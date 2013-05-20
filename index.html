@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>CSS Portal - Layout</title>
+<!--[if IE]><script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+<link rel="stylesheet" type="text/css" href="css/home.css" />
+<link rel="stylesheet" href="js/jqm/jquery.mobile-1.1.0-rc.1.min.css" /> 
+
+<script src="js/jqm/jquery-1.7.1.min.js"></script>
+<script src="js/jqm/jquery.mobile-1.1.0-rc.1.min.js"></script>
+<script src="js/jquery.json-2.3.min.js"></script>
+<script src="js/jstorage.min.js"></script>
+<script src="js/jqm.page.params.js"></script>
+<script src="js/highcharts/highcharts.js"></script>
+<script src="js/sem.js"></script>
+<script src="js/index.js"></script>
+<script src="/webinos.js"></script>
+
+</head>
+<body>
+    <div id="wrapper">
+        <div id="headerwrap">
+        <div id="header">
+            <p>This is the Header</p>
+        </div>
+        </div>
+        <div id="leftcolumnwrap">
+        <div id="leftcolumn">
+
+            <div id="refresh" style="height:30px; padding: 10px 10px 10px 10px;"><h1>Refresh</h1></div>
+            <table id="sensors_table"></table>
+
+        </div>
+        </div>
+        <div id="contentwrap">
+        <div id="content">
+           <div id="target"></div>
+        </div>
+        </div>
+        <div id="rightcolumnwrap">
+        <div id="rightcolumn">
+            <table id="configuration_table" border=0>
+                <tr>
+                    <td id="sensor_id_config"></td> 
+                </tr>
+                <tr>
+                    <th id="sensor_selected_th"></th> 
+                </tr>
+                <tr>
+                    <td class="param_td"><br>Mode</td>
+                </tr>
+                <tr>
+                     <td class="param_td">
+                        <select id="cfg_mode">
+                            <option value="">Mode</option>
+                            <option value="fixedinterval">Fixed Interval</option>
+                            <option value="valuechange">Value Change</option>
+                        </select>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>Rate</td>
+                </tr>
+                <tr>
+                    <td><input type="text"  id="cfg_rate" class="cfg_element"></td>
+                </tr>
+                <tr>
+                    <td>Timeout</td>
+                </tr>
+                <tr>
+                    <td><input type="text"  id="cfg_timeout" class="cfg_element"></td>
+                </tr>
+                <tr>
+                    <td colspan="2"><input type="button" id="cfg_but" value="Configure"></td>
+                </tr>
+            </table>
+        </div>
+        </div>
+        <div id="footerwrap">
+        <div id="footer">
+            <p>This is the Footer</p>
+        </div>
+        </div>
+    </div>
+</body>
+</html>
