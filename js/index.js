@@ -25,7 +25,7 @@
 	var sensors_configuration = {};
 	var sensor_chart = {};
 	var sensorActive = {};
-
+	var listeners = new Array();
 
 
 	var onSensorEvent = function(event){
@@ -175,17 +175,20 @@
 
             $("#target").append(html);
 
-            $('#delete-'+sensor_selected).live( 'click',function(event){
-            	deleteChart(this.id.split('-')[1]);
-            });
+            if(listeners.indexOf(sensor_selected) == -1){
+	            $('#delete-'+sensor_selected).live( 'click',function(event){
+	            	deleteChart(this.id.split('-')[1]);
+	            });
 
-            $('#settings-'+sensor_selected).live( 'click',function(event){
-            	settingSensor(this.id.split('-')[1]);
-            });
+	            $('#settings-'+sensor_selected).live( 'click',function(event){
+	            	settingSensor(this.id.split('-')[1]);
+	            });
 
-            $('#start-'+sensor_selected).live( 'click',function(event){
-            	startStopSensor(this.id.split('-')[1]);
-            });
+	            $('#start-'+sensor_selected).live( 'click',function(event){
+	            	startStopSensor(this.id.split('-')[1]);
+	            });
+	            listeners.push(sensor_selected);
+        	}
             
             
             Highcharts.setOptions({
