@@ -32,6 +32,12 @@ p {
 }
 
 #contentwrap {
+    width: 530px;
+    float: left;
+    margin: 0 auto;
+}
+
+#contentwrap2 {
     width: 820px;
     min-height: 1000px;
     float: left;
@@ -46,6 +52,12 @@ p {
 }
 
 #leftcolumnwrap {
+     width: 250px;
+     float: left;
+     margin: 0 auto;
+ }
+
+#leftcolumnwrap2 {
     width: 170px;
     float: left;
     margin: 0 auto;
@@ -106,7 +118,9 @@ p {
 }
 
 
-#target { width:818px; min-height:1000px; border-radius: 10px;}
+#target2 { width:818px; min-height:1000px; border-radius: 10px;}
+
+#target { width:518px; min-height:500px; border-radius: 10px;}
 .valid {  background: yellow;}
 
 .button_td,.param_td,.cfg_element,.cfg_but{

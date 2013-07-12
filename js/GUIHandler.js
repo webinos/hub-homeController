@@ -114,7 +114,7 @@
 
 	var addDragEventsForTarget = function(){
 
-		var target = document.getElementById("target");
+		var target = document.getElementById("target2");
 
 		target.ondragenter = function(event){
 			//add class "valid"
