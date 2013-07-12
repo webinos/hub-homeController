@@ -32,7 +32,8 @@ p {
 }
 
 #contentwrap {
-    width: 530px;
+    width: 820px;
+    min-height: 1000px;
     float: left;
     margin: 0 auto;
 }
@@ -45,7 +46,7 @@ p {
 }
 
 #leftcolumnwrap {
-    width: 250px;
+    width: 170px;
     float: left;
     margin: 0 auto;
 }
@@ -71,6 +72,12 @@ p {
     padding-left: 5px;
 }
 
+#faux_columns{
+    overflow:auto;
+    border-radius: 10px;
+    border: 1px solid #b81feb;
+}
+
 #footerwrap {
     width: 1000px;
     float: left;
@@ -86,7 +93,7 @@ p {
     margin: 5px;
 }
 
-#sensors_table{
+#sensors_table, #actuators_table, #operations_table{
     margin-left: auto;
     margin-right: auto;
     margin-top: 10px;
@@ -94,11 +101,12 @@ p {
 }
 
 
-#sensors_table img{
+#sensors_table img, #actuators_table img, #operations_table img{
     margin-left: 10px;
 }
 
-#target { width:518px; min-height:500px; border-radius: 10px;}
+
+#target { width:818px; min-height:1000px; border-radius: 10px;}
 .valid {  background: yellow;}
 
 .button_td,.param_td,.cfg_element,.cfg_but{
@@ -121,11 +129,81 @@ width: 180px;
     border-bottom-right-radius: 10px;
     background-color:#eaedef;
     width: 70%;
+    text-align: center;
+}
+
+.main_2{  
+    margin-top:20px;
+    margin-bottom:20px;
+    margin-left: auto;
+    margin-right: auto;
+    position: relative;
+    font-size: 80%;
+    border-top: 2px solid #456;
+    border-left: 2px solid #456;
+    border-right: 2px solid #456;
+    border-bottom: 2px solid #456;
+    overflow: hidden;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+    background-color:#eaedef;
+    width: 97%;
+    text-align: center;
+}
+
+.info_container{
+    width: 100%;
+    clear: both;
+    height: 40px;
 }
 
 #configuration_table{
     /*width: 150px;*/
 }
+
 th {
     width: 90px;
+}
+
+.sensorBlock{
+    border: 2px dotted rgb(243,250,37);
+    margin: 5px 5px 5px 5px;
+    width: 150px;
+    height: 100px;
+    /*per centrare il testo*/
+    text-align: center; /* orizzontale */
+    line-height: 100px; /* verticale */
+}
+
+.operationBlock{
+    border: 2px dotted rgb(108,240,135);
+    margin: 5px 5px 5px 5px;
+    width: 150px;
+    height: 100px;
+    text-align: center; /* orizzontale */
+    line-height: 100px; /* verticale */
+}
+
+.actuatorBlock{
+    border: 2px dotted rgb(111,111,247);
+    margin: 5px 5px 5px 5px;
+    width: 150px;
+    height: 100px;
+    text-align: center; /* orizzontale */
+    line-height: 100px; /* verticale */
+}
+
+.graphBlock{
+    border: 2px dotted rgb(255,115,115);
+    margin: 5px 5px 5px 5px;
+    width: 360px;
+    height:318px;
+    text-align: center; /* orizzontale */
+    line-height: 318px; /* verticale */
+}
+
+#buttons_content{
+    margin-top: 10px;
+    margin-bottom: 10px;
+    text-align: center;
 }
