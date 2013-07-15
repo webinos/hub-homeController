@@ -6,12 +6,24 @@
 <link rel="stylesheet" type="text/css" href="css/home.css" />
 <link rel="stylesheet" href="js/jqm/jquery.mobile-1.1.0-rc.1.min.css" /> 
 
+    <script src="RGraph/libraries/RGraph.common.core.js" ></script>
+    <script src="RGraph/libraries/RGraph.common.dynamic.js" ></script>
+    <script src="RGraph/libraries/RGraph.common.tooltips.js" ></script>
+    <script src="RGraph/libraries/RGraph.common.effects.js" ></script>
+    <script src="RGraph/libraries/RGraph.line.js" ></script>
+    <script src="RGraph/libraries/jquery.min.js" ></script>
+    
 <script src="js/jqm/jquery-1.7.1.min.js"></script>
-<script src="js/jqm/jquery.mobile-1.1.0-rc.1.min.js"></script>
 <script src="js/jquery.json-2.3.min.js"></script>
 <script src="js/jstorage.min.js"></script>
 <script src="js/jqm.page.params.js"></script>
 <script src="js/highcharts/highcharts.js"></script>
+<script src="js/RGraph/libraries/RGraph.common.core.js"></script>
+<script src="js/RGraph/libraries/RGraph.common.dynamic.js"></script>
+<script src="js/RGraph/libraries/RGraph.common.effects.js"></script>
+<script src="js/RGraph/libraries/RGraph.gauge.js"></script>
+<script src="js/RGraph/libraries/RGraph.thermometer.js"></script>
+<script type="text/javascript" src="https://www.google.com/jsapi"></script>
 <script src="js/index.js"></script>
 <script src="/webinos.js"></script>
 
@@ -25,55 +37,30 @@
         </div>
         <div id="leftcolumnwrap">
         <div id="leftcolumn">
-
             <div id="refresh" style="height:30px; padding: 10px 10px 10px 10px;"><h1>Refresh</h1></div>
             <table id="sensors_table"></table>
-
         </div>
         </div>
         <div id="contentwrap">
         <div id="content">
-           <div id="target"></div>
+            <div id="target">
+            <div id="drophere" style="width: 550px; height: 100px"></div>
+            </div>
         </div>
         </div>
         <div id="rightcolumnwrap">
+        
         <div id="rightcolumn">
-            <table id="configuration_table" border=0>
-                <tr>
-                    <td id="sensor_id_config"></td> 
-                </tr>
-                <tr>
-                    <th id="sensor_selected_th"></th> 
-                </tr>
-                <tr>
-                    <td class="param_td"><br>Mode</td>
-                </tr>
-                <tr>
-                     <td class="param_td">
-                        <select id="cfg_mode">
-                            <option value="">Mode</option>
-                            <option value="fixedinterval">Fixed Interval</option>
-                            <option value="valuechange">Value Change</option>
-                        </select>
-                    </td>
-                </tr>
-
-                <tr>
-                    <td>Rate</td>
-                </tr>
-                <tr>
-                    <td><input type="text"  id="cfg_rate" class="cfg_element"></td>
-                </tr>
-                <tr>
-                    <td>Timeout</td>
-                </tr>
-                <tr>
-                    <td><input type="text"  id="cfg_timeout" class="cfg_element"></td>
-                </tr>
-                <tr>
-                    <td colspan="2"><input type="button" id="cfg_but" value="Configure"></td>
-                </tr>
-            </table>
+            <div id="gauges_list">
+                <img width="122px" height="120px" src="assets/gauge2.png" id="btnGauge" style='padding:10px 10px 10px 10px;' />
+                <img width="33px" height="120px" src="assets/therm2.png" id="btnTherm" style='padding:10px 10px 10px 10px;' />
+                <img width="122px" height="120px" src="assets/line-chart.png" id="line-chart" style='padding:10px 10px 10px 10px;' />
+                <img width="122px" height="120px" src="assets/corner2.png" id="btnCorner" style='padding:10px 10px 10px 10px;' />
+                <img width="108px" height="120px" src="assets/fuel_01_min.png" id="btnFuel-1" style='padding:10px 10px 10px 10px;' />
+                <img width="101px" height="120px" src="assets/fuel_02_min.png" id="btnFuel-2" style='padding:10px 10px 10px 10px;' />
+                <img width="200px" height="120px" src="assets/meter.png" id="btnMeter" style='padding:10px 0px 10px 0px;' />
+                <img width="130px" height="120px" src="assets/odometer.png" id="btnMeter" style='padding:10px 10px 10px 10px;' />
+            </div>
         </div>
         </div>
         <div id="footerwrap">
@@ -82,5 +69,13 @@
         </div>
         </div>
     </div>
+   
+    <div id="settings_div" style='display:none'> 
+    	<div id="hover"> </div>
+		<div id="popup"> 
+	  		<div id="close">X</div> 
+		</div> 
+	</div>
+    
 </body>
 </html>
