@@ -348,7 +348,7 @@
 	            graphic.graphData.addColumn('number',null);		//creo una nuova colonna per il nuovo sensore nei valori del grafico 
 	            
 	    		graphic.options = {
-	    		        title: 'Titolo del grafico'			
+	    		        title: ''			
 	    		      };
 	    		
 	            charts[idChart]=graphic;
