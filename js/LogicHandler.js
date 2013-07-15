@@ -246,9 +246,9 @@ function settingSensorConnection(source, target, position){
 	}else if(block_list[target] instanceof Output){
 		block_list[source].setProcessingCallback(block_list[target].getOutputCallback());
 	}
-	var sensor = sensors[source.split("_")[1]];
-	sensor.addEventListener("sensor", onSensorEvent, false);
-	sensorActive[sensor.id] = true;
+	//var sensor = sensors[source.split("_")[1]];
+	//sensor.addEventListener("sensor", onSensorEvent, false);
+	//sensorActive[sensor.id] = true;
 }
 
 function settingUserInputConnection(source,target, position){

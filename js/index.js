@@ -307,7 +307,7 @@
 	            html += "</div>";
 	            html+="<canvas class='main' id='drop_canvas-"+idChart+"' width='100' height='400'></canvas></div>";
 	            $("#drophere").after(html);
-				var chart=new RGraph.Thermometer(idChart, -30,80,0);
+				var chart=new RGraph.Thermometer("drop_canvas-"+idChart, -30,80,0);
 				var g=new Graphic(chart);
 	            g.id=idChart;
 	            g.type="thermometer";
@@ -348,7 +348,7 @@
 	            graphic.graphData.addColumn('number',null);		//creo una nuova colonna per il nuovo sensore nei valori del grafico 
 	            
 	    		graphic.options = {
-	    		        title: 'Titolo del grafico'			
+	    		        title: ''			
 	    		      };
 	    		
 	            charts[idChart]=graphic;

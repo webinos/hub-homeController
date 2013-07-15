@@ -336,6 +336,10 @@
     	var divsWithWindowClass = jsPlumb.CurrentLibrary.getSelector(".window");
         jsPlumb.draggable(divsWithWindowClass);
 
+        //add eventListener
+        sensor.addEventListener("sensor", onSensorEvent, false);
+		sensorActive[sensor.id] = true;
+
         //to remove box
         $('#remove_'+idbox).on('click', function(){
         	var boxID = this.id.substring(7);
