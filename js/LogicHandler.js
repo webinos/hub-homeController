@@ -133,9 +133,6 @@ var onSensorEvent = function(event){
 	}
 
 	if (sensor){
-		if (!sensor.values) {
-			sensor.values = [];
-		}
 
 		$("#value_"+sensor.id).empty();
 		$("#value_"+sensor.id).text(sensor.values);

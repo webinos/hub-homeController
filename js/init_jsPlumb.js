@@ -124,6 +124,10 @@
             findSensorServices();
         });
 
+        $('#clearRules').live( 'click',function(event){
+            clearAll_for_rules();
+        });
+
         $('#saveRules').live( 'click',function(event){
             save_rules();
         });
