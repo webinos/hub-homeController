@@ -59,10 +59,12 @@
 
 		        					var div_id = "sensor_"+sensor.id;
 
-                                    var sensorCode = '<tr><td><img width="80px" height="80px" src="./assets/images/'+icons[sensor.api]+'" id="'+div_id+'" /></td></tr><tr><th>'+sensor.description+'</th></tr>';
+                                    var sensorCode = '<tr><td><img width="80px" height="80px" src="./assets/images/'+icons[sensor.api]+'" id="'+div_id+'" /></td></tr><tr><th>'+sensor.description+'<br>['+sensor.serviceAddress+']</th></tr>';
                                     jQuery("#sensors_table").append(sensorCode);
 
                                     initDragAndDrop(div_id);
+
+                                    setMinHeight();
 
 								},
 								function (){
@@ -76,10 +78,12 @@
 					actuators[service.id] = service;
 					var div_id = "actuator_"+service.id;
 
-					var actuatorCode = '<tr><td><img width="80px" height="80px" src="./assets/images/'+icons[service.api]+'" id="'+div_id+'" /></td></tr><tr><th>'+service.description+'</th></tr>';
+					var actuatorCode = '<tr><td><img width="80px" height="80px" src="./assets/images/'+icons[service.api]+'" id="'+div_id+'" /></td></tr><tr><th>'+service.description+'<br>['+service.serviceAddress+']</th></tr>';
                     jQuery("#actuators_table").append(actuatorCode);
 
                     initDragAndDrop(div_id);
+
+                    setMinHeight();
 				}
 				else if(service.api.indexOf("file") !== -1){
 					if(service.serviceAddress.indexOf(".local") !== -1){
@@ -101,6 +105,10 @@
 		});
 	}
 
+	function setMinHeight(){
+		var height = $("#leftcolumnwrap").height();
+		$("#target2").height(height - 55);
+	}
 
 	//set onDragStart for all types of boxes
 	var addOnDragStart = function(id){
@@ -320,7 +328,7 @@
 		var html = "";
 		html += "<div class='window' id='"+idbox+"' >";
 		html += "<div id='remove_"+idbox+"' style='clear:both;'><img width='10px' height='10px' src='./assets/x_min.png' style='float:right; margin-bottom:5px;'></img></div>";
-		html += sensor.description+'<br><br>';
+		html += sensor.description+'<br>['+sensor.serviceAddress+']<br><br>';
 		html += '<img width="80px" height="80px" src="./assets/images/'+icons[sensor.api]+'" id="sensorIMG_'+sensor.id+'" /><br><br>';                     
 	    html += "<div id='value_"+sensor.id+"'>-</div>";
 	    html += "</div>";
@@ -388,7 +396,7 @@
 		var html = "";
 		html += "<div class='window' id='"+idbox+"' >";
 		html += "<div id='remove_"+idbox+"' style='clear:both;'><img width='10px' height='10px' src='./assets/x_min.png' style='float:right; margin-bottom:5px;'></img></div>";
-		html += actuator.description+'<br><br>';
+		html += actuator.description+'<br>['+actuator.serviceAddress+']<br><br>';
 		html += '<img width="80px" height="80px" src="./assets/images/'+icons[actuator.api]+'" id="actuatorIMG_'+actuator.id+'" /><br><br>';
 	    html += "<div id='value_"+actuator.id+"'>-</div>";
 	    html += "</div>";
