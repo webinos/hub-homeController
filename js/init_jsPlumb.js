@@ -120,10 +120,16 @@
 
         initGUI();
 
-        $("#sensor_id_config").hide();
-
         $('#refresh').live( 'click',function(event){
             findSensorServices();
+        });
+
+        $('#saveRules').live( 'click',function(event){
+            save_rules();
+        });
+
+        $('#loadRules').live( 'click',function(event){
+            load_rules();
         });
     });
 
