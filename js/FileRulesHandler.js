@@ -33,53 +33,57 @@ function save_file(data, file_name){
 }
 
 function load_file(file_name){
-    root_directory.getFile(file_name, {create: true, exclusive: false}, 
-		function (myentry) {
-			var r = new window.FileReader();
-			r.onerror = function (evt) {
-				alert("Error reading file (#" + evt.target.error.name + ")");
-			}
+	var conf = confirm("Do you want to continue loading?");
 
-			r.onload = function (evt) {
-				try{
-					var contents = JSON.parse(evt.target.result);
+	if(conf){
+	    root_directory.getFile(file_name, {create: true, exclusive: false}, 
+			function (myentry) {
+				var r = new window.FileReader();
+				r.onerror = function (evt) {
+					alert("Error reading file (#" + evt.target.error.name + ")");
+				}
 
-					//for rules file
-					if(file_name == file_name_for_rules){
-						//remove all actual elements inside the target
-						clearAll_for_rules();
+				r.onload = function (evt) {
+					try{
+						var contents = JSON.parse(evt.target.result);
 
-						//{ old boxID : new boxID }
-						var boxIDassociated = {};
+						//for rules file
+						if(file_name == file_name_for_rules){
+							//remove all actual elements inside the target
+							clearAll_for_rules();
 
-						//Create box UI
-						for(var u in contents){
-							var newBoxID = paintOneBlock(contents[u]);
-							boxIDassociated[u] = newBoxID;
-						}
+							//{ old boxID : new boxID }
+							var boxIDassociated = {};
 
-						//Creare Connection UI (and object)
-						for(var i in contents){
-							addConnectionBetweenTwoBoxes(contents[i], boxIDassociated);
+							//Create box UI
+							for(var u in contents){
+								var newBoxID = paintOneBlock(contents[u]);
+								boxIDassociated[u] = newBoxID;
+							}
+
+							//Creare Connection UI (and object)
+							for(var i in contents){
+								addConnectionBetweenTwoBoxes(contents[i], boxIDassociated);
+							}
 						}
 					}
+					catch(err){
+						//alert(err.message);
+					}
 				}
-				catch(err){
-					//alert(err.message);
-				}
-			}
 
-			myentry.file(function (fileR) {
-				r.readAsText(fileR);
-			}, function (error) {
-				alert("Error retrieving file (#" + error.name + ")");
-			});
-		},
-		function (error) {
-			//if the file data.txt doesn't exist load the default upload image and center it
-			alert("Error on read file");
-		}
-	);
+				myentry.file(function (fileR) {
+					r.readAsText(fileR);
+				}, function (error) {
+					alert("Error retrieving file (#" + error.name + ")");
+				});
+			},
+			function (error) {
+				//if the file data.txt doesn't exist load the default upload image and center it
+				alert("Error on read file");
+			}
+		);
+	}
 }
 
 
@@ -87,47 +91,51 @@ function save_rules(){
 
 	var rules_to_save = {};
 
-	for(var x in block_list){		
-		rules_to_save[x] = {
-			boxID: x,
-			boxType: x.split("_")[0], // possible value: sensor - actuator - operation - bool - userInput
-			boxSpecific:x.split("_")[1], // possible value: sensorID - actuatorID - greater - lesser - and - or - input
-			userInputValue:(function(){
-				//only for userInput Box - save actual value insert by user
-				if(x.split("_")[0] == "userInput")
-					return $('#input_val_'+x).val();
-				else
-					return "";
-			})(),
-			objType: (function(){
-				if(block_list[x] instanceof Input)
-					return "Input";
-				if(block_list[x] instanceof Processing)
-					return "Processing";
-				if(block_list[x] instanceof Output)
-					return "Output";
-			})(),
-			coord:{ 
-				x: $("#"+x).position().left,
-				y: $("#"+x).position().top
-			},
-			connections:(function(){
-				var conn = [];
-				for (var j = 0; j < connections.length; j++) {
-                    if(connections[j].sourceId == x){
-                    	conn.push({
-                    		from:connections[j].sourceId,
-                    		to:connections[j].targetId,
-                    		params:connections[j].getParameters()
-                    	});
-                    }
-                }
-                return conn;
-			})()
-		};
-	}
+	var conf = confirm("Do you want to continue saving?");
 
-	save_file(rules_to_save,file_name_for_rules);
+	if(conf){
+		for(var x in block_list){		
+			rules_to_save[x] = {
+				boxID: x,
+				boxType: x.split("_")[0], // possible value: sensor - actuator - operation - bool - userInput
+				boxSpecific:x.split("_")[1], // possible value: sensorID - actuatorID - greater - lesser - and - or - input
+				userInputValue:(function(){
+					//only for userInput Box - save actual value insert by user
+					if(x.split("_")[0] == "userInput")
+						return $('#input_val_'+x).val();
+					else
+						return "";
+				})(),
+				objType: (function(){
+					if(block_list[x] instanceof Input)
+						return "Input";
+					if(block_list[x] instanceof Processing)
+						return "Processing";
+					if(block_list[x] instanceof Output)
+						return "Output";
+				})(),
+				coord:{ 
+					x: $("#"+x).position().left,
+					y: $("#"+x).position().top
+				},
+				connections:(function(){
+					var conn = [];
+					for (var j = 0; j < connections.length; j++) {
+	                    if(connections[j].sourceId == x){
+	                    	conn.push({
+	                    		from:connections[j].sourceId,
+	                    		to:connections[j].targetId,
+	                    		params:connections[j].getParameters()
+	                    	});
+	                    }
+	                }
+	                return conn;
+				})()
+			};
+		}
+
+		save_file(rules_to_save,file_name_for_rules);
+	}
 }
 
 
