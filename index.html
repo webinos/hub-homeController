@@ -3,7 +3,6 @@
 <head>
 <title>Home controller Hub</title>
 <link rel="stylesheet" type="text/css" href="css/home.css" />
-
 <script src="js/jquery-1.8.1-min.js"></script>
 <script src="js/RGraph/libraries/RGraph.common.core.js"></script>
 <script src="js/RGraph/libraries/RGraph.common.dynamic.js"></script>
@@ -12,59 +11,62 @@
 <script src="js/RGraph/libraries/RGraph.line.js" ></script>
 <script src="js/RGraph/libraries/RGraph.gauge.js"></script>
 <script src="js/RGraph/libraries/RGraph.thermometer.js"></script>
+<script src="js/jquery.tinyscrollbar.js"></script>
 <script type="text/javascript" src="js/jsapi.js"></script>
 <script src="js/index.js"></script>
 <script src="/webinos.js"></script>
-
 </head>
 <body>
-    <div id="wrapper">
-        <div id="headerwrap">
-        <div id="header">
-            <p>This is the Header</p>
-        </div>
-        </div>
-        <div id="leftcolumnwrap">
-        <div id="leftcolumn">
-            <div id="refresh" style="height:30px; padding: 10px 10px 10px 10px;"><h1>Refresh</h1></div>
-            <table id="sensors_table"></table>
-        </div>
-        </div>
-        <div id="contentwrap">
-        <div id="content">
-            <div id="target">
-            <div id="drophere" style="width: 550px; height: 100px"></div>
-            </div>
-        </div>
-        </div>
-        <div id="rightcolumnwrap">
-        
-        <div id="rightcolumn">
-            <div id="gauges_list">
-                <img width="122px" height="120px" src="assets/gauge2.png" id="btnGauge" style='padding:10px 10px 10px 10px;' />
-                <img width="33px" height="120px" src="assets/therm2.png" id="btnTherm" style='padding:10px 10px 10px 10px;' />
-                <img width="122px" height="120px" src="assets/line-chart.png" id="line-chart" style='padding:10px 10px 10px 10px;' />
-                <img width="122px" height="120px" src="assets/corner2.png" id="btnCorner" style='padding:10px 10px 10px 10px;' />
-                <img width="108px" height="120px" src="assets/fuel_01_min.png" id="btnFuel-1" style='padding:10px 10px 10px 10px;' />
-                <img width="101px" height="120px" src="assets/fuel_02_min.png" id="btnFuel-2" style='padding:10px 10px 10px 10px;' />
-                <img width="200px" height="120px" src="assets/meter.png" id="btnMeter" style='padding:10px 0px 10px 0px;' />
-                <img width="130px" height="120px" src="assets/odometer.png" id="btnMeter" style='padding:10px 10px 10px 10px;' />
-            </div>
-        </div>
-        </div>
-        <div id="footerwrap">
-        <div id="footer">
-            <p>This is the Footer</p>
-        </div>
-        </div>
-    </div>
-   
-    <div id="settings_div" style='display:none'> 
-    	<div id="hover"> </div>
-		<div id="popup"> 
-	  		<div id="close">X</div> 
-		</div> 
+
+	<div id="leftcolumn" class="scroll-container">
+		<div class="scroll-scrollbar"><div class="scroll-track"><div class="scroll-thumb"><div class="scroll-end"></div></div></div></div>
+		<div class="scroll-viewport">
+			<div class="scroll-overview">
+				<div id="refresh" class="button">Refresh</div>
+				<div id="sensors_table"></div>
+			</div>
+		</div>
 	</div>
-    
+
+	<div id="content-container">
+		<div id="header">
+			<p>This is the Header</p>
+		</div>
+
+        <div id="content" class="scroll-container">
+			<div class="scroll-scrollbar"><div class="scroll-track"><div class="scroll-thumb"><div class="scroll-end"></div></div></div></div>
+			<div class="scroll-viewport">
+				<div id="target" class="scroll-overview"></div>
+			</div>
+        </div>
+
+		<div id="footer">
+			<p>This is the Footer</p>
+		</div>
+	</div>
+
+	<div id="rightcolumn" class="scroll-container">
+		<div class="scroll-scrollbar"><div class="scroll-track"><div class="scroll-thumb"><div class="scroll-end"></div></div></div></div>
+		<div class="scroll-viewport">
+			<div id="gauges_list" class="scroll-overview">
+				<img width="122px" height="120px" src="assets/gauge2.png" id="btnGauge" />
+				<img width="33px" height="120px" src="assets/therm2.png" id="btnTherm" />
+				<img width="122px" height="120px" src="assets/line-chart.png" id="line-chart" />
+				<img width="122px" height="120px" src="assets/corner2.png" id="btnCorner" />
+				<img width="108px" height="120px" src="assets/fuel_01_min.png" id="btnFuel-1" />
+				<img width="101px" height="120px" src="assets/fuel_02_min.png" id="btnFuel-2" />
+				<img width="200px" height="120px" src="assets/meter.png" id="btnMeter" />
+				<img width="130px" height="120px" src="assets/odometer.png" id="btnMeter" />
+			</div>
+		</div>
+	</div>
+
+    <div id="settings-container" style='display:none'>
+		<div id="popup">
+			<div id="close">&times;</div>
+			<div id="settings-content"></div>
+		</div>
+	</div>
+
 </body>
 </html>
