@@ -19,19 +19,20 @@
 	var that = this;
 
 
-	var initGUI = function(){
-		findSensorServices();
+	var initGUI = function(leftColumn){
+		findSensorServices(leftColumn);
 		addOperationsGUI();
+        leftColumn.tinyscrollbar_update(); //in case we find no sensors and operations flow outside the screen
 	}
 
 
 	function addOperationsGUI(){
 		var html = "";
-		html += '<tr><td><img width="80px" height="80px" src="./assets/greater.png" id="operation_greater" /></td></tr><tr><th>Greater than</th></tr>';
-		html += '<tr><td><img width="80px" height="80px" src="./assets/lesser.png" id="operation_lesser" /></td></tr><tr><th>Lesser than</th></tr>';
-		html += '<tr><td><img width="80px" height="80px" src="./assets/and.png" id="bool_and" /></td></tr><tr><th>AND</th></tr>';
-		html += '<tr><td><img width="80px" height="80px" src="./assets/or.png" id="bool_or" /></td></tr><tr><th>OR</th></tr>';
-		html += '<tr><td><img width="80px" height="80px" src="./assets/user_input.png" id="userInput_input" /></td></tr><tr><th>User Input</th></tr>';
+		html += '<div class="sensor"><img width="80px" height="80px" src="./assets/greater.png" id="operation_greater" /><p>Greater than</p></div>';
+		html += '<div class="sensor"><img width="80px" height="80px" src="./assets/lesser.png" id="operation_lesser" /><p>Lesser than</p></div>';
+		html += '<div class="sensor"><img width="80px" height="80px" src="./assets/and.png" id="bool_and" /><p>AND</p></div>';
+		html += '<div class="sensor"><img width="80px" height="80px" src="./assets/or.png" id="bool_or" /><p>OR</p></div>';
+		html += '<div class="sensor"><img width="80px" height="80px" src="./assets/user_input.png" id="userInput_input" /><p>User Input</p></div>';
         jQuery("#operations_table").append(html);
         initDragAndDrop("operation_greater");
         initDragAndDrop("operation_lesser");
@@ -40,7 +41,7 @@
         initDragAndDrop("userInput_input");
 	}
 
-	var findSensorServices = function(){
+	var findSensorServices = function(container){
 		jQuery("#sensors_table").empty();
 		jQuery("#actuators_table").empty();
 
@@ -50,17 +51,19 @@
 				if(service.api.indexOf("sensors.") !== -1){
 					sensors[service.id] = service;
 					sensorActive[service.id] = false;
-					
+
 					service.bind({
 						onBind:function(){
-		        			service.configureSensor({rate: 500, eventFireMode: "fixedinterval"}, 
+		        			service.configureSensor({rate: 500, eventFireMode: "fixedinterval"},
 		        				function(){
 		        					var sensor = service;
 
 		        					var div_id = "sensor_"+sensor.id;
 
-                                    var sensorCode = '<tr><td><img width="80px" height="80px" src="./assets/images/'+icons[sensor.api]+'" id="'+div_id+'" /></td></tr><tr><th>'+sensor.description+'<br>['+sensor.serviceAddress+']</th></tr>';
+                                    var sensorCode = '<div class="sensor"><img width="80px" height="80px" src="./assets/images/'+icons[sensor.api]+'" id="'+div_id+'" /><p>'+sensor.description+'<br><span class="addr">['+sensor.serviceAddress+']</span></p></div>';
                                     jQuery("#sensors_table").append(sensorCode);
+
+                                    container.tinyscrollbar_update();
 
                                     initDragAndDrop(div_id);
 
@@ -73,13 +76,15 @@
 							);
 		        		}
 					});
-					
+
 				}else if(service.api.indexOf("actuators.") !== -1){
 					actuators[service.id] = service;
 					var div_id = "actuator_"+service.id;
 
-					var actuatorCode = '<tr><td><img width="80px" height="80px" src="./assets/images/'+icons[service.api]+'" id="'+div_id+'" /></td></tr><tr><th>'+service.description+'<br>['+service.serviceAddress+']</th></tr>';
+					var actuatorCode = '<div class="sensor"><img width="80px" height="80px" src="./assets/images/'+icons[service.api]+'" id="'+div_id+'" /><p>'+service.description+'<br><span class="addr">['+service.serviceAddress+']</span></p></div>';
                     jQuery("#actuators_table").append(actuatorCode);
+
+                    container.tinyscrollbar_update();
 
                     initDragAndDrop(div_id);
 
@@ -89,14 +94,14 @@
 					if(service.serviceAddress.indexOf(".local") !== -1){
 						service.bindService({
 							onBind: function () {
-								service.requestFileSystem(1, 1024, 
+								service.requestFileSystem(1, 1024,
 									function (filesystem) {
 										root_directory = filesystem.root;
 									},
 									function (error) {
 										alert("Error requesting filesystem (#" + error.code + ")");
 									}
-								);					
+								);
 							}
 						});
 					}
@@ -122,7 +127,7 @@
 
 	var addDragEventsForTarget = function(){
 
-		var target = document.getElementById("target2");
+		var target = document.getElementById("target");
 
 		target.ondragenter = function(event){
 			//add class "valid"
@@ -210,7 +215,7 @@
             connector: ["Bezier", { curviness:63 } ],
             maxConnections:-1, //unlimited
             beforeDetach:function(conn) {
-                return confirm("Detach connection?"); 
+                return confirm("Detach connection?");
             },
             dropOptions : exampleDropOptions
 	    };
@@ -239,10 +244,10 @@
                 strokeStyle:exampleColor,
                 dashstyle:"2 2"
             },
-            maxConnections:-1, //unlimited            
+            maxConnections:-1, //unlimited
             dropOptions : exampleDropOptions
 	    };
-	    return exampleEndpoint;      
+	    return exampleEndpoint;
 	}
 
 
@@ -271,21 +276,21 @@
 		var d = document.getElementById(idbox);
 		d.style.left = coord.x+'px';
 		d.style.top = coord.y+'px';
-		
-		jsPlumb.addEndpoint(idbox, { 
+
+		jsPlumb.addEndpoint(idbox, {
 			anchor:"TopRight",
 			parameters:{
 				position:"right"
-			} 
+			}
 		}, greeCircle());
-		jsPlumb.addEndpoint(idbox, { 
+		jsPlumb.addEndpoint(idbox, {
 			anchor:"TopLeft",
 			parameters:{
 				position:"left"
-			} 
+			}
 		}, greeCircle());
 		jsPlumb.addEndpoint(idbox, { anchor:"BottomCenter" }, blueRectangle());
-    	
+
     	var divsWithWindowClass = jsPlumb.CurrentLibrary.getSelector(".window");
         jsPlumb.draggable(divsWithWindowClass);
 
@@ -329,7 +334,7 @@
 		html += "<div class='window' id='"+idbox+"' >";
 		html += "<div id='remove_"+idbox+"' style='clear:both;'><img width='10px' height='10px' src='./assets/x_min.png' style='float:right; margin-bottom:5px;'></img></div>";
 		html += sensor.description+'<br>['+sensor.serviceAddress+']<br><br>';
-		html += '<img width="80px" height="80px" src="./assets/images/'+icons[sensor.api]+'" id="sensorIMG_'+sensor.id+'" /><br><br>';                     
+		html += '<img width="80px" height="80px" src="./assets/images/'+icons[sensor.api]+'" id="sensorIMG_'+sensor.id+'" /><br><br>';
 	    html += "<div id='value_"+sensor.id+"'>-</div>";
 	    html += "</div>";
 
@@ -338,9 +343,9 @@
 	    var d = document.getElementById(idbox);
 		d.style.left = coord.x+'px';
 		d.style.top = coord.y+'px';
-		
+
 		jsPlumb.addEndpoint(idbox, { anchor:"BottomCenter" }, blueRectangle());
-    	
+
     	var divsWithWindowClass = jsPlumb.CurrentLibrary.getSelector(".window");
         jsPlumb.draggable(divsWithWindowClass);
 
@@ -406,9 +411,9 @@
 	    var d = document.getElementById(idbox);
 		d.style.left = coord.x+'px';
 		d.style.top = coord.y+'px';
-		
+
 		jsPlumb.addEndpoint(idbox, { anchor:"TopCenter" }, greeCircle());
-    	
+
     	var divsWithWindowClass = jsPlumb.CurrentLibrary.getSelector(".window");
         jsPlumb.draggable(divsWithWindowClass);
 
@@ -459,21 +464,21 @@
 		var d = document.getElementById(idbox);
 		d.style.left = coord.x+'px';
 		d.style.top = coord.y+'px';
-		
-		jsPlumb.addEndpoint(idbox, { 
+
+		jsPlumb.addEndpoint(idbox, {
 			anchor:"TopRight",
 			parameters:{
 				position:"right"
-			} 
+			}
 		}, greeCircle());
-		jsPlumb.addEndpoint(idbox, { 
+		jsPlumb.addEndpoint(idbox, {
 			anchor:"TopLeft",
 			parameters:{
 				position:"left"
-			} 
+			}
 		}, greeCircle());
 		jsPlumb.addEndpoint(idbox, { anchor:"BottomCenter" }, blueRectangle());
-    	
+
     	var divsWithWindowClass = jsPlumb.CurrentLibrary.getSelector(".window");
         jsPlumb.draggable(divsWithWindowClass);
 
@@ -508,9 +513,9 @@
 	    var d = document.getElementById(idbox);
 		d.style.left = coord.x+'px';
 		d.style.top = coord.y+'px';
-		
+
 		jsPlumb.addEndpoint(idbox, { anchor:"BottomCenter" }, blueRectangle());
-    	
+
     	var divsWithWindowClass = jsPlumb.CurrentLibrary.getSelector(".window");
         jsPlumb.draggable(divsWithWindowClass);
 

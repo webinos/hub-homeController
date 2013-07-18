@@ -47,7 +47,7 @@
                 }
             }
         };
-    
+
     window.jsPlumbDemo = {
         init : function() {
 
@@ -58,7 +58,7 @@
                 EndpointStyle : { width:20, height:16, strokeStyle:'#666' },
                 Endpoint : "Rectangle",
                 Anchors : ["TopCenter", "TopCenter"]
-            });                                             
+            });
 
             // bind to connection/connectionDetached events, and update the list of connections on screen.
             jsPlumb.bind("connection", function(info, originalEvent) {
@@ -73,12 +73,12 @@
             jsPlumb.draggable(divsWithWindowClass);
 
 
-            // init         
+            // init
             if (!_initialised) {
                 $(".hide").click(function() {
                     jsPlumb.toggle($(this).attr("rel"));
                 });
-    
+
                 $(".drag").click(function() {
                     var s = jsPlumb.toggleDraggable($(this).attr("rel"));
                     $(this).html(s ? 'disable dragging' : 'enable dragging');
@@ -88,16 +88,16 @@
                         $("#" + $(this).attr("rel")).removeClass('drag-locked');
                     $("#" + $(this).attr("rel")).css("cursor", s ? "pointer" : "default");
                 });
-    
+
                 $(".detach").click(function() {
                     jsPlumb.detachAllConnections($(this).attr("rel"));
                 });
-    
+
                 $("#clear").click(function() {
                     jsPlumb.detachEveryConnection();
                     showConnectionInfo("");
                 });
-                
+
                 _initialised = true;
             }
         }
@@ -105,20 +105,31 @@
 
 
     Array.prototype.uniq = function uniq() {
-        return this.reduce(function(accum, cur) { 
-            if (accum.indexOf(cur) === -1) accum.push(cur); 
-                return accum; 
+        return this.reduce(function(accum, cur) {
+            if (accum.indexOf(cur) === -1) accum.push(cur);
+                return accum;
             }, [] );
     }
 
     /***************  ON READY FUNCTION FOR JsPlump Library   *********************/
 
     jsPlumb.bind("ready", function() {
-        jsPlumb.reset();
+        //jsPlumb.reset();
         jsPlumb.setRenderMode(jsPlumb.SVG);
         jsPlumbDemo.init();
 
-        initGUI();
+        var leftColumn = $('#leftcolumn');
+		leftColumn.tinyscrollbar();
+
+        var contentDiv = $('#content');
+        contentDiv.tinyscrollbar();
+
+        $(window).resize(function() {
+            leftColumn.tinyscrollbar_update();
+            contentDiv.tinyscrollbar_update();
+        });
+
+        initGUI(leftColumn);
 
         $('#refresh').live( 'click',function(event){
             findSensorServices();
@@ -136,5 +147,3 @@
             load_rules();
         });
     });
-
-
