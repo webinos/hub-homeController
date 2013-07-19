@@ -145,7 +145,7 @@ function load_rules(){
 
 
 function paintOneBlock(box){
-	var id = box.boxID.substring(0,(box.boxID.length-1));
+	var id = box.boxID.substring(0,(box.boxID.length-2));
 	var result;
 	switch(box.boxType){
 		case "sensor":
@@ -183,6 +183,8 @@ function addConnectionBetweenTwoBoxes(box, boxIDassociated){
 			var newTargetBoxID = boxIDassociated[box.connections[j].to];
 			var newParams = box.connections[j].params;
 
+			//alert("newSourceBoxID: " + newSourceBoxID + " - newTargetBoxID: " + newTargetBoxID);
+
 			var sourceEndpoint;
 			var targetEndpoint;
 
@@ -192,22 +194,40 @@ function addConnectionBetweenTwoBoxes(box, boxIDassociated){
 			}else{
 		        for(var h=0; h<endps.length; h++){
 		        	var params = endps[h].getParameters();
+		        	//only for greater than and lesser than
 		        	if(typeof params !== "undefined"){
-		        		if(params.position == newParams.position)
+		        		if(params.position == newParams.position){
 		        			sourceEndpoint = endps[h];
+		        			//break;
+		        		}
+		        	}
+		        	if(newSourceBoxID.split("_")[0].indexOf("bool") !== -1){
+			        	if(endps[h].isSource == true){
+							sourceEndpoint = endps[h];
+							break;
+			        	}
 		        	}
 		        }
 	    	}
 
 	        var endpt = jsPlumb.getEndpoints(newTargetBoxID);
-	        if(endpt.length == 1){
+	      	if(endpt.length == 1){
 				targetEndpoint = endpt[0];
 			}else{
 		        for(var h=0; h<endpt.length; h++){
 		        	var params = endpt[h].getParameters();
+		        	//only for greater than and lesser than
 		        	if(typeof params !== "undefined"){
-		        		if(params.position == newParams.position)
+		        		if(params.position == newParams.position){
 		        			targetEndpoint = endpt[h];
+		        			//break;
+		        		}
+		        	}
+		        	if(newTargetBoxID.split("_")[0].indexOf("bool") !== -1){
+			        	if(endpt[h].isTarget == true){
+							targetEndpoint = endpt[h];
+							break;
+			        	}
 		        	}
 		        }
 	    	}
@@ -226,10 +246,10 @@ function clearAll_for_rules(){
 
 	//remove event listener:
 	for(i in sensorActive){
-		if(sensorActive[i] == true){
+		numListenerToRemove = sensorActive[i];
+		for(var x=0; x<numListenerToRemove; x++)
 			sensors[i].removeEventListener('sensor', onSensorEvent, false);
-        	sensorActive[i] = false;
-		}
+        sensorActive[i] = 0;
 	}
 
 	for(x in block_list){

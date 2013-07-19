@@ -12,8 +12,8 @@
                     var param = conn.getParameters();
                     settingUserInputConnection(conn.sourceId, conn.targetId, param.position);
                 }else if(conn.sourceId.indexOf("operation") !== -1){
-                    //var param = conn.getParameters();
-                    //alert(param.position);
+                    settingProcessingConnection(conn.sourceId, conn.targetId);
+                }else if(conn.sourceId.indexOf("bool") !== -1){
                     settingProcessingConnection(conn.sourceId, conn.targetId);
                 }
             }
@@ -34,6 +34,8 @@
                     removeInputConnection(conn.sourceId, conn.targetId, param.position);
                 }else if(conn.sourceId.indexOf("operation") !== -1){
                     removeProcessingConnection(conn.sourceId, conn.targetId);
+                }else if(conn.sourceId.indexOf("bool") !== -1){
+                    removeProcessingConnection(conn.sourceId, conn.targetId);
                 }
 
             }
@@ -47,7 +49,7 @@
                 }
             }
         };
-
+    
     window.jsPlumbDemo = {
         init : function() {
 
@@ -58,7 +60,7 @@
                 EndpointStyle : { width:20, height:16, strokeStyle:'#666' },
                 Endpoint : "Rectangle",
                 Anchors : ["TopCenter", "TopCenter"]
-            });
+            });                                             
 
             // bind to connection/connectionDetached events, and update the list of connections on screen.
             jsPlumb.bind("connection", function(info, originalEvent) {
@@ -73,12 +75,12 @@
             jsPlumb.draggable(divsWithWindowClass);
 
 
-            // init
+            // init         
             if (!_initialised) {
                 $(".hide").click(function() {
                     jsPlumb.toggle($(this).attr("rel"));
                 });
-
+    
                 $(".drag").click(function() {
                     var s = jsPlumb.toggleDraggable($(this).attr("rel"));
                     $(this).html(s ? 'disable dragging' : 'enable dragging');
@@ -88,29 +90,29 @@
                         $("#" + $(this).attr("rel")).removeClass('drag-locked');
                     $("#" + $(this).attr("rel")).css("cursor", s ? "pointer" : "default");
                 });
-
+    
                 $(".detach").click(function() {
                     jsPlumb.detachAllConnections($(this).attr("rel"));
                 });
-
+    
                 $("#clear").click(function() {
                     jsPlumb.detachEveryConnection();
                     showConnectionInfo("");
                 });
-
+                
                 _initialised = true;
             }
         }
     };
 
-
+/*
     Array.prototype.uniq = function uniq() {
-        return this.reduce(function(accum, cur) {
-            if (accum.indexOf(cur) === -1) accum.push(cur);
-                return accum;
+        return this.reduce(function(accum, cur) { 
+            if (accum.indexOf(cur) === -1) accum.push(cur); 
+                return accum; 
             }, [] );
     }
-
+*/
     /***************  ON READY FUNCTION FOR JsPlump Library   *********************/
 
     jsPlumb.bind("ready", function() {
@@ -119,7 +121,7 @@
         jsPlumbDemo.init();
 
         var leftColumn = $('#leftcolumn');
-		leftColumn.tinyscrollbar();
+        leftColumn.tinyscrollbar();
 
         var contentDiv = $('#content');
         contentDiv.tinyscrollbar();
@@ -147,3 +149,5 @@
             load_rules();
         });
     });
+
+
