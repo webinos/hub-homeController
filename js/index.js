@@ -4,7 +4,7 @@
 		this.id = 0;
 		if(id!=null)
 			this.id = id;
-
+		
 		this.type = null;
 		if(type!=null)
 			this.type = type;
@@ -49,37 +49,40 @@
 	};
 
 	google.load("visualization", "1", {packages:["corechart"]});
-
+	
 	var sensors = {};
-	var sensors_configuration = {};
-	var sensor_chart = {};
+	var sensors_configuration = {};		//for storing sensor's rate,timeout and mode 
 	var sensorActive = {};
 	var listeners = new Array();
-
-	var gauge_charts = {};			//To delete
-	var gauge_sensor_list = {};
-
-	var listeners_numbers={}	//for counting the number of listeners per sensor
-
-	var charts={};
-	var labels_value=[];
+	
+	var listeners_numbers={};	//for counting the number of listeners per sensor
+	
+	var charts={};				//contain Graphic instances
 	var chart_selected;
 	var charts_to_fade=[];
-
+	
+	var min_temperature_range=-30;
+	var max_temperature_range=50;
+	
+	var min_gauge_range=-10;
+	var max_gauge_range=65;
+	var lineColor=['blue','red','orange','green','violet','brown','pink','yellow'];
+	
+	
  	function Graphic(chart){
- 			this.id;
+ 			this.id='';
  			this.chart = chart;
  			this.sensor_list=[];
  			this.values=[];
  			this.old_values=[];
  			this.graphData =[];
  			this.numberOfValues=0;
- 			this.title;
- 			this.type;
- 			this.options;
- 			this.getInfo = function() {
- 		        return "getInfo";
- 		    };
+ 			this.title='';
+ 			this.type='';
+ 			this.options='';
+ 			this.sensor_active={};
+ 			this.minRange=0;
+ 			this.maxRange=0;
  	}
 
 	var onSensorEvent = function(event){
@@ -92,32 +95,42 @@
 			for(var elem in charts){
 				var graphic= charts[elem];
 				graphic.values=[];
-
-				if(in_array(sensor.id,graphic.sensor_list)){
+			
+				if(in_array(sensor.id,graphic.sensor_list)&&(graphic.sensor_active[sensor.id]==true)){		
 					if(graphic.type=="thermometer"){
-						graphic.chart.value = value;
+						value_temp=value;
+						if(value_temp>graphic.maxRange){
+							var value_temp=graphic.maxRange;
+						}
+						graphic.chart.value = value_temp;
 						RGraph.Effects.Thermometer.Grow(graphic.chart);
 					}else if(graphic.type=="gauge"){
 						graphic.chart.value = value;
 						RGraph.Effects.Gauge.Grow(graphic.chart);
 					}else if(graphic.type=="line"){
 						var index=graphic.sensor_list.indexOf(sensor.id);
-
+						
 						graphic.values.push(time);
-
 						for(var i=0;i<graphic.sensor_list.length;i++){
-							if(i==index)
+							if(i==index){
 								graphic.values.push(value);
-							else
-								graphic.values.push(graphic.old_values[i+1]);
+							}
+							else{
+								if(graphic.sensor_active[graphic.sensor_list[i]]==true){
+									graphic.values.push(graphic.old_values[i+1]);
+								}else{
+									graphic.values.push(null);
+								}
+							}
 						}
 						graphic.numberOfValues++;
 						graphic.graphData.addRow(graphic.values);
 				  		graphic.chart.draw(graphic.graphData, graphic.options);
 				  		graphic.old_values=graphic.values;
-
-						if(graphic.numberOfValues>150)
+				  		
+						if(graphic.numberOfValues>150){
 							graphic.graphData.removeRow(0);
+						}
 					}
 				}
 			}
@@ -128,27 +141,11 @@
 
 		$("#sensor_id_config").hide();
 		$('#refresh').live( 'click',function(event){
-			discovery_sensors();
+			var leftColumn = $('#leftcolumn');
+			leftColumn.tinyscrollbar();
+			discovery_sensors(leftColumn);
 		});
-
-		$('#save_cfg_but').live( 'click',function(event){
-			var sid = $("#sensor_id_config").text();
-			var urate = $("#cfg_rate").val();
-			var umode = $("#cfg_mode").val();
-			var utime = $("#cfg_timeout").val();
-
-			if(sid!="" && umode!=""){
-				sensors[sid].configureSensor({rate: urate, time: utime, eventFireMode: umode},
-					function(){
-					},
-					function (){
-						console.error('Error configuring Sensor ' + service.api);
-					}
-				);
-			}
-			else
-				alert("Error! Can you select a sensor and a modality?");
-        });
+		
 
 		var leftColumn = $('#leftcolumn');
 		leftColumn.tinyscrollbar();
@@ -169,23 +166,48 @@
 
 		initDragAndDropGauges(contentDiv);
 
+		
 		var popup = $("#settings-container");
 		popup.click(function(){
+			/*
 			popup.fadeOut();
 			for(chart_id in charts_to_fade){
 				$("#chart_div-"+charts_to_fade[chart_id]).fadeIn();
 		  	}
+		  	*/
 		});
+		
 
 		$("#close").click(function(){
 		 	popup.fadeOut();
-		 	for(chart_id in charts_to_fade){
-				//alert("aa: "+chars_to_fade[chart_id]);
-				$("#chart_div-"+charts_to_fade[chart_id]).fadeIn();
-		  	}
+		 	fadeOutSettings();
+		 	// for(chart_id in charts_to_fade){
+				// //alert("aa: "+chars_to_fade[chart_id]);
+				// $("#chart_div-"+charts_to_fade[chart_id]).fadeIn();
+		  // 	}
 		});
 
+
+		// initDragAndDropGauges();
+		// $("#hover").click(function(){
+		// 	fadeOutSettings();  
+		// });
+
+		// $("#close").click(function(){
+		// 	fadeOutSettings();
+		// });
 	});
+	
+	function fadeOutSettings(){
+		var popup = $("#settings-container");
+		popup.fadeOut();
+		//$("#settings_div").fadeOut();
+		for(chart_id in charts_to_fade){
+			$("#chart_div-"+charts_to_fade[chart_id]).fadeIn();
+			charts[charts_to_fade[chart_id]].chart.draw(charts[charts_to_fade[chart_id]].graphData, charts[charts_to_fade[chart_id]].options);
+	  	}	  
+		charts_to_fade=[];
+	}
 
 	function add_gui_rule(){
 		var id=get_next_ID();
@@ -205,7 +227,7 @@
         html+= "</div>";
         html+= "</div>";
 
-		$('#content').append(html);
+		$('#content').append(html);        
 	}
 
 	function get_next_ID(){
@@ -226,19 +248,27 @@
 			webinos.discovery.findServices(new ServiceType(type), {
 				onFound: function (service) {
 					sensors[service.id] = service;
-					sensorActive[service.id] = false;
+					//sensorActive[service.id] = false;
 					service.bind({
 						onBind:function(){
 		        			console.log("Service "+service.api+" bound");
 		        			console.log(service);
-		        			service.configureSensor({rate: 500, time: 500, eventFireMode: "fixedinterval"},
+		        			//---- save sensors_configuration information
+		        			sensors_configuration[service.id]={
+		        					rate:500,
+		        					time:500,
+		        					eventFireMode: "fixedinterval"
+		        			};
+		        			service.configureSensor({rate: 500, time: 500, eventFireMode: "fixedinterval"}, 
 		        				function(){
 		        					var sensor = service;
 
+                                    //var sensorCode = '<tr><td><img width="120px" height="120px" src="./assets/images/'+icons[sensor.api]+'" id="'+sensor.id+'" draggable="false" /></td></tr><tr><th>'+sensor.description+'</th></tr>';
                                     var sensorCode = '<div class="sensor"><img width="120px" height="120px" src="./assets/images/'+icons[sensor.api]+'" id="'+sensor.id+'" draggable="false" /><p>'+sensor.description+'</p></div>';
-                                    jQuery("#sensors_table").append(sensorCode);
 
+                                    jQuery("#sensors_table").append(sensorCode);
                                     container.tinyscrollbar_update();
+
 								},
 								function (){
 									console.error('Error configuring Sensor ' + service.api);
@@ -262,7 +292,7 @@
 		    var id = $(this).prop("id");
 
 		    var elem = document.getElementById(id);
-
+		    
 		    elem.ondragstart = function(event) {
 				event.dataTransfer.setData("gauges", id);
 				target.className = "scroll-overview target"; //indicate droppable area
@@ -294,7 +324,10 @@
 		}
 
 		target.ondrop = function(event){
-
+			
+			 if(event.preventDefault){
+				 event.preventDefault(); 
+			 }
 			//remove class "valid"
 			this.className = "scroll-overview";
 
@@ -306,79 +339,82 @@
 	            html += "<div id='info-"+idChart+"' class='chart-titlebar'><div id='name-"+idChart+"' class='chart-sensorname gauge' />";
 	            html += "<input type='image' id='delete-"+idChart+"' src='assets/delete_min.png' alt='delete' class='chart-control delete' />";
 	            html += "<input type='image' id='settings-"+idChart+"' src='assets/sett_min.png' alt='settings' class='chart-control settings' />";
-	            //html += "<input type='button' id='start-"+idChart+"' value='Stop' style='float:right; padding:5px 5px 5px 5px;' />";
+	            
 	            html += "</div>";
 	            html+="<canvas class='main' id='drop_canvas-"+idChart+"' width='250' height='250'></canvas></div>";
+	            
 	            $("#target").prepend(html);
-				var chart=new RGraph.Gauge("drop_canvas-"+idChart, -10, 65, 0);
-				var g=new Graphic(chart);
-	            g.id=idChart;
-	            g.type="gauge";
-	            charts[idChart]=g;
-
+				var chart=new RGraph.Gauge("drop_canvas-"+idChart, min_gauge_range, max_gauge_range, 0);
+				var graphic=new Graphic(chart);
+				graphic.id=idChart;
+				graphic.type="gauge";
+				graphic.minRange=min_gauge_range;
+				graphic.maxRange=max_gauge_range;
+	            charts[idChart]=graphic;
+	            
 				RGraph.Effects.Gauge.Grow(chart);
-				enableDragAndDropSensors("drop_canvas-"+idChart);
+				enableDragAndDropSensors("drop_canvas-"+idChart);    
 				enableButtonsLive(idChart);
 			}else if(gauge_selected == "btnTherm"){
 				var idChart = "therm_" + (Object.keys(charts).length + 1);
-				//alert("id_gauge: "+idChart);
 				var html = "";
 	            html += "<div id='main-"+idChart+"' class='chart-container therm'>";	//this div is used for deleting all the elements of this chart when delete button is clicked
 	            html += "<div id='info-"+idChart+"' class='chart-titlebar therm'><div id='name-"+idChart+"' class='chart-sensorname therm' />";
 	            html += "<input type='image' id='delete-"+idChart+"' src='assets/delete_min.png' alt='delete' class='chart-control delete' />";
 	            html += "<input type='image' id='settings-"+idChart+"' src='assets/sett_min.png' alt='settings' class='chart-control settings' />";
-	            //html += "<input type='button' id='start-"+idChart+"' value='Stop' style='float:right; padding:5px 5px 5px 5px;' />";
+	            
 	            html += "</div>";
 	            html+="<canvas class='main' id='drop_canvas-"+idChart+"' width='100' height='400'></canvas></div>";
 	            $("#target").prepend(html);
-				var chart=new RGraph.Thermometer("drop_canvas-"+idChart, -30,80,0);
-				var g=new Graphic(chart);
-	            g.id=idChart;
-	            g.type="thermometer";
-	            charts[idChart]=g;
-
+				var chart=new RGraph.Thermometer("drop_canvas-"+idChart, min_temperature_range,max_temperature_range,0);
+				var graphic=new Graphic(chart);
+				graphic.id=idChart;
+				graphic.type="thermometer";
+				graphic.minRange=min_temperature_range;
+				graphic.maxRange=max_temperature_range;
+	            charts[idChart]=graphic;
+	            
 				RGraph.Effects.Gauge.Grow(chart);
 				enableDragAndDropSensors("drop_canvas-"+idChart);
 				enableButtonsLive(idChart);
 			}else if(gauge_selected == "line-chart"){
 				var idChart = "chart_" + (Object.keys(charts).length + 1);
-				//alert("id_gauge: "+idChart);
-				//var idChart = "line-chart_" + (Object.keys(gauge_charts).length + 1);
-				//$('#target').append("<div id='div_"+idChart+"' class='' ><canvas class='main' id='"+idChart+"' height='250' width='300'></canvas></div>");
-				//$('#target').append("<canvas class='main' id='"+idChart+"'height='250' width='550' ></canvas>");
 	            var html = "";
 	            html += "<div id='main-"+idChart+"' class='chart-container line'>";	//this div is used for deleting all the elements of this chart when delete button is clicked
 	            html += "<div id='info-"+idChart+"' class='chart-titlebar'>";
 	            html += "<input type='image' id='delete-"+idChart+"' src='assets/delete_min.png' alt='delete' class='chart-control delete' />";
 	            html += "<input type='image' id='settings-"+idChart+"' src='assets/sett_min.png' alt='settings' class='chart-control settings' />";
-	            //html += "<input type='button' id='start-"+idChart+"' value='Stop' style='float:right; padding:5px 5px 5px 5px;' />";
+	            
 	            html += "</div>";
 	            html += "<div class='' id='drop_div-"+idChart+"'></div>";
 	            html += "<div id='chart_div-"+idChart+"' class='line-chart'></div>";
 	            html += "</div>";
-
+	            
 	            $("#target").prepend(html);
 	            var chart_div=document.getElementById('chart_div-'+idChart);
 	            var chart=new google.visualization.LineChart(chart_div);
-//	            var dataset1 = [11,9,7,6,6,7,9,9,7,6,6,7,9,11];
-
-	            //var chart=new RGraph.Line(idChart, []);		//empty graph
 	            var graphic=new Graphic(chart);
-	            //g.sensor_list.push(sensor_selected);
 	            graphic.id=idChart;
 	            graphic.type="line";
 	            graphic.graphData=new google.visualization.DataTable();
 	            graphic.graphData.addColumn('string','Data');
-	            graphic.graphData.addColumn('number',null);		//creo una nuova colonna per il nuovo sensore nei valori del grafico
-
+	            graphic.graphData.addColumn('number',null);		
+	            
+				
 	    		graphic.options = {
-	    		        title: ''
+	    				title: '',
+	    				chartArea: {width: '90%', height: '75%', top:'25'},
+	    				legend: {position: 'top'},
+	    				titlePosition: 'in', axisTitlesPosition: 'in',
+	    				hAxis: {textPosition: 'out'}, vAxis: {textPosition: 'out'},		
+	    				colors:['blue','red','orange','green','violet','brown','pink','yellow'],
+	    				pointSize: 0
 	    		      };
-
+	    		
 	            charts[idChart]=graphic;
 	            graphic.chart.draw(graphic.graphData, graphic.options);
-
-
+	            
+	            
 	            enableDragAndDropSensors("drop_div-"+idChart);   	//drop over hidden div for line-charts
 	            enableButtonsLive(idChart);
 			}else{
@@ -400,7 +436,7 @@
 
 	//only for sensors
 	var addOnDragStartEndSensors = function(ids){
-
+		
 		var sensor = document.getElementById(ids);
 		sensor.ondragstart = function(event) {
 			event.dataTransfer.setData("sensors", sensor.id);
@@ -419,116 +455,120 @@
 
 	var addDragEventsForSensorsOnGauge = function(idChart){
 		var target = document.getElementById(idChart);
-
+				
 		target.ondragover = function(event){
 			event.preventDefault();
 			event.stopPropagation();
 			return false;
 		};
-
+		
 		target.ondragenter = function(event){
  			//add class "valid"
 			event.stopPropagation();
-			var idGauge_selected = event.target.id.split('-')[1];
-			if(charts[idGauge_selected].type!="line") {
-				this.className = "main valid";
-			} else {
-				charts[idGauge_selected].options = {
-    		        title: '',
-    		        backgroundColor: 'yellow'
-    		      };
-				charts[idGauge_selected].chart.draw(charts[idGauge_selected].graphData, charts[idGauge_selected].options);
-			}
+			var idChart_selected = event.target.id.split('-')[1];
+			if(charts[idChart_selected].type!="line")
+				this.className = "main_valid";
+			else{
+				charts[idChart_selected].options['backgroundColor'] = "yellow";
+				charts[idChart_selected].chart.draw(charts[idChart_selected].graphData, charts[idChart_selected].options);			}
  		};
 
  		target.ondragleave = function(event){
  			//remove class "valid"
  			event.stopPropagation();
- 			var idGauge_selected = event.target.id.split('-')[1];
- 			if(charts[idGauge_selected].type!="line") {
+ 			var idChart_selected = event.target.id.split('-')[1];
+ 			if(charts[idChart_selected].type!="line"){
 				this.className = "main";
-			} else {
-				charts[idGauge_selected].options = {
-	    		        title: ''
-	    		      };
-				charts[idGauge_selected].chart.draw(charts[idGauge_selected].graphData, charts[idGauge_selected].options);
-			}
-			//$('#drop_div'+idGauge_selected).className="";
+			}else{
+				charts[idChart_selected].options['backgroundColor'] = "";
+				charts[idChart_selected].chart.draw(charts[idChart_selected].graphData, charts[idChart_selected].options);
+				}
+			//$('#drop_div'+idChart_selected).className="";
  			//this.className = "main";
  		};
 
- 		//SENSOR ON GAUGE
+ 		//SENSOR ON CHART
 		target.ondrop = function(event){
-
+			
+			if(event.preventDefault){
+				event.preventDefault();
+			}
 			//stop events fire
 			event.stopPropagation();
-
+			
 			var sensor_selected = event.dataTransfer.getData("sensors");
 			//this.className = "main";
-
-			var idGauge_selected = event.target.id.split('-')[1];
-
-			var graphic=charts[idGauge_selected];
-
-			$('#'+idGauge_selected).removeClass("drop_div");
-
+			
+			var idChart_selected = event.target.id.split('-')[1];
+			
+			var graphic=charts[idChart_selected];
+			
+			$('#'+idChart_selected).removeClass("drop_div");
+			
 			if(graphic.type!="line"){
 				this.className = "main";
 			}else{
-				graphic.options = {
-	    		        title: ''
-	    		      };
+				graphic.options['backgroundColor'] = "";
 				graphic.chart.draw(graphic.graphData, graphic.options);
 			}
-
+				
 			if(sensor_selected!=''){
-				//set title of box configuration
-				settingSensor(sensor_selected);
-
-				if(!listeners_numbers.hasOwnProperty(sensor_selected)){
-					//add event listener
-					sensors[sensor_selected].addEventListener('sensor', onSensorEvent, false);
-		            sensorActive[sensor_selected] = true;
-		            listeners_numbers[sensor_selected]=0;
-				}
-
-				//TODO do not increment listener_number if the user drags the same sensor on the same graph
-	            listeners_numbers[sensor_selected]++;
-
-	            if(graphic.type!="line"){
-	            	if(graphic.sensor_list[0]!=null){
-	            		listeners_numbers[graphic.sensor_list[0]]--;
-						if(listeners_numbers[graphic.sensor_list[0]]==0){
-							sensors[graphic.sensor_list[0]].removeEventListener('sensor', onSensorEvent, false);
-							sensorActive[graphic.sensor_list[0]] = false;
-							delete listeners_numbers[graphic.sensor_list[0]];
-							graphic.sensor_list[0]=sensor_selected;
-							$('#name-'+graphic.id).empty();
+				if(!in_array(sensor_selected,graphic.sensor_list)){
+					//set title of box configuration
+					//settingSensor(sensor_selected);
+					if(!listeners_numbers.hasOwnProperty(sensor_selected)){
+						//add event listener
+						sensors[sensor_selected].addEventListener('sensor', onSensorEvent, false);
+						
+			            //sensorActive[sensor_selected] = true;
+			            listeners_numbers[sensor_selected]=0;
+					}
+					graphic.sensor_active[sensor_selected] = true;
+		            listeners_numbers[sensor_selected]++;
+		            
+		            $('#startstop_cfg_but-'+graphic.id+'_'+sensor_selected).live( 'click',function(event){
+			     		 startStopSensor(graphic.id,sensor_selected);
+			         });
+		            
+		            $('#remove_sensor-'+graphic.id+'_'+sensor_selected).live("click",function(){
+		            	removeSensor(graphic,sensor_selected);
+		    		});
+		           
+		            if(graphic.type!="line"){
+		            	if(graphic.sensor_list[0]!=null){
+		            		listeners_numbers[graphic.sensor_list[0]]--;
+							if(listeners_numbers[graphic.sensor_list[0]]==0){
+								sensors[graphic.sensor_list[0]].removeEventListener('sensor', onSensorEvent, false);
+								graphic.sensor_active[graphic.sensor_list[0]] = false;
+								//sensorActive[graphic.sensor_list[0]] = false;
+								delete listeners_numbers[graphic.sensor_list[0]];
+								graphic.sensor_list[0]=sensor_selected;
+								$('#name-'+graphic.id).empty();
+			            		$('#name-'+graphic.id).text(sensors[sensor_selected].description);
+							}else{
+								graphic.sensor_list[0]=sensor_selected;
+								$('#name-'+graphic.id).empty();
+			            		$('#name-'+graphic.id).text(sensors[sensor_selected].description);
+							}
+		            	}else{
+		            		graphic.sensor_list[0]=sensor_selected;
+		            		$('#name-'+graphic.id).empty();
 		            		$('#name-'+graphic.id).text(sensors[sensor_selected].description);
-						}else{
-							graphic.sensor_list[0]=sensor_selected;
-							$('#name-'+graphic.id).empty();
-		            		$('#name-'+graphic.id).text(sensors[sensor_selected].description);
+		            	}
+		            }
+					else{
+						if(graphic.sensor_list.length==0){
+							graphic.graphData.removeColumn(1);
 						}
-	            	}else{
-	            		graphic.sensor_list[0]=sensor_selected;
-	            		$('#name-'+graphic.id).empty();
-	            		$('#name-'+graphic.id).text(sensors[sensor_selected].description);
-	            	}
-	            }
-				else{
-					if(graphic.sensor_list.length==0)
-						graphic.graphData.removeColumn(1);
-
-					graphic.sensor_list.push(sensor_selected);
-					graphic.graphData.addColumn('number',sensors[sensor_selected].description);
-
+						
+						graphic.sensor_list.push(sensor_selected);
+						graphic.graphData.addColumn('number',sensors[sensor_selected].description);
+						
+					}
 				}
-
-
-				graphic.title=sensors[sensor_selected].description;		//TODO add sensor's description
-			}
-			else
+				else
+					alert("Not allowed - This sensor is already in this graph");
+			}else
 				alert("Not allowed");
 		};
 	};
@@ -545,91 +585,195 @@
 		addDragEventsForSensorsOnGauge(idChart);
 	}
 
-
+	
 	function enableButtonsLive(idChart){
-
+		
 		 $('#delete-'+idChart).live( 'click',function(event){
          	deleteChart(this.id.split('-')[1]);
          });
 
-         $('#settings-'+idChart).live( 'click',function(event){
-        	 $('#settings-content').empty();
+		 $('#settings-'+idChart).live( 'click',function(event){
+        	$('#settings-content').empty();
          	$("#settings-container").fadeIn(1000);
-         	for(var elem in charts){
-				var graphic= charts[elem];
-				if(graphic.type=="line"){
-					$("#chart_div-"+graphic.id).fadeOut();
-					charts_to_fade.push(graphic.id);
-				}
-         	}
-
+        	 for(var elem in charts){
+        		 var graphic= charts[elem];
+        		 if(graphic.type=="line"){
+        			 $("#chart_div-"+graphic.id).fadeOut();
+        			 charts_to_fade.push(graphic.id);
+        		 }
+         	 }
+         	
          	var graphic=charts[idChart];
-         	for(sensor in graphic.sensor_list){
+         	for(var sensor in graphic.sensor_list){
 	         	var html='';
-				html+= "<div id='configuration_div' class='configuration_div'>";
-				html+= "	<div id='sensor_id_config'> Sensor id: "+graphic.sensor_list[sensor]+"</div>";
-				html+= "	<div id='sensor_selected_th'> </div>";
+				html+= "<div id='configuration_div-"+graphic.id+"_"+graphic.sensor_list[sensor]+"' class='configuration_div'>";
+				html+= "	<div id='remove_sensor-"+graphic.id+"_"+graphic.sensor_list[sensor]+"' class='remove_sensor' >X</div> ";
+				html+= "	<div id='sensor_name_config-"+graphic.sensor_list[sensor]+"'>Sensor name: "+sensors[graphic.sensor_list[sensor]].description+"</div>";
+				html+= "	<div id='sensor_id_config-"+graphic.sensor_list[sensor]+"'> Sensor id: "+graphic.sensor_list[sensor]+"</div>";
 				html+= "	<div id='mode' class='param_td'>Mode";
-				html+= "   	<select id='cfg_mode'>";
-				html+= "       	<option value=''>Choose mode</option>";
-				html+= "           <option value='fixedinterval'>Fixed Interval</option>";
-				html+= "           <option value='valuechange'>Value Change</option>";
-				html+= "   	</select>";
-				html+= "		<input type='button' id='cfg_startstop_but' value='Start'>";
+				html+= "   		<select id='cfg_mode-"+graphic.sensor_list[sensor]+"'>";
+				if(sensors_configuration[graphic.sensor_list[sensor]].eventFireMode=='fixedinterval'){
+					html+= "    	<option selected value='fixedinterval'>Fixed Interval</option>";
+					html+= "    	<option value='valuechange'>Value Change</option>";
+				}else{
+					html+= "    	<option value='fixedinterval'>Fixed Interval</option>";
+					html+= "    	<option selected value='valuechange'>Value Change</option>";
+				}
+				html+= "   		</select>";
+				if(graphic.sensor_active[graphic.sensor_list[sensor]]==true){
+				//if(sensorActive[graphic.sensor_list[sensor]] == true){
+					html+=" 	<input type='button' id='startstop_cfg_but-"+graphic.id+"_"+graphic.sensor_list[sensor]+"' value='Stop'>";
+				}else{
+					html+=" 	<input type='button' id='startstop_cfg_but-"+graphic.id+"_"+graphic.sensor_list[sensor]+"' value='Start'>";
+				}
 				html+= "	</div>";
-				html+= "	<div id='rate' > Rate <input type='text' id='cfg_rate' class='cfg_element'></div>";
-				html+= "	<div id='timeout'> Timeout <input type='text' id='cfg_timeout' class='cfg_element'></div>";
-				html+= "	<input class='button_td' type='button' id='save_cfg_but' value='Save'>";
-				html+= "   </div>";
+				html+= "	<div id='rate' > Rate <input type='text' id='cfg_rate-"+graphic.sensor_list[sensor]+"' class='cfg_element' value='"+sensors_configuration[graphic.sensor_list[sensor]].rate+"' ></div>";
+				html+= "	<div id='timeout'> Timeout <input type='text' id='cfg_timeout-"+graphic.sensor_list[sensor]+"' class='cfg_element' value='"+sensors_configuration[graphic.sensor_list[sensor]].time+"'></div>";
+				if(graphic.type!='line'){
+					html+= "	<div id='range'> Range:		Min <input type='text' id='min_range-"+graphic.sensor_list[sensor]+"' value='"+graphic.minRange+"'>		Max <input type='text' id='max_range-"+graphic.sensor_list[sensor]+"' value='"+graphic.maxRange+"'></div>";
+				}else{
+					html+= "	<div id='color' class='param_td'>Color";
+					html+= "   		<select id='cfg_color-"+graphic.sensor_list[sensor]+"'>";
+					/*if(sensors_configuration[graphic.sensor_list[sensor]].eventFireMode=='fixedinterval'){
+						html+= "    	<option selected value='fixedinterval'>Fixed Interval</option>";
+						html+= "    	<option value='valuechange'>Value Change</option>";
+					}else*/
+					for(var i=0;i<graphic.options.colors.length;i++){
+						if(lineColor[i]==graphic.options.colors[sensor]){
+							html+= "    	<option selected value='"+lineColor[i]+"'>"+lineColor[i]+"</option>";
+						}
+						else{
+							html+= "    	<option value='"+lineColor[i]+"'>"+lineColor[i]+"</option>";
+						}
+						//html+= "    	<option selected value='valuechange'>Value Change</option>";
+					}
+					html+= "   		</select>";	
+				}
+				html+= "</div>";
+				//$('#popup').append(html);	
 				$('#settings-content').append(html);
          	}
-
+         	html= "	<div id='save_cfg_but-"+idChart+"' class='save_cfg_but'> <input class='button' type='button' value='Save'></div>";
+         	//$('#popup').append(html);
+         	$('#settings-content').append(html);
+         	
          });
+		 
+		 //SAVE BUTTON
+         $('#save_cfg_but-'+idChart).live( 'click',function(event){
+     		var graphic=charts[idChart];
+     		var color=[];
+          	for(var sensor in graphic.sensor_list){
+          		var urate = $("#cfg_rate-"+graphic.sensor_list[sensor]).val();
+     			var utime = $("#cfg_timeout-"+graphic.sensor_list[sensor]).val();
+     			var umode = $("#cfg_mode-"+graphic.sensor_list[sensor]).val();
+     			//color[sensor]=$("#cfg_color-"+graphic.sensor_list[sensor]).val();
+     			graphic.minRange=$("#min_range-"+graphic.sensor_list[sensor]).val();
+     			graphic.maxRange=$("#max_range-"+graphic.sensor_list[sensor]).val();
+     			//graphic.options.colors[sensor]=color[sensor];
+     			if(graphic.type=='gauge'){
+     				$("#drop_canvas-"+idChart).empty();
+     				var chart=new RGraph.Gauge("drop_canvas-"+idChart, parseInt(graphic.minRange), parseInt(graphic.maxRange), 0);
+     				graphic.chart=chart;
+     			}else if(graphic.type=='thermometer'){
+     				$("#drop_canvas-"+idChart).empty();
+     				var chart=new RGraph.Thermometer("drop_canvas-"+idChart, parseInt(graphic.minRange), parseInt(graphic.maxRange), 0);
+     				graphic.chart=chart;
+     			}
+     			else{
+     				color[sensor]=$("#cfg_color-"+graphic.sensor_list[sensor]).val();
+         			graphic.options.colors[sensor]=color[sensor];
+     			}
+     				
+     			
+     			
+     			sensors_configuration[graphic.sensor_list[sensor]]={
+    					rate:urate,
+    					time:utime,
+    					eventFireMode:umode
+    			};
+          		sensors[graphic.sensor_list[sensor]].configureSensor({rate: urate, time: utime, eventFireMode: umode}, 
+     					function(){
+     					},
+     					function (){
+     						console.error('Error configuring Sensor ' + service.api);
+     					}
+     				);
+          	}
+          	fadeOutSettings();
+      	 });
+              
 	}
+	
 
-	function deleteChart(idGauge_selected){
-		//alert(" delete graphic: main-"+idGauge_selected);
 
-		for(var elem in charts){
-			var graphic= charts[elem];
-			if(graphic.id==idGauge_selected){
-				for(var sens in graphic.sensor_list){
+	function deleteChart(idChart_selected){
+		var graphic= charts[idChart_selected];
+		for(var sens in graphic.sensor_list){
+				if(listeners_numbers.hasOwnProperty(graphic.sensor_list[sens])){
 					listeners_numbers[graphic.sensor_list[sens]]--;
 					if(listeners_numbers[graphic.sensor_list[sens]]==0){
 						sensors[graphic.sensor_list[sens]].removeEventListener('sensor', onSensorEvent, false);
-						sensorActive[graphic.sensor_list[sens]] = false;
+						graphic.sensor_active[graphic.sensor_list[sens]]=false;
+						//TODO remove all the graphic instance
 						delete listeners_numbers[graphic.sensor_list[sens]];
-					}
+					}		
 				}
-				graphic.sensor_list=[];
 			}
-		}
-
-		$("#main-"+idGauge_selected).remove();
-		$("#sensor_selected_th").empty();
-		$("#sensor_id_config").empty();
+		graphic.sensor_list=[];	//to remove and delete the object 'graphic' at all
+        
+		$("#main-"+idChart_selected).remove();
 	}
-
-	function settingSensor(sid){
-		$("#sensor_selected_th").empty();
-		$("#sensor_selected_th").text("Configuration of " + sensors[sid].description);
-		$("#sensor_id_config").empty();
-		$("#sensor_id_config").text(sid);
-	}
-
-	function startStopSensor(sid){
-		if(sensorActive[sid] == true){
-			sensorActive[sid] = false;
-			$('#start-'+sid).prop('value','Start');
-			sensors[sid].removeEventListener('sensor', onSensorEvent, false);
+	
+	function removeSensor(graphic, sid){
+		listeners_numbers[sid]--;
+		delete graphic.sensor_active[sid];
+		
+		if(graphic.type=='line'){
+			graphic.graphData.removeColumn(graphic.sensor_list.indexOf(sid)+1);
+			graphic.sensor_list.splice(graphic.sensor_list.indexOf(sid),1);
+			if(graphic.sensor_list.length==0){
+				graphic.graphData.addColumn('number',null);		//add a null column only for a graphical aspect
+			}
 		}else{
-			sensorActive[sid] = true;
-			$('#start-'+sid).prop('value','Stop');
-			sensors[sid].addEventListener('sensor', onSensorEvent, false);
+			graphic.sensor_list=[];
+			$('#name-'+graphic.id).empty();
 		}
-
+		
+		if(listeners_numbers[sid]==0){
+			sensors[sid].removeEventListener('sensor', onSensorEvent, false);
+			delete listeners_numbers[sid];
+		}	
+		
+		$("#configuration_div-"+graphic.id+"_"+sid).remove();
+		$('#remove_sensor-'+graphic.id+'_'+sid).die();		
 	}
 
+	
+	function startStopSensor(chartId,sid){
+		//alert("premuto start/stop)");
+		if(charts[chartId].sensor_active[sid] == true){	//stop the sensor listening
+			$('#startstop_cfg_but-'+chartId+'_'+sid).prop('value','Start');
+			charts[chartId].sensor_active[sid] = false;
+			listeners_numbers[sid]--;
+			if(listeners_numbers[sid]==0){
+				sensors[sid].removeEventListener('sensor', onSensorEvent, false);
+				delete listeners_numbers[sid];
+			}	
+		}else{	//active the sensor listening
+			charts[chartId].sensor_active[sid] = true;
+			$('#startstop_cfg_but-'+chartId+'_'+sid).prop('value','Stop');
+			
+			if(!listeners_numbers.hasOwnProperty(sid)){
+				//add event listener
+				sensors[sid].addEventListener('sensor', onSensorEvent, false);
+				charts[chartId].sensor_active[sid]=true; 
+	            listeners_numbers[sid]=0;
+			}
+            listeners_numbers[sid]++;
+		}
+	}
+	
 	function in_array(val, reference_array) {
 	    for(i = 0; i < reference_array.length; i++) {
 		if(val == reference_array[i]) {
