@@ -20,19 +20,19 @@
 
 
 	var initGUI = function(leftColumn){
-		findSensorServices(leftColumn);
-		addOperationsGUI();
+        findSensorServices(leftColumn);
+        addOperationsGUI();
         leftColumn.tinyscrollbar_update(); //in case we find no sensors and operations flow outside the screen
-	}
+    }
 
 
 	function addOperationsGUI(){
 		var html = "";
 		html += '<div class="sensor"><img width="80px" height="80px" src="./assets/greater.png" id="operation_greater" /><p>Greater than</p></div>';
-		html += '<div class="sensor"><img width="80px" height="80px" src="./assets/lesser.png" id="operation_lesser" /><p>Lesser than</p></div>';
-		html += '<div class="sensor"><img width="80px" height="80px" src="./assets/and.png" id="bool_and" /><p>AND</p></div>';
-		html += '<div class="sensor"><img width="80px" height="80px" src="./assets/or.png" id="bool_or" /><p>OR</p></div>';
-		html += '<div class="sensor"><img width="80px" height="80px" src="./assets/user_input.png" id="userInput_input" /><p>User Input</p></div>';
+        html += '<div class="sensor"><img width="80px" height="80px" src="./assets/lesser.png" id="operation_lesser" /><p>Lesser than</p></div>';
+        html += '<div class="sensor"><img width="80px" height="80px" src="./assets/and.png" id="bool_and" /><p>AND</p></div>';
+        html += '<div class="sensor"><img width="80px" height="80px" src="./assets/or.png" id="bool_or" /><p>OR</p></div>';
+        html += '<div class="sensor"><img width="80px" height="80px" src="./assets/user_input.png" id="userInput_input" /><p>User Input</p></div>';
         jQuery("#operations_table").append(html);
         initDragAndDrop("operation_greater");
         initDragAndDrop("operation_lesser");
@@ -50,17 +50,36 @@
 				//found a new sensors
 				if(service.api.indexOf("sensors.") !== -1){
 					sensors[service.id] = service;
-					sensorActive[service.id] = false;
-
+					sensorActive[service.id] = 0;
+					
 					service.bind({
 						onBind:function(){
-		        			service.configureSensor({rate: 500, eventFireMode: "fixedinterval"},
+		        			service.configureSensor({rate: 500, eventFireMode: "fixedinterval"}, 
 		        				function(){
 		        					var sensor = service;
 
 		        					var div_id = "sensor_"+sensor.id;
 
-                                    var sensorCode = '<div class="sensor"><img width="80px" height="80px" src="./assets/images/'+icons[sensor.api]+'" id="'+div_id+'" /><p>'+sensor.description+'<br><span class="addr">['+sensor.serviceAddress+']</span></p></div>';
+		        					var user_name = sensor.serviceAddress.split("@")[0];
+                                    var host = "";
+                                    var device = "";
+                                    var address = user_name;
+
+                                    if(sensor.serviceAddress.indexOf("@") !== -1){
+                                    	address += "<br>";
+                                    	var tmp = sensor.serviceAddress.substring(sensor.serviceAddress.indexOf("@")+1).split("/");
+                                        host = tmp[0];
+                                        address += host;
+                                        if(typeof tmp[1] != "undefined"){
+	                                        address += "<br>";
+	                                        device = tmp[1];
+	                                        address += device;
+                                    	}
+                                    }
+
+                                    //var sensorCode = '<tr><td><img width="80px" height="80px" src="./assets/images/'+icons[sensor.api]+'" id="'+div_id+'" /></td></tr><tr><th>- '+sensor.description+'<br>['+address+']</th></tr>';
+                                    var sensorCode = '<div class="sensor"><img width="80px" height="80px" src="./assets/images/'+icons[sensor.api]+'" id="'+div_id+'" /><p>'+sensor.description+'<br><span class="addr">['+address+']</span></p></div>';
+                                    
                                     jQuery("#sensors_table").append(sensorCode);
 
                                     container.tinyscrollbar_update();
@@ -76,14 +95,31 @@
 							);
 		        		}
 					});
-
+					
 				}else if(service.api.indexOf("actuators.") !== -1){
 					actuators[service.id] = service;
 					var div_id = "actuator_"+service.id;
 
-					var actuatorCode = '<div class="sensor"><img width="80px" height="80px" src="./assets/images/'+icons[service.api]+'" id="'+div_id+'" /><p>'+service.description+'<br><span class="addr">['+service.serviceAddress+']</span></p></div>';
-                    jQuery("#actuators_table").append(actuatorCode);
+					var user_name = service.serviceAddress.split("@")[0];
+                    var host = "";
+                    var device = "";
+                    var address = user_name;
 
+                    if(service.serviceAddress.indexOf("@") !== -1){
+                    	address += "<br>";
+                    	var tmp = service.serviceAddress.substring(service.serviceAddress.indexOf("@")+1).split("/");
+                        host = tmp[0];
+                        address += host;
+                        if(typeof tmp[1] != "undefined"){
+                            address += "<br>";
+                            device = tmp[1];
+                            address += device;
+                    	}
+                    }
+
+                    //var actuatorCode = '<tr><td><img width="80px" height="80px" src="./assets/images/'+icons[service.api]+'" id="'+div_id+'" /></td></tr><tr><th>'+service.description+'<br>['+address+']</th></tr>';
+                    var actuatorCode = '<div class="sensor"><img width="80px" height="80px" src="./assets/images/'+icons[service.api]+'" id="'+div_id+'" /><p>'+service.description+'<br><span class="addr">['+address+']</span></p></div>';
+                    jQuery("#actuators_table").append(actuatorCode);
                     container.tinyscrollbar_update();
 
                     initDragAndDrop(div_id);
@@ -91,17 +127,17 @@
                     setMinHeight();
 				}
 				else if(service.api.indexOf("file") !== -1){
-					if(service.serviceAddress.indexOf(".local") !== -1){
+					if(service.serviceAddress === webinos.session.getPZPId()){
 						service.bindService({
 							onBind: function () {
-								service.requestFileSystem(1, 1024,
+								service.requestFileSystem(1, 1024, 
 									function (filesystem) {
 										root_directory = filesystem.root;
 									},
 									function (error) {
 										alert("Error requesting filesystem (#" + error.code + ")");
 									}
-								);
+								);					
 							}
 						});
 					}
@@ -145,6 +181,11 @@
 		}
 
 		target.ondrop = function(event){
+
+			if(event.preventDefault){
+				event.preventDefault();
+			}
+
 			//remove class "valid"
 			this.className = "";
 
@@ -215,7 +256,7 @@
             connector: ["Bezier", { curviness:63 } ],
             maxConnections:-1, //unlimited
             beforeDetach:function(conn) {
-                return confirm("Detach connection?");
+                return confirm("Detach connection?"); 
             },
             dropOptions : exampleDropOptions
 	    };
@@ -244,10 +285,10 @@
                 strokeStyle:exampleColor,
                 dashstyle:"2 2"
             },
-            maxConnections:-1, //unlimited
+            maxConnections:-1, //unlimited            
             dropOptions : exampleDropOptions
 	    };
-	    return exampleEndpoint;
+	    return exampleEndpoint;      
 	}
 
 
@@ -276,21 +317,21 @@
 		var d = document.getElementById(idbox);
 		d.style.left = coord.x+'px';
 		d.style.top = coord.y+'px';
-
-		jsPlumb.addEndpoint(idbox, {
+		
+		jsPlumb.addEndpoint(idbox, { 
 			anchor:"TopRight",
 			parameters:{
 				position:"right"
-			}
+			} 
 		}, greeCircle());
-		jsPlumb.addEndpoint(idbox, {
+		jsPlumb.addEndpoint(idbox, { 
 			anchor:"TopLeft",
 			parameters:{
 				position:"left"
-			}
+			} 
 		}, greeCircle());
 		jsPlumb.addEndpoint(idbox, { anchor:"BottomCenter" }, blueRectangle());
-
+    	
     	var divsWithWindowClass = jsPlumb.CurrentLibrary.getSelector(".window");
         jsPlumb.draggable(divsWithWindowClass);
 
@@ -334,7 +375,7 @@
 		html += "<div class='window' id='"+idbox+"' >";
 		html += "<div id='remove_"+idbox+"' style='clear:both;'><img width='10px' height='10px' src='./assets/x_min.png' style='float:right; margin-bottom:5px;'></img></div>";
 		html += sensor.description+'<br>['+sensor.serviceAddress+']<br><br>';
-		html += '<img width="80px" height="80px" src="./assets/images/'+icons[sensor.api]+'" id="sensorIMG_'+sensor.id+'" /><br><br>';
+		html += '<img width="80px" height="80px" src="./assets/images/'+icons[sensor.api]+'" id="sensorIMG_'+sensor.id+'" /><br><br>';                     
 	    html += "<div id='value_"+sensor.id+"'>-</div>";
 	    html += "</div>";
 
@@ -343,15 +384,15 @@
 	    var d = document.getElementById(idbox);
 		d.style.left = coord.x+'px';
 		d.style.top = coord.y+'px';
-
+		
 		jsPlumb.addEndpoint(idbox, { anchor:"BottomCenter" }, blueRectangle());
-
+    	
     	var divsWithWindowClass = jsPlumb.CurrentLibrary.getSelector(".window");
         jsPlumb.draggable(divsWithWindowClass);
 
         //add eventListener
         sensor.addEventListener("sensor", onSensorEvent, false);
-		sensorActive[sensor.id] = true;
+		sensorActive[sensor.id] = (sensorActive[sensor.id] + 1);
 
         //to remove box
         $('#remove_'+idbox).on('click', function(){
@@ -360,7 +401,7 @@
         	//remove listener
             var sensorID = boxID.split("_")[1];
             sensors[sensorID].removeEventListener('sensor', onSensorEvent, false);
-            sensorActive[sensorID] = false;
+            sensorActive[sensorID] = (sensorActive[sensorID] - 1);
 
             //remove connections
         	var connTMP = [];
@@ -411,9 +452,9 @@
 	    var d = document.getElementById(idbox);
 		d.style.left = coord.x+'px';
 		d.style.top = coord.y+'px';
-
+		
 		jsPlumb.addEndpoint(idbox, { anchor:"TopCenter" }, greeCircle());
-
+    	
     	var divsWithWindowClass = jsPlumb.CurrentLibrary.getSelector(".window");
         jsPlumb.draggable(divsWithWindowClass);
 
@@ -453,10 +494,12 @@
 		var html="";
 		html += "<div class='window' id='"+idbox+"'>";
 		html += "<div id='remove_"+idbox+"' style='clear:both;'><img width='10px' height='10px' src='./assets/x_min.png' style='float:right; margin-bottom:5px;'></img></div>";
+		html += "<div style='clear:both;'>";
 		if(type=="and")
 			html += '<img width="80px" height="80px" src="./assets/and.png" id="and" /><br><br>';
 		else
 			html += '<img width="80px" height="80px" src="./assets/or.png" id="or" /><br><br>';
+		html += "</div>";
 		html += "</div>";
 
 		$("#main").append(html);
@@ -464,27 +507,35 @@
 		var d = document.getElementById(idbox);
 		d.style.left = coord.x+'px';
 		d.style.top = coord.y+'px';
-
-		jsPlumb.addEndpoint(idbox, {
-			anchor:"TopRight",
-			parameters:{
-				position:"right"
-			}
-		}, greeCircle());
-		jsPlumb.addEndpoint(idbox, {
-			anchor:"TopLeft",
-			parameters:{
-				position:"left"
-			}
-		}, greeCircle());
+		
 		jsPlumb.addEndpoint(idbox, { anchor:"BottomCenter" }, blueRectangle());
 
+		jsPlumb.addEndpoint(idbox, { anchor:"TopCenter" }, greeCircle());
+    	
     	var divsWithWindowClass = jsPlumb.CurrentLibrary.getSelector(".window");
         jsPlumb.draggable(divsWithWindowClass);
 
         //to remove box
         $('#remove_'+idbox).on('click', function(){
-			alert("TODO");
+			var boxID = this.id.substring(7);
+			var connTMP = [];
+			for (var j = 0; j < connections.length; j++){
+				if(connections[j].sourceId == boxID){
+                    removeProcessingConnection(connections[j].sourceId, connections[j].targetId);
+				}else if(connections[j].targetId == boxID){
+					var param = connections[j].getParameters();
+                    removeInputConnection(connections[j].sourceId, connections[j].targetId, param.position);
+				}else{
+					connTMP.push(connections[j]);
+				}
+			}
+			connections = connTMP;
+			var endps = jsPlumb.getEndpoints(boxID);
+            for(var h=0; h<endps.length; h++){
+            	jsPlumb.deleteEndpoint(endps[h]);
+            }
+			deleteBox(boxID);
+			$("#"+boxID).remove();
 		});
 
         return idbox;
@@ -513,9 +564,9 @@
 	    var d = document.getElementById(idbox);
 		d.style.left = coord.x+'px';
 		d.style.top = coord.y+'px';
-
+		
 		jsPlumb.addEndpoint(idbox, { anchor:"BottomCenter" }, blueRectangle());
-
+    	
     	var divsWithWindowClass = jsPlumb.CurrentLibrary.getSelector(".window");
         jsPlumb.draggable(divsWithWindowClass);
 
