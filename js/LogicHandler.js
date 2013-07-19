@@ -23,7 +23,8 @@ function Input(id){
 };
 
 
-function Processing(ic){
+function Processing(ic, id){
+	var boxID = id;
 	var input_nodes = {};
 	var input_nodes_position = {};
 	var inner_callback = ic;
@@ -64,7 +65,7 @@ function Processing(ic){
 					var result = inner_callback(getArray());
 					if(result!=-1){
 						if(output_callback)
-							output_callback(result);
+							output_callback(result, boxID);
 					}
 				}
 			}
@@ -134,8 +135,10 @@ var onSensorEvent = function(event){
 
 	if (sensor){
 
-		$("#value_"+sensor.id).empty();
-		$("#value_"+sensor.id).text(sensor.values);
+		//$("#value_"+sensor.id).empty();
+		$("[id=value_"+sensor.id+"]").empty();
+		//$("#value_"+sensor.id).text(sensor.values);
+		$("[id=value_"+sensor.id+"]").text(sensor.values);
 
 		for(var n in block_list){
 			if(n.indexOf(sensor.id) !== -1)
@@ -143,6 +146,7 @@ var onSensorEvent = function(event){
 		}
 	}
 }
+
 
 var greaterThan = function(values){
 	//values is an array
@@ -168,6 +172,28 @@ var lesserThan = function(values){
 			return 0;
 	}
 	return -1;
+}
+
+var ANDManagment = function(values){
+	if(values.length>=2){
+		for(var i in values){
+			if( values[i] == 0)
+				return 0;
+		}
+		return 1;
+	}
+	return -1;
+}
+
+var ORManagment = function(values){
+	if(values.length>=2){
+		for(var i in values){
+			if( values[i] == 1)
+				return 1;
+		}
+		return 0;
+	}
+	return -1;	
 }
 
 var setActuatorState = function(state,aid){
@@ -217,18 +243,14 @@ function addInputBox(ID){
 }
 
 function addProcessingBox(ID){
-
 	if(ID.indexOf("greater") !== -1)
-		block_list[ID] = new Processing(greaterThan);
+		block_list[ID] = new Processing(greaterThan, ID);
 	else if(ID.indexOf("lesser") !== -1)
-		block_list[ID] = new Processing(lesserThan);
-
-	/*
-	else if(ID.indexOf("and"))
-		//TODO
-	else if(ID.indexOf("or"))
-		//TODO
-	*/
+		block_list[ID] = new Processing(lesserThan, ID);
+	else if(ID.indexOf("and") !== -1)
+		block_list[ID] = new Processing(ANDManagment, ID);
+	else if(ID.indexOf("or") !== -1)
+		block_list[ID] = new Processing(ORManagment, ID);
 }
 
 function addOutputBox(ID){
@@ -243,9 +265,6 @@ function settingSensorConnection(source, target, position){
 	}else if(block_list[target] instanceof Output){
 		block_list[source].setProcessingCallback(block_list[target].getOutputCallback());
 	}
-	//var sensor = sensors[source.split("_")[1]];
-	//sensor.addEventListener("sensor", onSensorEvent, false);
-	//sensorActive[sensor.id] = true;
 }
 
 function settingUserInputConnection(source,target, position){
@@ -266,13 +285,30 @@ function settingUserInputConnection(source,target, position){
 }
 
 function settingProcessingConnection(source,target){
-	block_list[source].setOutputCallback(block_list[target].getOutputCallback());
+	if(block_list[target] instanceof Output){
+		block_list[source].setOutputCallback(block_list[target].getOutputCallback());
+	}else if(block_list[target] instanceof Processing){
+		block_list[target].addInputNodes(source, null);
+		block_list[source].setOutputCallback(block_list[target].getProcessingCallback());
+	}
 }
 
 function removeInputConnection(source,target, position){
+	//on source
+	if(block_list[source] instanceof Input)
+		block_list[source].removeProcessingCallback();
+	else if(block_list[source] instanceof Processing)
+		block_list[source].removeOutputCallback();
+
+	//on target
+	if(block_list[target] instanceof Processing)
+		block_list[target].removeInputNodes(source, position);
+
+	/*
 	block_list[source].removeProcessingCallback();
 	if(block_list[target] instanceof Processing)
 		block_list[target].removeInputNodes(source, position);
+	*/
 }
 
 function removeProcessingConnection(source, target){
