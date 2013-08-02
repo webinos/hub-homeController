@@ -2,23 +2,26 @@
 //Value: OBJECT (- Input/Processing/Output -)
 var block_list = {};
 
+var textinput_array = new Array();
 
 function Input(id){
 	var inputID = id;
-	var processing_callback;
+	//var processing_callback;
+	var processing_callbacks = {};
 
 	this.input_callback = function(val){
-		if(processing_callback){
-			processing_callback(val,inputID);
+		for(var i in processing_callbacks){
+			processing_callbacks[i](val,inputID);
 		}
 	}
 
-	this.setProcessingCallback = function(cb){
-		processing_callback = cb;
+	this.addProcessingCallback = function(owner, cb){
+		processing_callbacks[owner] = cb;
 	}
 
-	this.removeProcessingCallback = function(){
-		processing_callback = null;
+	this.removeProcessingCallback = function(owner){
+		if(processing_callbacks[owner])
+			delete processing_callbacks[owner];
 	}
 };
 
@@ -28,7 +31,10 @@ function Processing(ic, id){
 	var input_nodes = {};
 	var input_nodes_position = {};
 	var inner_callback = ic;
-	var output_callback;
+	
+	//GLT
+	//var output_callback;
+	var output_callbacks = {};
 
 	var getArray = function(){
 		var arrayTMP = [];
@@ -64,16 +70,17 @@ function Processing(ic, id){
 				if(inner_callback){
 					var result = inner_callback(getArray());
 					if(result!=-1){
-						if(output_callback)
-							output_callback(result, boxID);
+						for(var i in output_callbacks){
+							output_callbacks[i](result, boxID);
+						}
 					}
 				}
 			}
 		}
 	}
 
-	this.setOutputCallback = function(cb){
-		output_callback = cb;
+	this.addOutputCallback = function(owner, cb){
+		output_callbacks[owner] = cb;
 	}
 
 	this.getProcessingCallback = function(){
@@ -98,8 +105,9 @@ function Processing(ic, id){
 		delete input_nodes_position[position];
 	}
 
-	this.removeOutputCallback = function(){
-		output_callback = null;
+	this.removeOutputCallback = function(owner){
+		if(output_callbacks[owner])
+			delete output_callbacks[owner];
 	}
 };
 
@@ -199,8 +207,8 @@ var ORManagment = function(values){
 var setActuatorState = function(state,aid){
     actuator = actuators[aid];
     actuator.bind({
-        onBind:function(){
-			var r = actuator.range;
+        onBind:function(service){
+			var r = service.range;
         	var val_array=new Array(); 
         	if(r[0].length==2){
         		if(r[0][0]==0 && r[0][1]==1){
@@ -217,6 +225,7 @@ var setActuatorState = function(state,aid){
         		val_array[0]=parseFloat(state);
         	}
             try{
+
                 actuator.setValue(val_array,
                     function(actuatorEvent){
                         $("#value_"+aid).empty();
@@ -261,32 +270,35 @@ function addOutputBox(ID){
 function settingSensorConnection(source, target, position){
 	if(block_list[target] instanceof Processing){
 		block_list[target].addInputNodes(source, position);
-		block_list[source].setProcessingCallback(block_list[target].getProcessingCallback());
+		block_list[source].addProcessingCallback(target,block_list[target].getProcessingCallback());
 	}else if(block_list[target] instanceof Output){
-		block_list[source].setProcessingCallback(block_list[target].getOutputCallback());
+		block_list[source].addProcessingCallback(target, block_list[target].getOutputCallback());
 	}
 }
 
 function settingUserInputConnection(source,target, position){
 	if(block_list[target] instanceof  Processing){
 		block_list[target].addInputNodes(source, position);
-		block_list[source].setProcessingCallback(block_list[target].getProcessingCallback());
+		block_list[source].addProcessingCallback(target,block_list[target].getProcessingCallback());
 	}else if(block_list[target] instanceof Output){
-		block_list[source].setProcessingCallback(block_list[target].getOutputCallback());
+		block_list[source].addProcessingCallback(target, block_list[target].getOutputCallback());
 	}
 	var val = $('#input_val_'+source).val();
-	if(typeof val!=="undefined")
+	if(typeof val!=="undefined"){
 		block_list[source].input_callback(val);
-
-	$('#input_val_'+source).on('change', function(){
-		var vall = this.value;
-	    block_list[source].input_callback(vall);
-	});
+	}
+	if(textinput_array.indexOf(source) == -1){
+		$('#input_val_'+source).on('change', function(){
+			var vall = this.value;
+		    block_list[source].input_callback(vall);
+		});
+		textinput_array.push(source);
+	}
 }
 
 function settingProcessingConnection(source,target){
 	if(block_list[target] instanceof Output){
-		block_list[source].setOutputCallback(block_list[target].getOutputCallback());
+		block_list[source].addOutputCallback(target, block_list[target].getOutputCallback());
 	}else if(block_list[target] instanceof Processing){
 		block_list[target].addInputNodes(source, null);
 		block_list[source].setOutputCallback(block_list[target].getProcessingCallback());
@@ -295,8 +307,9 @@ function settingProcessingConnection(source,target){
 
 function removeInputConnection(source,target, position){
 	//on source
-	if(block_list[source] instanceof Input)
+	if(block_list[source] instanceof Input){
 		block_list[source].removeProcessingCallback();
+	}
 	else if(block_list[source] instanceof Processing)
 		block_list[source].removeOutputCallback();
 
@@ -312,12 +325,25 @@ function removeInputConnection(source,target, position){
 }
 
 function removeProcessingConnection(source, target){
-	if(block_list[source] instanceof Processing)
-		block_list[source].removeOutputCallback();
-	else if(block_list[source] instanceof Input)
-		block_list[source].removeProcessingCallback();
+	if(block_list[source] instanceof Processing){
+		block_list[source].removeOutputCallback(target);
+	}
+	else if(block_list[source] instanceof Input){
+		block_list[source].removeProcessingCallback(target);
+	}
 }
 
 function deleteBox(idBox){
+	if(block_list[idBox] instanceof Input){
+		var index = -1;
+		for(var i=0; i<textinput_array.length;i++){
+			if(textinput_array[i] == idBox){
+				index = i;
+				break;
+			}
+		}
+		if(index != -1)
+			textinput_array.splice(index,1);
+	}
 	delete block_list[idBox];
 }

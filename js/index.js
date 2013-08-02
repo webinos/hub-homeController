@@ -1,5 +1,6 @@
 var charts={};				//contain Graphic instances
-	
+
+var explorer_enabled = true;
 
 //(function(){
 
@@ -145,13 +146,71 @@ var charts={};				//contain Graphic instances
 		}
 	};
 
+	function callExplorer(container) {
+	    webinos.dashboard
+	        .open({
+	                module: 'explorer',
+	                data: { service:'http://webinos.org/api/sensors.*' }
+	              }
+	            , function(){ console.log("***Dashboard opened");} )
+	              .onAction( function (data) { serviceDiscovery(container, data.result); } );
+		}
+
+
+	function error(error) {
+	    alert('Error: ' + error.message + ' (Code: #' + error.code + ')');
+	}
+
+	function serviceDiscovery(container, serviceFilter){
+	    webinos.discovery.findServices(
+	        new ServiceType(serviceFilter.api)
+	      , {
+	            onFound: function(service){
+	                if ((service.id === serviceFilter.id) && (service.address === serviceFilter.serviceAddress)) {
+	                	sensors[service.id] = service;
+	                    sensors_configuration[service.id]={
+		        					rate:500,
+		        					time:500,
+		        					eventFireMode: "fixedinterval"
+		        			};
+		        			service.configureSensor({rate: 500, time: 500, eventFireMode: "fixedinterval"}, 
+		        				function(){
+		        					var sensor = service;
+
+	                                //var sensorCode = '<tr><td><img width="120px" height="120px" src="./assets/images/'+icons[sensor.api]+'" id="'+sensor.id+'" draggable="false" /></td></tr><tr><th>'+sensor.description+'</th></tr>';
+	                                var sensorCode = '<div class="sensor"><img width="120px" height="120px" src="./assets/images/'+icons[sensor.api]+'" id="'+sensor.id+'" draggable="false" /><p>'+sensor.description+'</p></div>';
+	                                
+	                                jQuery("#sensors_table").append(sensorCode);
+	                                container.tinyscrollbar_update();
+
+	                                document.getElementById(sensor.id).draggable = true;
+									//handler drag and drop
+									addOnDragStartEndSensors(sensor.id);
+
+								},
+								function (){
+									console.error('Error configuring Sensor ' + service.api);
+								}
+							);
+	                }
+	            }
+	          , onError: error
+	        }
+	    );
+
+	}
 	jQuery(document).ready(function() {
 
 		$("#sensor_id_config").hide();
 		$('#refresh').live( 'click',function(event){
 			var leftColumn = $('#leftcolumn');
 			leftColumn.tinyscrollbar();
+			
+			if(explorer_enabled)
+				callExplorer(leftColumn);
+			else
 			discovery_sensors(leftColumn);
+			
 			discovery_service_file();
 		});
 		
@@ -177,7 +236,12 @@ var charts={};				//contain Graphic instances
         var contentDiv = $('#content');
         contentDiv.tinyscrollbar();
 
-		discovery_sensors(leftColumn);
+        if(!explorer_enabled){
+			discovery_sensors(leftColumn);
+		}
+		else
+			$("#refresh").text("Add From Explorer").button("refresh");
+
 		discovery_service_file();
 		$(window).resize(function() {
             leftColumn.tinyscrollbar_update();
@@ -260,6 +324,7 @@ var charts={};				//contain Graphic instances
 		num = num + 1;
 		return num;
 	}
+
 
 	function discovery_sensors(container){
 		jQuery("#sensors_table").empty();
