@@ -130,7 +130,7 @@ hr {
 
 .target { border: 2px dashed #ADFF00; }
 .target:after {
-	content: 'drop here';
+	/*content: 'drop here';*/
 	width: 300px;
 	left: 50%;
 	margin-left: -150px;
@@ -192,7 +192,7 @@ hr {
 }
 
 .main {
-    margin-bottom:22px;
+    /*margin-bottom:22px;*/
     margin-left: auto;
     margin-right: auto;
     position: relative;

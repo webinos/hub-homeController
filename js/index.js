@@ -183,10 +183,9 @@ var explorer_enabled = true;
 	                                jQuery("#sensors_table").append(sensorCode);
 	                                container.tinyscrollbar_update();
 
+	                                //handle drag&drop for new sensor
 	                                document.getElementById(sensor.id).draggable = true;
-									//handler drag and drop
 									addOnDragStartEndSensors(sensor.id);
-
 								},
 								function (){
 									console.error('Error configuring Sensor ' + service.api);
@@ -454,16 +453,16 @@ var explorer_enabled = true;
 			//for the position
 			var X = event.layerX - $(event.target).position().left;
 			var Y = event.layerY - $(event.target).position().top;
-
 			var gauge_selected = event.dataTransfer.getData("gauges");
+
 			if(gauge_selected == "btnGauge"){
 				var idChart = "gauge_" + (Object.keys(charts).length + 1);
 				var html = "";
-	            html += "<div id='main-"+idChart+"' class='chart-container'>";	//this div is used for deleting all the elements of this chart when delete button is clicked
+
+				html += "<div id='main-"+idChart+"' class='window'>";	//this div is used for deleting all the elements of this chart when delete button is clicked
 	            html += "<div id='info-"+idChart+"' class='chart-titlebar'><div id='name-"+idChart+"' class='chart-sensorname gauge' />";
 	            html += "<input type='image' id='delete-"+idChart+"' src='assets/delete_min.png' alt='delete' class='chart-control delete' />";
 	            html += "<input type='image' id='settings-"+idChart+"' src='assets/sett_min.png' alt='settings' class='chart-control settings' />";
-	            
 	            html += "</div>";
 	            html+="<canvas class='main' id='drop_canvas-"+idChart+"' width='250' height='250'></canvas></div>";
 	            
@@ -479,27 +478,27 @@ var explorer_enabled = true;
 				
 	            charts[idChart]=graphic;
 	            
-				RGraph.Effects.Gauge.Grow(chart);
-				
-					var d = document.getElementById("main-"+idChart);
-		    		d.style.left = graphic.coord.x+'px';
-		    		d.style.top = graphic.coord.y+'px';
-		    		//addOnDragStart("main-"+idChart);
-		    		//var divsWithWindowClass = jsPlumb.CurrentLibrary.getSelector(".main");	//TODO
-		            //jsPlumb.draggable(divsWithWindowClass);
-		    		
-	    		
-				enableDragAndDropSensors("drop_canvas-"+idChart);    
+	            RGraph.Effects.Gauge.Grow(chart);
+				var d = document.getElementById("main-"+idChart);
+		    	d.style.left = graphic.coord.x+'px';
+		    	d.style.top = graphic.coord.y+'px';
+
+	   			var divsWithWindowClass = jsPlumb.CurrentLibrary.getSelector(".window");
+        		jsPlumb.draggable(divsWithWindowClass);
+        		enableDragAndDropSensors("drop_canvas-"+idChart);
+				//addOnDragStart("main-"+idChart);	
 				enableButtonsLive(idChart);
-			}else if(gauge_selected == "btnTherm"){
+			}
+			else if(gauge_selected == "btnTherm"){
 				var idChart = "therm_" + (Object.keys(charts).length + 1);
 				var html = "";
-	            html += "<div id='main-"+idChart+"' class='chart-container therm'>";	//this div is used for deleting all the elements of this chart when delete button is clicked
+	            //html += "<div id='main-"+idChart+"' class='chart-container therm'>";	//this div is used for deleting all the elements of this chart when delete button is clicked
+	            html += "<div id='main-"+idChart+"' class='window'>";	//this div is used for deleting all the elements of this chart when delete button is clicked
 	            html += "<div id='info-"+idChart+"' class='chart-titlebar therm'><div id='name-"+idChart+"' class='chart-sensorname therm' />";
 	            html += "<input type='image' id='delete-"+idChart+"' src='assets/delete_min.png' alt='delete' class='chart-control delete' />";
 	            html += "<input type='image' id='settings-"+idChart+"' src='assets/sett_min.png' alt='settings' class='chart-control settings' />";
-	            
 	            html += "</div>";
+
 	            html+="<canvas class='main' id='drop_canvas-"+idChart+"' width='100' height='400'></canvas></div>";
 	            $("#target").prepend(html);
 				var chart=new RGraph.Thermometer("drop_canvas-"+idChart, min_temperature_range,max_temperature_range,0);
@@ -514,18 +513,21 @@ var explorer_enabled = true;
 	            charts[idChart]=graphic;
 	            
 				RGraph.Effects.Gauge.Grow(chart);
-				
-					var d = document.getElementById("main-"+idChart);
-		    		d.style.left = graphic.coord.x+'px';
-		    		d.style.top = graphic.coord.y+'px';
-		    		//addOnDragStart("main-"+idChart);
+				var d = document.getElementById("main-"+idChart);
+		    	d.style.left = graphic.coord.x+'px';
+		    	d.style.top = graphic.coord.y+'px';
+		    	//addOnDragStart("main-"+idChart);
 	    		
+	    		var divsWithWindowClass = jsPlumb.CurrentLibrary.getSelector(".window");
+        		jsPlumb.draggable(divsWithWindowClass);
 				enableDragAndDropSensors("drop_canvas-"+idChart);
 				enableButtonsLive(idChart);
+
 			}else if(gauge_selected == "line-chart"){
 				var idChart = "chart_" + (Object.keys(charts).length + 1);
 	            var html = "";
-	            html += "<div id='main-"+idChart+"' class='chart-container line'>";	//this div is used for deleting all the elements of this chart when delete button is clicked
+	            //html += "<div id='main-"+idChart+"' class='chart-container line'>";	//this div is used for deleting all the elements of this chart when delete button is clicked
+	            html += "<div id='main-"+idChart+"' class='window'>";	//this div is used for deleting all the elements of this chart when delete button is clicked
 	            html += "<div id='info-"+idChart+"' class='chart-titlebar'>";
 	            html += "<input type='image' id='delete-"+idChart+"' src='assets/delete_min.png' alt='delete' class='chart-control delete' />";
 	            html += "<input type='image' id='settings-"+idChart+"' src='assets/sett_min.png' alt='settings' class='chart-control settings' />";
@@ -556,17 +558,18 @@ var explorer_enabled = true;
 	    				hAxis: {textPosition: 'out'}, vAxis: {textPosition: 'out'},		
 	    				colors:['blue','red','orange','green','violet','brown','pink','yellow'],
 	    				pointSize: 0
-	    				//backgroundColor: ''
 	    		      };
 	    		
 	            charts[idChart]=graphic;
 	            graphic.chart.draw(graphic.graphData, graphic.options);
+            
+	            var d = document.getElementById("main-"+idChart);
+	    		d.style.left = graphic.coord.x+'px';
+	    		d.style.top = graphic.coord.y+'px';
+	    		//addOnDragStart("main-"+idChart);
 	            
-		            var d = document.getElementById("main-"+idChart);
-		    		d.style.left = graphic.coord.x+'px';
-		    		d.style.top = graphic.coord.y+'px';
-		    		//addOnDragStart("main-"+idChart);
-	            
+	            var divsWithWindowClass = jsPlumb.CurrentLibrary.getSelector(".window");
+        		jsPlumb.draggable(divsWithWindowClass);
 	            enableDragAndDropSensors("drop_div-"+idChart);   	//drop over hidden div for line-charts
 	            enableButtonsLive(idChart);
 	            
@@ -713,7 +716,6 @@ var explorer_enabled = true;
 		for(var sid in sensors){
 			//enable drag and drop of element removed
 			document.getElementById(sid).draggable = true;
-
 			//handler drag and drop
 			addOnDragStartEndSensors(sid);
 		}
