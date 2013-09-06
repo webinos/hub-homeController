@@ -205,24 +205,44 @@ var ORManagment = function(values){
 }
 
 var setActuatorState = function(state,aid){
-    actuator = actuators[aid];
+	var actuatorID = aid.split("_")[1];
+    actuator = actuators[actuatorID];
     actuator.bind({
         onBind:function(service){
-			var r = service.range;
+        	var r = service.range;
         	var val_array=new Array(); 
-        	if(r[0].length==2){
-        		if(r[0][0]==0 && r[0][1]==1){
-        			//binary actuator
-        			if(state>0)
+
+        	//if the user has setted a specific value for "true" and "false" - I send these values to the actuator!
+        	if( $('#actuator_false_'+aid).val()!=="" || $('#actuator_true_'+aid).val()!=="" ){
+        		if(state > 0){
+        			if($('#actuator_true_'+aid).val()!=="")
+        				val_array[0]=parseFloat($('#actuator_true_'+aid).val());
+        			else
         				val_array[0]=parseFloat(1);
+        		}
+        		else{
+        			if($('#actuator_false_'+aid).val()!=="")
+        				val_array[0]=parseFloat($('#actuator_false_'+aid).val());
         			else
         				val_array[0]=parseFloat(0);
-        		}else{
-        			//"decimal" actuator
-        			val_array[0]=parseFloat(state);
         		}
-        	}else{
-        		val_array[0]=parseFloat(state);
+        	}
+        	else{
+        		//now, I verify if the actuator is binary or decimal
+	        	if(r[0].length==2){
+	        		if(r[0][0]==0 && r[0][1]==1){
+	        			//binary actuator
+	        			if(state>0)
+	        				val_array[0]=parseFloat(1);
+	        			else
+	        				val_array[0]=parseFloat(0);
+	        		}else{
+	        			//"decimal" actuator
+	        			val_array[0]=parseFloat(state);
+	        		}
+	        	}else{
+	        		val_array[0]=parseFloat(state);
+	        	}
         	}
             try{
 
@@ -263,8 +283,8 @@ function addProcessingBox(ID){
 }
 
 function addOutputBox(ID){
-	var actuatorID = ID.split("_")[1];
-	block_list[ID] = new Output(setActuatorState,actuatorID);
+	//var actuatorID = ID.split("_")[1];
+	block_list[ID] = new Output(setActuatorState,ID);
 }
 
 function settingSensorConnection(source, target, position){
@@ -288,7 +308,8 @@ function settingUserInputConnection(source,target, position){
 		block_list[source].input_callback(val);
 	}
 	if(textinput_array.indexOf(source) == -1){
-		$('#input_val_'+source).on('change', function(){
+		//event onchange or onkeyup?
+		$('#input_val_'+source).on('keyup', function(){
 			var vall = this.value;
 		    block_list[source].input_callback(vall);
 		});
@@ -308,7 +329,7 @@ function settingProcessingConnection(source,target){
 function removeInputConnection(source,target, position){
 	//on source
 	if(block_list[source] instanceof Input){
-		block_list[source].removeProcessingCallback();
+		block_list[source].removeProcessingCallback(target);
 	}
 	else if(block_list[source] instanceof Processing)
 		block_list[source].removeOutputCallback();

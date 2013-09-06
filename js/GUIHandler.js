@@ -18,11 +18,14 @@
 	var num_boxes = 0;
 	var that = this;
 
+	var explorer_enabled = true;
+
 
 	var initGUI = function(leftColumn){
-        findSensorServices(leftColumn);
+        //findSensorServices(leftColumn);
         addOperationsGUI();
         leftColumn.tinyscrollbar_update(); //in case we find no sensors and operations flow outside the screen
+        addDragEventsForTarget();
     }
 
 
@@ -41,6 +44,163 @@
         initDragAndDrop("userInput_input");
 	}
 
+	function myConfigureSensor(sensor){
+        var div_id = "sensor_"+sensor.id;
+        
+        var user_name = sensor.serviceAddress.split("@")[0];
+        var host = "";
+        var device = "";
+        var address = user_name;
+
+        if(sensor.serviceAddress.indexOf("@") !== -1){
+            address += "<br>";
+            var tmp = sensor.serviceAddress.substring(sensor.serviceAddress.indexOf("@")+1).split("/");
+            host = tmp[0];
+            address += host;
+            if(typeof tmp[1] != "undefined"){
+                address += "<br>";
+                device = tmp[1];
+                address += device;
+            }
+        }
+
+        var sensorCode = '<div id="code_'+ sensor.id +'" class="sensor">';
+        sensorCode += "<div id='remove_"+sensor.id+"' style='clear:both;'><img width='10px' height='10px' src='./assets/x_min.png' style='float:right; margin-left:-40px;'></img></div>";
+        sensorCode += '<img style="clear:both;" width="80px" height="80px" src="./assets/images/'+icons[sensor.api]+'" id="'+div_id+'" /><p>'+sensor.description+'<br><span class="addr">['+address+']</span></p>';
+        sensorCode += '</div>'; 
+        jQuery("#sensors_table").append(sensorCode);
+
+        var leftColumn = $('#leftcolumn');
+        leftColumn.tinyscrollbar_update();
+
+        initDragAndDrop(div_id);
+
+        setMinHeight();
+
+        $('#remove_'+sensor.id).on('click',removeSensor);
+
+    }
+
+    removeSensor = function(event){
+    	var sensorID = this.id.substring(7);
+
+    	//remove event listener for button red "remove_sensorID"
+    	$('#remove_'+sensorID).unbind('click',removeSensor);
+
+    	overwrite_rules_file(sensorID, "sensor");
+
+    	//Remove all connection which
+    	for(x in block_list){
+    		if(x.indexOf(sensorID) !== -1)
+    			removeSensorBox(x);
+    	}
+
+    	//update file
+    	//save_rules(false);
+
+
+        //remove sensor selected from the 'sensors' object
+    	delete sensors[sensorID];
+    	//update file
+    	save_rules_sa_explorer();
+    	//update leftColum GUI
+    	$("#code_"+sensorID).remove();
+    	
+
+    }
+
+    function myConfigureActuator(service){
+        actuators[service.id] = service;
+        var div_id = "actuator_"+service.id;
+
+        var user_name = service.serviceAddress.split("@")[0];
+        var host = "";
+        var device = "";
+        var address = user_name;
+
+        if(service.serviceAddress.indexOf("@") !== -1){
+            address += "<br>";
+            var tmp = service.serviceAddress.substring(service.serviceAddress.indexOf("@")+1).split("/");
+            host = tmp[0];
+            address += host;
+            if(typeof tmp[1] != "undefined"){
+                address += "<br>";
+                device = tmp[1];
+                address += device;
+            }
+        }
+
+        var actuatorCode = '<div id="code_'+ service.id +'" class="sensor">';
+        actuatorCode += "<div id='remove_"+service.id+"' style='clear:both;'><img width='10px' height='10px' src='./assets/x_min.png' style='float:right; margin-left:-40px;'></img></div>";
+        actuatorCode += '<img width="80px" height="80px" src="./assets/images/'+icons[service.api]+'" id="'+div_id+'" /><p>'+service.description+'<br><span class="addr">['+address+']</span></p>'
+        actuatorCode += '</div>';
+        jQuery("#actuators_table").append(actuatorCode);
+       	
+       	var leftColumn = $('#leftcolumn');
+        leftColumn.tinyscrollbar_update();
+
+        initDragAndDrop(div_id);
+
+        setMinHeight();
+
+        $('#remove_'+service.id).on('click',removeActuator);
+
+    }
+
+    removeActuator = function(event){
+    	var actuatorID = this.id.substring(7);
+
+    	//remove event listener for button red "remove_actuatorID"
+    	$('#remove_'+actuatorID).unbind('click',removeActuator);
+
+    	overwrite_rules_file(actuatorID, "actuator");
+
+    	//Remove all connection which
+    	for(x in block_list){
+    		if(x.indexOf(actuatorID) !== -1)
+    			removeActuatorBox(x);
+    	}
+
+    	//update file
+    	//save_rules(false);
+
+        //remove actuator selected from the 'actuators' object
+    	delete actuators[actuatorID];
+    	//update file
+    	save_rules_sa_explorer();
+    	//update leftColum GUI
+    	$("#code_"+actuatorID).remove();
+
+    }
+
+	function findFileSystem(container) {
+    	webinos.discovery.findServices(new ServiceType("http://webinos.org/api/file"), {
+			onFound: function (service) {
+				if(service.serviceAddress === webinos.session.getPZPId()){
+					service.bindService({
+						onBind: function () {
+							service.requestFileSystem(1, 1024, 
+								function (filesystem) {
+									root_directory = filesystem.root;
+
+									if(explorer_enabled){
+										//load past sensors and actuators selected by user from explorer.
+           								load_file(false, file_name_sensor_actuator_explorer);
+           							}
+								},
+								function (error) {
+									alert("Error requesting filesystem (#" + error.code + ")");
+								}
+							);					
+						}
+					});
+				}
+			}
+		});
+    }
+
+/******   This function is used only in case you don't use explorer  *****/
+
 	var findSensorServices = function(container){
 		jQuery("#sensors_table").empty();
 		jQuery("#actuators_table").empty();
@@ -56,38 +216,7 @@
 						onBind:function(){
 		        			service.configureSensor({rate: 500, eventFireMode: "fixedinterval"}, 
 		        				function(){
-		        					var sensor = service;
-
-		        					var div_id = "sensor_"+sensor.id;
-
-		        					var user_name = sensor.serviceAddress.split("@")[0];
-                                    var host = "";
-                                    var device = "";
-                                    var address = user_name;
-
-                                    if(sensor.serviceAddress.indexOf("@") !== -1){
-                                    	address += "<br>";
-                                    	var tmp = sensor.serviceAddress.substring(sensor.serviceAddress.indexOf("@")+1).split("/");
-                                        host = tmp[0];
-                                        address += host;
-                                        if(typeof tmp[1] != "undefined"){
-	                                        address += "<br>";
-	                                        device = tmp[1];
-	                                        address += device;
-                                    	}
-                                    }
-
-                                    //var sensorCode = '<tr><td><img width="80px" height="80px" src="./assets/images/'+icons[sensor.api]+'" id="'+div_id+'" /></td></tr><tr><th>- '+sensor.description+'<br>['+address+']</th></tr>';
-                                    var sensorCode = '<div class="sensor"><img width="80px" height="80px" src="./assets/images/'+icons[sensor.api]+'" id="'+div_id+'" /><p>'+sensor.description+'<br><span class="addr">['+address+']</span></p></div>';
-                                    
-                                    jQuery("#sensors_table").append(sensorCode);
-
-                                    container.tinyscrollbar_update();
-
-                                    initDragAndDrop(div_id);
-
-                                    setMinHeight();
-
+		        					myConfigureSensor(service);
 								},
 								function (){
 									console.error('Error configuring Sensor ' + service.api);
@@ -97,51 +226,46 @@
 					});
 					
 				}else if(service.api.indexOf("actuators.") !== -1){
-					actuators[service.id] = service;
-					var div_id = "actuator_"+service.id;
-
-					var user_name = service.serviceAddress.split("@")[0];
-                    var host = "";
-                    var device = "";
-                    var address = user_name;
-
-                    if(service.serviceAddress.indexOf("@") !== -1){
-                    	address += "<br>";
-                    	var tmp = service.serviceAddress.substring(service.serviceAddress.indexOf("@")+1).split("/");
-                        host = tmp[0];
-                        address += host;
-                        if(typeof tmp[1] != "undefined"){
-                            address += "<br>";
-                            device = tmp[1];
-                            address += device;
-                    	}
-                    }
-
-                    //var actuatorCode = '<tr><td><img width="80px" height="80px" src="./assets/images/'+icons[service.api]+'" id="'+div_id+'" /></td></tr><tr><th>'+service.description+'<br>['+address+']</th></tr>';
-                    var actuatorCode = '<div class="sensor"><img width="80px" height="80px" src="./assets/images/'+icons[service.api]+'" id="'+div_id+'" /><p>'+service.description+'<br><span class="addr">['+address+']</span></p></div>';
-                    jQuery("#actuators_table").append(actuatorCode);
-                    container.tinyscrollbar_update();
-
-                    initDragAndDrop(div_id);
-
-                    setMinHeight();
+					myConfigureActuator(service);
 				}
-				else if(service.api.indexOf("file") !== -1){
-					if(service.serviceAddress === webinos.session.getPZPId()){
-						service.bindService({
-							onBind: function () {
-								service.requestFileSystem(1, 1024, 
-									function (filesystem) {
-										root_directory = filesystem.root;
-									},
-									function (error) {
-										alert("Error requesting filesystem (#" + error.code + ")");
-									}
-								);					
-							}
-						});
-					}
-				}//THE END - If-Else - Actuators & Sensors & Files
+			}
+		});
+	}
+
+/******   *****   *****   *****   *****   *****   *****   *****   *****/
+
+	function searchSensors(id, serviceAddress){
+		webinos.discovery.findServices(new ServiceType("http://webinos.org/api/sensors.*"), {
+			onFound: function (service) {
+				//found a new sensors
+				if((service.id === id) && (service.serviceAddress === serviceAddress) && (typeof(sensors[service.id]) === "undefined")){
+					sensors[service.id] = service;
+					sensorActive[service.id] = 0;
+					
+					service.bind({
+						onBind:function(){
+		        			service.configureSensor({rate: 500, eventFireMode: "fixedinterval"}, 
+		        				function(){
+		        					myConfigureSensor(service);
+								},
+								function (){
+									console.error('Error configuring Sensor ' + service.api);
+								}
+							);
+		        		}
+					});	
+				}
+			}
+		});
+	}
+
+	function searchActuators(id, serviceAddress){
+		webinos.discovery.findServices(new ServiceType("http://webinos.org/api/actuators.*"), {
+			onFound: function (service) {
+				//found a new sensors
+				if((service.id === id) && (service.serviceAddress === serviceAddress) && (typeof(actuators[service.id]) === "undefined")){
+					myConfigureActuator(service);
+				}
 			}
 		});
 	}
@@ -226,14 +350,14 @@
 					addProcessingBox(result);
 					break;
 				default:
-					alert("Error");
+					alert("Error - on DRAG AND DROP");
 			}
         }
     }
 
-    var initDragAndDrop = function(id){
+	function initDragAndDrop(id){
 		addOnDragStart(id);
-		addDragEventsForTarget();
+		//addDragEventsForTarget();
 	}
 
 
@@ -397,36 +521,40 @@
         //to remove box
         $('#remove_'+idbox).on('click', function(){
         	var boxID = this.id.substring(7);
-
-        	//remove listener
-            var sensorID = boxID.split("_")[1];
-            sensors[sensorID].removeEventListener('sensor', onSensorEvent, false);
-            sensorActive[sensorID] = (sensorActive[sensorID] - 1);
-
-            //remove connections
-        	var connTMP = [];
-			for (var j = 0; j < connections.length; j++){
-				if(connections[j].sourceId == boxID){
-					var param = connections[j].getParameters();
-                    removeInputConnection(connections[j].sourceId, connections[j].targetId, param.position);
-				}else{
-					connTMP.push(connections[j]);
-				}
-			}
-			connections = connTMP;
-
-			//remove GUI for endpoints
-			var endps = jsPlumb.getEndpoints(boxID);
-            for(var h=0; h<endps.length; h++){
-            	jsPlumb.deleteEndpoint(endps[h]);
-            }
-
-            //remove GUI for box
-			deleteBox(boxID);
-			$("#"+boxID).remove();
+        	removeSensorBox(boxID)
 		});
 
         return idbox;
+	}
+
+	function removeSensorBox(boxID){
+
+    	//remove listener
+        var sensorID = boxID.split("_")[1];
+        sensors[sensorID].removeEventListener('sensor', onSensorEvent, false);
+        sensorActive[sensorID] = (sensorActive[sensorID] - 1);
+
+        //remove connections
+    	var connTMP = [];
+		for (var j = 0; j < connections.length; j++){
+			if(connections[j].sourceId == boxID){
+				var param = connections[j].getParameters();
+                removeInputConnection(connections[j].sourceId, connections[j].targetId, param.position);
+			}else{
+				connTMP.push(connections[j]);
+			}
+		}
+		connections = connTMP;
+
+		//remove GUI for endpoints
+		var endps = jsPlumb.getEndpoints(boxID);
+        for(var h=0; h<endps.length; h++){
+        	jsPlumb.deleteEndpoint(endps[h]);
+        }
+
+        //remove GUI for box
+		deleteBox(boxID);
+		$("#"+boxID).remove();
 	}
 
 
@@ -444,7 +572,19 @@
 		html += "<div id='remove_"+idbox+"' style='clear:both;'><img width='10px' height='10px' src='./assets/x_min.png' style='float:right; margin-bottom:5px;'></img></div>";
 		html += actuator.description+'<br>['+actuator.serviceAddress+']<br><br>';
 		html += '<img width="80px" height="80px" src="./assets/images/'+icons[actuator.api]+'" id="actuatorIMG_'+actuator.id+'" /><br><br>';
-	    html += "<div id='value_"+actuator.id+"'>-</div>";
+		html += '<div style="text-align:center">';
+		html += '<table style="margin: 0 auto;">';
+		html += '<tr>';
+		html += '<td>False</td>';
+		html += '<td>True</td>';
+		html += '</tr>';
+		html += '<tr>';
+		html += '<td><input type="text" id="actuator_false_'+idbox+'" class="cells_small" /> <br></td>';
+		html += '<td><input type="text" id="actuator_true_'+idbox+'" class="cells_small" /></td>';
+		html += '</tr>';
+		html += '</table>';
+		html += '</div>';
+	    html += "<div id='value_"+idbox+"'>-</div>";
 	    html += "</div>";
 
 	    $("#main").append(html);
@@ -461,26 +601,31 @@
         //to remove box
         $('#remove_'+idbox).on('click', function(){
 			var boxID = this.id.substring(7);
-			var connTMP = [];
-			for (var j = 0; j < connections.length; j++){
-				if(connections[j].targetId == boxID){
-                    removeProcessingConnection(connections[j].sourceId, connections[j].targetId);
-				}else{
-					connTMP.push(connections[j]);
-				}
-			}
-			connections = connTMP;
-			var endps = jsPlumb.getEndpoints(boxID);
-            for(var h=0; h<endps.length; h++){
-            	jsPlumb.deleteEndpoint(endps[h]);
-            }
-			deleteBox(boxID);
-			$("#"+boxID).remove();
+			removeActuatorBox(boxID);
 		});
 
         return idbox;
 	}
 
+	function removeActuatorBox(boxID){
+		var connTMP = [];
+		for (var j = 0; j < connections.length; j++){
+			if(connections[j].targetId == boxID){
+                removeProcessingConnection(connections[j].sourceId, connections[j].targetId);
+			}else{
+				connTMP.push(connections[j]);
+			}
+		}
+		
+		connections = connTMP;
+
+		var endps = jsPlumb.getEndpoints(boxID);
+        for(var h=0; h<endps.length; h++){
+        	jsPlumb.deleteEndpoint(endps[h]);
+        }
+		deleteBox(boxID);
+		$("#"+boxID).remove();
+	}
 
 
 /*****************     BOOLEAN   ******************/
