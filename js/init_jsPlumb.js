@@ -126,6 +126,15 @@
         var contentDiv = $('#content');
         contentDiv.tinyscrollbar();
 
+        if(!explorer_enabled){
+            $("#refresh").append("<div id='refresh_button' class='button'>Refresh</div>");
+            findSensorServices(leftColumn);
+        }
+        else{
+            $("#refresh").append("<div id='explorer_sensor_button' class='button'>Add Sensor From Explorer</div>");
+            $("#refresh").append("<div id='explorer_actuator_button' class='button'>Add Actuator From Explorer</div>");
+        }
+
         $(window).resize(function() {
             leftColumn.tinyscrollbar_update();
             contentDiv.tinyscrollbar_update();
@@ -133,8 +142,21 @@
 
         initGUI(leftColumn);
 
-        $('#refresh').live( 'click',function(event){
-            findSensorServices();
+        //search file system and save the root directory.
+        findFileSystem(leftColumn);
+
+        $('#refresh_button').live( 'click',function(event){
+                findSensorServices(leftColumn);
+        });
+
+        $('#explorer_sensor_button').live( 'click',function(event){
+            var leftColumn = $('#leftcolumn');
+            callExplorerSensor(leftColumn);
+        });
+
+        $('#explorer_actuator_button').live( 'click',function(event){
+            var leftColumn = $('#leftcolumn');
+            callExplorerActuator(leftColumn);
         });
 
         $('#clearRules').live( 'click',function(event){
@@ -142,7 +164,7 @@
         });
 
         $('#saveRules').live( 'click',function(event){
-            save_rules();
+            save_rules(true);
         });
 
         $('#loadRules').live( 'click',function(event){
@@ -151,3 +173,58 @@
     });
 
 
+    function callExplorerSensor(container) {
+        webinos.dashboard
+            .open({
+                    module: 'explorer',
+                    data: { service:'http://webinos.org/api/sensors.*' }
+                  }
+                , function(){ console.log("***Dashboard opened");} )
+                  .onAction( function (data) { serviceDiscovery(container, data.result); 
+            });
+    }
+
+    function serviceDiscovery(container, serviceFilter){
+        webinos.discovery.findServices(new ServiceType(serviceFilter.api), {
+            onFound: function (service) {
+                if ((service.id === serviceFilter.id) && (service.address === serviceFilter.serviceAddress) && (typeof(sensors[service.id]) === "undefined")) {
+                    //found a new sensors
+                    sensors[service.id] = service;
+                    sensorActive[service.id] = 0;
+                    service.configureSensor({rate: 500, eventFireMode: "fixedinterval"}, 
+                        function(){
+                            myConfigureSensor(service);
+                            //save on file the new sensor added
+                            save_rules_sa_explorer();
+                        },
+                        function (){
+                            console.error('Error configuring Sensor ' + service.api);
+                        }
+                    );
+                }
+            }
+        });
+    }
+
+    function callExplorerActuator(container) {
+        webinos.dashboard
+            .open({
+                    module: 'explorer',
+                    data: { service:'http://webinos.org/api/actuators.*' }
+                  }
+                , function(){ console.log("***Dashboard opened");} )
+                  .onAction( function (data) { actuatorDiscovery(container, data.result); 
+            });
+    }
+
+    function actuatorDiscovery(container, serviceFilter){
+        webinos.discovery.findServices(new ServiceType(serviceFilter.api), {
+            onFound: function (service) {
+                if ((service.id === serviceFilter.id) && (service.address === serviceFilter.serviceAddress) && (typeof(actuators[service.id]) === "undefined")) {
+                    myConfigureActuator(service);
+                    //save on file the new actuator added
+                    save_rules_sa_explorer();
+                }
+            }
+        });
+    }
