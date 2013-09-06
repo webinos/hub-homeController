@@ -211,3 +211,11 @@ path, ._jsPlumb_endpoint { cursor:pointer; }
 ._jsPlumb_endpoint._jsPlumb_hover {
     z-index:22 !important;
 }
+
+input.cells_small {
+width: 50px;
+}
+
+input.cells_big {
+width: 150px;
+}
