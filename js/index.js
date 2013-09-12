@@ -1,34 +1,12 @@
-var charts={};				//contain Graphic instances
 
-var explorer_enabled = true;
+    var charts={};				//contain Graphic instances
+    var debug;
+    var sensors_type = "http://webinos.org/api/sensors";
+    var geolocation_type = "http://www.w3.org/ns/api-perms/geolocation";
 
-//(function(){
+    var explorer_enabled = true;
+    var element_counter = 0;
 
-	function Gauge(id, type, gauge){
-		this.id = 0;
-		if(id!=null)
-			this.id = id;
-		
-		this.type = null;
-		if(type!=null)
-			this.type = type;
-
-		this.gauge = null;
-		if(gauge!=null)
-			this.gauge = gauge;
-
-		this.sensorID = null;
-
-		//set property of gauges
-		this.setProperty = function(propName, propValue){
-			if(this.type=="thermometer" && propName=="title")
-				this.gauge.Set('chart.title.side', propValue);
-			else if(this.type=="gauge" && propName=="title")
-				this.gauge.Set('chart.title.bottom', propValue);
-			else
-				this.gauge.Set(propName, propValue);
-		}
-	}
 
 	var sensor_types = [
 		"http://webinos.org/api/sensors.temperature",
@@ -37,8 +15,14 @@ var explorer_enabled = true;
 		"http://webinos.org/api/sensors.voltage",
 		"http://webinos.org/api/sensors.electricity",
 		"http://webinos.org/api/sensors.proximity",
-		"http://webinos.org/api/sensors.heartratemonitor"
+		"http://webinos.org/api/sensors.heartratemonitor",
+        "http://webinos.org/api/sensors.rpm",
+        "http://webinos.org/api/sensors.vss"
 	];
+
+    var service_types = [
+        "http://www.w3.org/ns/api-perms/geolocation"
+    ];
 
 	var icons = {
 		"http://webinos.org/api/sensors.temperature": "temperature-icon.png",
@@ -49,7 +33,10 @@ var explorer_enabled = true;
 		"http://webinos.org/api/actuators.switch": "switch-icon.png",
 		"http://webinos.org/api/sensors.proximity": "proximity-icon.png",
 		"http://webinos.org/api/actuators.linearmotor": "switch-icon.png",
-		"http://webinos.org/api/sensors.heartratemonitor": "heartratemonitor-icon.png"
+		"http://webinos.org/api/sensors.heartratemonitor": "heartratemonitor-icon.png",
+        "http://webinos.org/api/sensors.rpm": "electricity-icon.png",
+        "http://webinos.org/api/sensors.vss": "electricity-icon.png",
+        "http://www.w3.org/ns/api-perms/geolocation": "geolocation-icon.png"
 	};
 
 	google.load("visualization", "1", {packages:["corechart"]});
@@ -71,61 +58,383 @@ var explorer_enabled = true;
 	var min_gauge_range=-10;
 	var max_gauge_range=65;
 	var lineColor=['blue','red','orange','green','violet','brown','pink','yellow'];
-	
-	
- 	function Graphic(chart){
- 			this.id='';
- 			this.chart = chart;
- 			this.sensor_list=[];
- 			this.serviceAddress_list=[];
- 			this.values=[];
- 			this.old_values=[];
- 			this.graphData =[];
- 			this.numberOfValues=0;
- 			this.title='';
- 			this.type='';
- 			this.options='';
- 			this.sensor_active={};
- 			this.minRange=0;
- 			this.maxRange=0;
- 			this.coord = {
- 					x:0,
- 					y:0
- 				}
- 	}
+
+	Function.prototype.subclassFrom=function(superClassFunc) {
+        if (superClassFunc == null) {
+            this.prototype={};
+        } 
+        else {
+            this.prototype = new superClassFunc();
+            this.prototype.constructor=this;
+            this.superConstructor=superClassFunc;   
+      }
+    }
+
+    Function.prototype.methods=function(funcs) {
+        for (each in funcs) 
+            if (funcs.hasOwnProperty(each)) {
+                var original=this.prototype[each];
+                funcs[each].superFunction=original;
+                this.prototype[each]=funcs[each];
+            }
+    }
+
+    
+    function Graphic(idChart, X, Y) {
+		this.id = idChart;
+		this.service_list=[];
+		this.serviceAddress_list=[];
+		this.values=[];
+		this.old_values=[];
+		this.graphData =[];
+		this.numberOfValues=0;
+		this.title='';
+		this.type='';
+		this.options='';
+		this.sensor_active={};
+		this.minRange;
+		this.maxRange;
+		this.coord = {
+			x:X,
+			y:Y
+		}
+		this.allowed_drop = [];
+    }
+
+    Graphic.methods({
+        setVal : function(val) {},
+        getHTMLContent : function(){
+        	var idChart = this.id;
+        	var html = "";
+        	html += "<div id='main-"+idChart+"' class='window'>";	//this div is used for deleting all the elements of this chart when delete button is clicked
+            html += "<div id='info-"+idChart+"' class='chart-titlebar'><div id='name-"+idChart+"' class='chart-sensorname gauge' />";
+            html += "<input type='image' id='delete-"+idChart+"' src='assets/delete_min.png' alt='delete' class='chart-control delete' />";
+            html += "<input type='image' id='settings-"+idChart+"' src='assets/sett_min.png' alt='settings' class='chart-control settings' />";
+            html += "</div>";
+            return html;
+        },
+        canDrop : function(service){
+            var allowed = false;
+            for(var i in this.allowed_drop){
+                if(service.indexOf(this.allowed_drop[i]) != -1){
+                    allowed = true;
+                    break;
+                }
+            }
+            return allowed;
+        }
+    });
+
+
+
+    function Thermometer(idChart, X, Y){
+    	arguments.callee.superConstructor.call(this, idChart, X, Y);
+    	
+    	this.type="thermometer";
+ 		this.minRange=min_temperature_range;
+ 		this.maxRange=max_temperature_range;
+        
+        this.allowed_drop = [sensors_type];
+    	
+    	$("#target").prepend(this.getHTMLContent());
+		this.chart = new RGraph.Thermometer("drop_canvas-"+this.id, min_gauge_range, max_gauge_range, 0);
+		RGraph.Effects.Thermometer.Grow(this.chart);
+    }
+    
+    Thermometer.subclassFrom(Graphic);
+    
+    Thermometer.methods({
+    	setVal : function(val) {
+    		this.chart.value = val;
+			RGraph.Effects.Thermometer.Grow(this.chart);
+    	},
+        getHTMLContent : function(){
+			var html = arguments.callee.superFunction.call(this);
+        	html += "<canvas class='main' id='drop_canvas-"+this.id+"' width='100' height='400'></canvas></div></div>";
+        	return html;
+        },
+        canDrop : function(service){
+            return arguments.callee.superFunction.call(this, service);
+        }
+    });
+
+
+    function Gauge(idChart, X, Y){
+    	arguments.callee.superConstructor.call(this, idChart, X, Y);
+		this.type="gauge";
+		this.minRange=min_gauge_range;
+		this.maxRange=max_gauge_range;
+
+        this.allowed_drop = [sensors_type];
+		
+		$("#target").prepend(this.getHTMLContent());
+		this.chart = new RGraph.Gauge("drop_canvas-"+this.id, min_gauge_range, max_gauge_range, 0);
+		RGraph.Effects.Gauge.Grow(this.chart);
+    }
+    
+    Gauge.subclassFrom(Graphic);
+    
+    Gauge.methods({
+    	setVal : function(val) {
+    		this.chart.value = val;
+			RGraph.Effects.Gauge.Grow(this.chart);
+    	},
+        getHTMLContent : function(){
+        	var html = arguments.callee.superFunction.call(this);
+        	html += "<canvas class='main' id='drop_canvas-"+this.id+"' width='250' height='250'></canvas></div></div>";        	
+        	return html;
+        },
+        canDrop : function(service){
+            return arguments.callee.superFunction.call(this, service);
+        }
+    });
+
+
+    function TextLabel(idChart, X, Y){
+    	arguments.callee.superConstructor.call(this, idChart, X, Y);
+
+    	this.type="text-label";
+        this.allowed_drop = [sensors_type, geolocation_type];
+
+    	$("#target").prepend(this.getHTMLContent());
+    	this.chart = document.getElementById("drop_canvas-"+this.id);
+    	this.setVal("-");
+    	
+    }
+    
+    TextLabel.subclassFrom(Graphic);
+    
+    TextLabel.methods({
+    	setVal : function(val) {
+    		this.chart.innerHTML = val;
+    	},
+        getHTMLContent : function(){
+        	var html = arguments.callee.superFunction.call(this);
+        	html += "<div class='text-label' id='drop_canvas-"+this.id+"'></div></div>";
+        	return html;
+        },
+        canDrop : function(service){
+            return arguments.callee.superFunction.call(this, service);
+        }
+    });
+
+
+    function LineChart(idChart, X, Y){
+    	arguments.callee.superConstructor.call(this, idChart, X, Y);
+		this.type="line-chart";
+		
+		this.graphData=new google.visualization.DataTable();
+        this.graphData.addColumn('string','Data');
+        this.graphData.addColumn('number',null);
+        this.options = {
+            title: '',
+            chartArea: {width: '90%', height: '75%', top:'25', left: '50'},
+            legend: {position: 'top'},
+            titlePosition: 'in', axisTitlesPosition: 'in',
+            hAxis: {textPosition: 'out'}, vAxis: {textPosition: 'out'},     
+            colors:['blue','red','orange','green','violet','brown','pink','yellow'],
+            pointSize: 0
+        };
+
+		this.allowed_drop = [sensors_type, geolocation_type];
+
+		$("#target").prepend(this.getHTMLContent());
+		var chart_div = document.getElementById('chart_div-'+idChart);
+		this.chart = new google.visualization.LineChart(chart_div);
+		this.chart.draw(this.graphData, this.options);
+    }
+    
+    LineChart.subclassFrom(Graphic);
+    
+    LineChart.methods({
+    	setVal : function(val) {
+    		this.chart.value = val;
+			RGraph.Effects.Gauge.Grow(this.chart);
+    	},
+        getHTMLContent : function(){
+        	var html = arguments.callee.superFunction.call(this);
+        	html += "<div class='' id='drop_canvas-"+this.id+"'></div>";
+            html += "<div id='chart_div-"+this.id+"' class='line-chart'></div>";
+        	return html;
+        },
+        canDrop : function(service){
+            return arguments.callee.superFunction.call(this, service);
+        }
+    });
+
+
+
+    function GoogleMap(idChart, X, Y){
+        arguments.callee.superConstructor.call(this, idChart, X, Y);
+
+        this.type="google-map";
+        this.marker;
+        this.latitude = 0;
+        this.longitude = 0;
+
+        this.allowed_drop = [geolocation_type];
+
+        $("#target").prepend(this.getHTMLContent());
+
+        //var latlng = new google.maps.LatLng(this.latitude,this.longitude);
+        var latlng = new google.maps.LatLng(42.745334,12.738430);
+        var options = { zoom: 12,
+            center: latlng,
+            mapTypeId: google.maps.MapTypeId.ROADMAP,
+            draggable : false
+        };
+
+        //this.chart = new google.maps.Map(document.getElementById("drop_canvas-"+this.id), options);
+
+        var chart_div = document.getElementById('chart_div-'+idChart);
+        this.chart = new google.maps.Map(document.getElementById("chart_div-"+this.id), options);        
+    }
+    
+    GoogleMap.subclassFrom(Graphic);
+    
+    GoogleMap.methods({
+        addMarker : function(lat, lon) {
+            var latlng = new google.maps.LatLng(lat,lon);
+            if(!this.marker){
+                this.marker = new google.maps.Marker({ position: latlng,
+                    map: this.chart, 
+                    title: 'Example title' });
+            }
+            else
+                this.marker.setPosition(latlng);
+        },
+        setCenter : function(lat, lon){
+            this.chart.set('center', new google.maps.LatLng(lat, lon));
+        },
+        getHTMLContent : function(){
+            var html = arguments.callee.superFunction.call(this);
+            //html += "<div id='drop_canvas-"+this.id+"' class='google-map'></div></div>";
+            html += "<div id='drop_canvas-"+this.id+"' class=''></div>";
+            html += "<div id='chart_div-"+this.id+"' class='google-map'></div></div>";
+            return html;
+        },
+        canDrop : function(service){
+            return arguments.callee.superFunction.call(this, service);
+        }
+    });
+
+    function updateUI(service_id, data){
+        for(var elem in charts){
+            var graphic= charts[elem];
+            graphic.values=[];
+            //alert(service_id);
+            //alert(graphic.sensor_active[service_id]);
+
+            if(in_array(service_id,graphic.service_list)&&(graphic.sensor_active[service_id]==true)){
+
+                if(data.type.indexOf(sensors_type)!=-1){
+                    if(graphic.type == "gauge" || graphic.type == "thermometer" || graphic.type == "text-label"){
+                        value = data.value;
+                        var normalized_val = value;
+                        if(graphic.maxRange && value > graphic.maxRange)
+                            normalized_val = graphic.maxRange;
+                        if(graphic.minRange && value < graphic.minRange)
+                            normalized_val = graphic.minRange;
+                        graphic.setVal(normalized_val);
+                    }
+                    else if(graphic.type == "line-chart"){
+                        var index=graphic.service_list.indexOf(sensor.id);
+                        
+                        graphic.values.push(time);
+                        for(var i=0;i<graphic.service_list.length;i++){
+                            if(i==index){
+                                graphic.values.push(value);
+                            }
+                            else{
+                                if(graphic.sensor_active[graphic.service_list[i]]==true){
+                                    graphic.values.push(graphic.old_values[i+1]);
+                                }else{
+                                    graphic.values.push(null);
+                                }
+                            }
+                        }
+                        graphic.numberOfValues++;
+                        graphic.graphData.addRow(graphic.values);
+                        graphic.chart.draw(graphic.graphData, graphic.options);
+                        graphic.old_values=graphic.values;
+                        
+                        if(graphic.numberOfValues>150){
+                            graphic.graphData.removeRow(0);
+                        }
+                    }
+                }
+                else if(data.type.indexOf(geolocation_type)!=-1){
+                    if(graphic.type == "text-label"){
+                        graphic.setVal(data.value.latitude + ", " + data.value.longitude);
+                    }
+                    else if(graphic.type == "google-map"){
+                        graphic.setCenter(data.value.latitude, data.value.longitude);
+                        graphic.addMarker(data.value.latitude, data.value.longitude);
+                    }
+
+                }
+            }
+        }
+    }
+
+    var onGeolocationEvent = function(event){
+        var data = {};
+        data.type = geolocation_type;
+        data.value = {latitude:event.coords.latitude, longitude:event.coords.longitude};
+        
+        // horrible workaround
+        var id;
+        for(var i in sensors){
+            if(sensors[i].api == geolocation_type){
+                id = sensors[i].id;
+                break;
+            }
+        }
+
+
+        updateUI(id,data);
+    }
 
 	var onSensorEvent = function(event){
 		var sensor = sensors && sensors[event.sensorId];
-		var value= event.sensorValues[0] || 0;
 		var time=new Date(event.timestamp);
 		time=(time.getUTCHours()+2)+ ":"+time.getUTCMinutes()+":"+time.getUTCSeconds();
 		if(sensor){
+            var value= event.sensorValues[0] || 0;
+            var data = {};
+            data.type = sensors_type;
+            data.value = value;
+            //updateUI(event.sensorId, data);
 			//console.log("************ SENSOR VALURE: " + value);
-			for(var elem in charts){
+			
+            for(var elem in charts){
 				var graphic= charts[elem];
 				graphic.values=[];
-			
-				if(in_array(sensor.id,graphic.sensor_list)&&(graphic.sensor_active[sensor.id]==true)){		
-					if(graphic.type=="thermometer"){
-						value_temp=value;
-						if(value_temp>graphic.maxRange){
-							var value_temp=graphic.maxRange;
-						}
-						graphic.chart.value = value_temp;
-						RGraph.Effects.Thermometer.Grow(graphic.chart);
-					}else if(graphic.type=="gauge"){
-						graphic.chart.value = value;
-						RGraph.Effects.Gauge.Grow(graphic.chart);
-					}else if(graphic.type=="line"){
-						var index=graphic.sensor_list.indexOf(sensor.id);
+				if(in_array(sensor.id,graphic.service_list)&&(graphic.sensor_active[sensor.id]==true)){	
+                    console.log(graphic.type);
+					if(graphic.type == "gauge" || graphic.type == "thermometer" || graphic.type == "text-label"){
+						var normalized_val = value;
+						if(graphic.maxRange && value > graphic.maxRange)
+							normalized_val = graphic.maxRange;
+						if(graphic.minRange && value < graphic.minRange)
+							normalized_val = graphic.minRange;
+						graphic.setVal(normalized_val);
+					}
+                    else if(graphic.type == "google-map"){
+                        //alert(JSON.stringify(event));
+                        graphic.setCenter(0,value);
+                        graphic.addMarker(0,value);
+                    }
+					else if(graphic.type == "line-chart"){
+						var index=graphic.service_list.indexOf(sensor.id);
 						
 						graphic.values.push(time);
-						for(var i=0;i<graphic.sensor_list.length;i++){
+						for(var i=0;i<graphic.service_list.length;i++){
 							if(i==index){
 								graphic.values.push(value);
 							}
 							else{
-								if(graphic.sensor_active[graphic.sensor_list[i]]==true){
+								if(graphic.sensor_active[graphic.service_list[i]]==true){
 									graphic.values.push(graphic.old_values[i+1]);
 								}else{
 									graphic.values.push(null);
@@ -177,8 +486,9 @@ var explorer_enabled = true;
 		        				function(){
 		        					var sensor = service;
 
-	                                //var sensorCode = '<tr><td><img width="120px" height="120px" src="./assets/images/'+icons[sensor.api]+'" id="'+sensor.id+'" draggable="false" /></td></tr><tr><th>'+sensor.description+'</th></tr>';
-	                                var sensorCode = '<div class="sensor"><img width="120px" height="120px" src="./assets/images/'+icons[sensor.api]+'" id="'+sensor.id+'" draggable="false" /><p>'+sensor.description+'</p></div>';
+	                                var sensorCode = "<div class='sensor'>"+
+                                                     //"<div id='remove_"+sensor.id+"' style='clear:both;'><img width='10px' height='10px' src='./assets/x_min.png' style='float:right; margin-bottom:5px;'></img></div>"+
+                                                     "<img width='120px' height='120px' src='./assets/images/"+icons[sensor.api]+"' id='"+sensor.id+"' draggable='false' /><p>"+sensor.description+"</p></div>";
 	                                
 	                                jQuery("#sensors_table").append(sensorCode);
 	                                container.tinyscrollbar_update();
@@ -186,6 +496,8 @@ var explorer_enabled = true;
 	                                //handle drag&drop for new sensor
 	                                document.getElementById(sensor.id).draggable = true;
 									addOnDragStartEndSensors(sensor.id);
+
+                                    //save_rules_sa_explorer("hub_presentation_explorer.txt");
 								},
 								function (){
 									console.error('Error configuring Sensor ' + service.api);
@@ -207,10 +519,11 @@ var explorer_enabled = true;
 			
 			if(explorer_enabled)
 				callExplorer(leftColumn);
-			else
-			discovery_sensors(leftColumn);
+			else{
+			    discover_sensors(leftColumn);
+            }
 			
-			discovery_service_file();
+			discover_filesystem();
 		});
 		
 		$('#clearCharts').live( 'click',function(event){
@@ -236,12 +549,13 @@ var explorer_enabled = true;
         contentDiv.tinyscrollbar();
 
         if(!explorer_enabled){
-			discovery_sensors(leftColumn);
+			discover_sensors(leftColumn);
+            discover_services(leftColumn);
 		}
 		else
 			$("#refresh").text("Add From Explorer").button("refresh");
 
-		discovery_service_file();
+		discover_filesystem();
 		$(window).resize(function() {
             leftColumn.tinyscrollbar_update();
             contentDiv.tinyscrollbar_update();
@@ -293,39 +607,36 @@ var explorer_enabled = true;
 		charts_to_fade=[];
 	}
 
-	function add_gui_rule(){
-		var id=get_next_ID();
-		var html="";
-		html+= "<div id='exernal_content-"+id+"' class='main_2'>";
-        html+= "<div style='clear:both'>";
-		html+= "<input type='image' id='delete-"+id+"' src='assets/delete_min.png' alt='delete' style='float:right; padding:5px 5px 5px 5px;' />";
-        html+= "<input type='image' id='settings-"+id+"' src='assets/sett_min.png' alt='settings' style='float:right; padding:5px 5px 5px 5px;' />";
-        html+= "</div>";
-        html+= "<div style='float:left; clear:both;'>";
-        html+= "<div id='sensor_div-"+id+"' class='sensorBlock'>Sensors</div>";
-        html+= "<div id='operation_div-"+id+"' class='operationBlock'>Operation</div>";
-        html+= "<div id='actuator_div-"+id+"' class='actuatorBlock'>Actuator</div>";
-        html+= "</div>";
-        html+= "<div style='float:left;'>";
-        html+= "<div id='chart_div-"+id+"' class='graphBlock'>Graph or Gauges</div>";
-        html+= "</div>";
-        html+= "</div>";
+    function discover_services(container){
+        jQuery("#sensors_table").empty();
 
-		$('#content').append(html);        
-	}
+        for ( var i in service_types) {
+            var type = service_types[i];
+            webinos.discovery.findServices(new ServiceType(type), {
+                onFound: function (service) { 
+                    //sensorActive[service.id] = false;
+                    service.bind({
+                        onBind:function(){
+                            console.log("Service "+service.api+" bound");
+                            sensors[service.id] = service;
+                            
+                            var sensor = service;
+                            var sensorCode = '<div class="sensor"><img width="120px" height="120px" src="./assets/images/'+icons[sensor.api]+'" id="'+sensor.id+'" draggable="false" /><p>'+sensor.description+'</p></div>';
+                            
+                            jQuery("#sensors_table").append(sensorCode);
+                            container.tinyscrollbar_update();
 
-	function get_next_ID(){
-		var boxes = $('#content').children();
-		var num = 0;
-		boxes.each(function() {
-		    num++;
-		});
-		num = num + 1;
-		return num;
-	}
+                            //handle drag&drop for new sensor
+                            document.getElementById(sensor.id).draggable = true;
+                            addOnDragStartEndSensors(sensor.id);
+                        }
+                    });
+                }
+            });
+        }
+    }
 
-
-	function discovery_sensors(container){
+	function discover_sensors(container){
 		jQuery("#sensors_table").empty();
 
 		for ( var i in sensor_types) {
@@ -365,7 +676,7 @@ var explorer_enabled = true;
 	}
 	
 	
-	function discovery_service_file(){
+	function discover_filesystem(){
 		webinos.discovery.findServices(new ServiceType("http://webinos.org/api/*"), {
 			onFound: function (service) {
 				if(service.api.indexOf("file") !== -1){
@@ -426,7 +737,6 @@ var explorer_enabled = true;
 	var addDragEventsForGaugesOnTarget = function(contentDiv){
 
 		var target = document.getElementById("target");
-
 		target.ondragenter = function(event){
 			//add class "valid"
 			this.className = "scroll-overview valid";
@@ -443,7 +753,6 @@ var explorer_enabled = true;
 		}
 
 		target.ondrop = function(event){
-			
 			 if(event.preventDefault){
 				 event.preventDefault(); 
 			 }
@@ -455,131 +764,45 @@ var explorer_enabled = true;
 			var Y = event.layerY - $(event.target).position().top;
 			var gauge_selected = event.dataTransfer.getData("gauges");
 
+			var idChart = "chart_" + (element_counter++);
+
+			var graphic = new Graphic();
+			
 			if(gauge_selected == "btnGauge"){
-				var idChart = "gauge_" + (Object.keys(charts).length + 1);
-				var html = "";
-
-				html += "<div id='main-"+idChart+"' class='window'>";	//this div is used for deleting all the elements of this chart when delete button is clicked
-	            html += "<div id='info-"+idChart+"' class='chart-titlebar'><div id='name-"+idChart+"' class='chart-sensorname gauge' />";
-	            html += "<input type='image' id='delete-"+idChart+"' src='assets/delete_min.png' alt='delete' class='chart-control delete' />";
-	            html += "<input type='image' id='settings-"+idChart+"' src='assets/sett_min.png' alt='settings' class='chart-control settings' />";
-	            html += "</div>";
-	            html+="<canvas class='main' id='drop_canvas-"+idChart+"' width='250' height='250'></canvas></div>";
-	            
-	            $("#target").prepend(html);
-				var chart=new RGraph.Gauge("drop_canvas-"+idChart, min_gauge_range, max_gauge_range, 0);
-				var graphic=new Graphic(chart);
-				graphic.id=idChart;
-				graphic.type="gauge";
-				graphic.minRange=min_gauge_range;
-				graphic.maxRange=max_gauge_range;
-				graphic.coord.x=X;
-				graphic.coord.y=Y;
-				
-	            charts[idChart]=graphic;
-	            
-	            RGraph.Effects.Gauge.Grow(chart);
-				var d = document.getElementById("main-"+idChart);
-		    	d.style.left = graphic.coord.x+'px';
-		    	d.style.top = graphic.coord.y+'px';
-
-	   			var divsWithWindowClass = jsPlumb.CurrentLibrary.getSelector(".window");
-        		jsPlumb.draggable(divsWithWindowClass);
-        		enableDragAndDropSensors("drop_canvas-"+idChart);
-				//addOnDragStart("main-"+idChart);	
-				enableButtonsLive(idChart);
+				graphic = new Gauge(idChart, X, Y);
 			}
 			else if(gauge_selected == "btnTherm"){
-				var idChart = "therm_" + (Object.keys(charts).length + 1);
-				var html = "";
-	            //html += "<div id='main-"+idChart+"' class='chart-container therm'>";	//this div is used for deleting all the elements of this chart when delete button is clicked
-	            html += "<div id='main-"+idChart+"' class='window'>";	//this div is used for deleting all the elements of this chart when delete button is clicked
-	            html += "<div id='info-"+idChart+"' class='chart-titlebar therm'><div id='name-"+idChart+"' class='chart-sensorname therm' />";
-	            html += "<input type='image' id='delete-"+idChart+"' src='assets/delete_min.png' alt='delete' class='chart-control delete' />";
-	            html += "<input type='image' id='settings-"+idChart+"' src='assets/sett_min.png' alt='settings' class='chart-control settings' />";
-	            html += "</div>";
-
-	            html+="<canvas class='main' id='drop_canvas-"+idChart+"' width='100' height='400'></canvas></div>";
-	            $("#target").prepend(html);
-				var chart=new RGraph.Thermometer("drop_canvas-"+idChart, min_temperature_range,max_temperature_range,0);
-				var graphic=new Graphic(chart);
-				graphic.id=idChart;
-				graphic.type="thermometer";
-				graphic.minRange=min_temperature_range;
-				graphic.maxRange=max_temperature_range;
-				graphic.coord.x=X;
-				graphic.coord.y=Y;
-				
-	            charts[idChart]=graphic;
-	            
-				RGraph.Effects.Gauge.Grow(chart);
-				var d = document.getElementById("main-"+idChart);
-		    	d.style.left = graphic.coord.x+'px';
-		    	d.style.top = graphic.coord.y+'px';
-		    	//addOnDragStart("main-"+idChart);
-	    		
-	    		var divsWithWindowClass = jsPlumb.CurrentLibrary.getSelector(".window");
-        		jsPlumb.draggable(divsWithWindowClass);
-				enableDragAndDropSensors("drop_canvas-"+idChart);
-				enableButtonsLive(idChart);
-
-			}else if(gauge_selected == "line-chart"){
-				var idChart = "chart_" + (Object.keys(charts).length + 1);
-	            var html = "";
-	            //html += "<div id='main-"+idChart+"' class='chart-container line'>";	//this div is used for deleting all the elements of this chart when delete button is clicked
-	            html += "<div id='main-"+idChart+"' class='window'>";	//this div is used for deleting all the elements of this chart when delete button is clicked
-	            html += "<div id='info-"+idChart+"' class='chart-titlebar'>";
-	            html += "<input type='image' id='delete-"+idChart+"' src='assets/delete_min.png' alt='delete' class='chart-control delete' />";
-	            html += "<input type='image' id='settings-"+idChart+"' src='assets/sett_min.png' alt='settings' class='chart-control settings' />";
-	            
-	            html += "</div>";
-	            html += "<div class='' id='drop_div-"+idChart+"'></div>";
-	            html += "<div id='chart_div-"+idChart+"' class='line-chart'></div>";
-	            html += "</div>";
-	            
-	            $("#target").prepend(html);
-	            var chart_div=document.getElementById('chart_div-'+idChart);
-	            var chart=new google.visualization.LineChart(chart_div);
-	            var graphic=new Graphic(chart);
-	            graphic.id=idChart;
-	            graphic.type="line";
-	            graphic.coord.x=X;
-				graphic.coord.y=Y;
-	            graphic.graphData=new google.visualization.DataTable();
-	            graphic.graphData.addColumn('string','Data');
-	            graphic.graphData.addColumn('number',null);		
-	            
-				
-	    		graphic.options = {
-	    				title: '',
-	    				chartArea: {width: '90%', height: '75%', top:'25', left: '50'},
-	    				legend: {position: 'top'},
-	    				titlePosition: 'in', axisTitlesPosition: 'in',
-	    				hAxis: {textPosition: 'out'}, vAxis: {textPosition: 'out'},		
-	    				colors:['blue','red','orange','green','violet','brown','pink','yellow'],
-	    				pointSize: 0
-	    		      };
-	    		
-	            charts[idChart]=graphic;
-	            graphic.chart.draw(graphic.graphData, graphic.options);
-            
-	            var d = document.getElementById("main-"+idChart);
-	    		d.style.left = graphic.coord.x+'px';
-	    		d.style.top = graphic.coord.y+'px';
-	    		//addOnDragStart("main-"+idChart);
-	            
-	            var divsWithWindowClass = jsPlumb.CurrentLibrary.getSelector(".window");
-        		jsPlumb.draggable(divsWithWindowClass);
-	            enableDragAndDropSensors("drop_div-"+idChart);   	//drop over hidden div for line-charts
-	            enableButtonsLive(idChart);
-	            
-			}else{
-				alert("Not Allowed!");
+				graphic = new Thermometer(idChart, X, Y);
 			}
+			else if(gauge_selected == "text-label"){
+				graphic = new TextLabel(idChart, X, Y);
+			}
+			else if(gauge_selected == "line-chart"){
+				graphic = new LineChart(idChart, X, Y);
+			}
+            else if(gauge_selected == "google-map"){
+                graphic = new GoogleMap(idChart, X, Y);
+            }
+            else{
+                alert("Not Allowed__");
+                return;
+            }
+
+			//$("#target").prepend(graphic.getHTMLContent());
+			charts[idChart]=graphic;
+
+			var d = document.getElementById("main-"+idChart);
+	    	d.style.left = graphic.coord.x+'px';
+	    	d.style.top = graphic.coord.y+'px';
+
+   			var divsWithWindowClass = jsPlumb.CurrentLibrary.getSelector(".window");
+    		jsPlumb.draggable(divsWithWindowClass);
+
+    		enableDragAndDropSensors("drop_canvas-"+idChart);	
+			enableButtonsLive(idChart);
 
 			contentDiv.tinyscrollbar_update();
 
-			//stop events fire
 			event.stopPropagation();
 		};
 	};
@@ -590,28 +813,29 @@ var explorer_enabled = true;
 		addDragEventsForGaugesOnTarget(contentDiv);
 	};
 
-	//only for sensors
+	//only for input elements
 	var addOnDragStartEndSensors = function(ids){
 		
-		var sensor = document.getElementById(ids);
-		sensor.ondragstart = function(event) {
-			event.dataTransfer.setData("sensors", sensor.id);
+		var service = document.getElementById(ids);
+		service.ondragstart = function(event) {
+
+			event.dataTransfer.setData("service", service.id);
 			for(var graphic in charts){
-				if(charts[graphic].type=="line")
-					$('#drop_div-'+charts[graphic].id).addClass("drop_div");
+				if(charts[graphic].type=="line-chart" || charts[graphic].type=="google-map")
+					$('#drop_canvas-'+charts[graphic].id).addClass("drop_div");
 			}
 		};
-		sensor.ondragend = function(event) {
+		service.ondragend = function(event) {
 			for(var graphic in charts){
-				if(charts[graphic].type=="line")
-					$('#drop_div-'+charts[graphic].id).removeClass("drop_div");
+				if(charts[graphic].type=="line-chart" || charts[graphic].type=="google-map" )
+					$('#drop_canvas-'+charts[graphic].id).removeClass("drop_div");
 			}
 		};
 	};
 
 	var addDragEventsForSensorsOnGauge = function(idChart){
 		var target = document.getElementById(idChart);
-				
+
 		target.ondragover = function(event){
 			event.preventDefault();
 			event.stopPropagation();
@@ -620,94 +844,121 @@ var explorer_enabled = true;
 		
 		target.ondragenter = function(event){
  			//add class "valid"
+            debug=event;
 			event.stopPropagation();
 			var idChart_selected = event.target.id.split('-')[1];
-			if(charts[idChart_selected].type!="line")
-				this.className = "main_valid";
+
+			if(charts[idChart_selected].type!="line-chart")
+				;//this.className = "main_valid";
 			else{
 				charts[idChart_selected].options['backgroundColor'] = "yellow";
-				charts[idChart_selected].chart.draw(charts[idChart_selected].graphData, charts[idChart_selected].options);			}
+				charts[idChart_selected].chart.draw(charts[idChart_selected].graphData, charts[idChart_selected].options);			
+			}
+
  		};
 
  		target.ondragleave = function(event){
  			//remove class "valid"
  			event.stopPropagation();
  			var idChart_selected = event.target.id.split('-')[1];
- 			if(charts[idChart_selected].type!="line"){
-				this.className = "main";
-			}else{
+ 			if(charts[idChart_selected].type!="line-chart")
+				;//	this.className = "main";
+			else{
 				charts[idChart_selected].options['backgroundColor'] = "";
 				charts[idChart_selected].chart.draw(charts[idChart_selected].graphData, charts[idChart_selected].options);
 				}
  		};
 
- 		//SENSOR ON CHART
+ 		//INPUT ELEMENT ON CHART
 		target.ondrop = function(event){
-			
 			if(event.preventDefault){
 				event.preventDefault();
 			}
 			//stop events fire
 			event.stopPropagation();
 			
-			var sensor_selected = event.dataTransfer.getData("sensors");
-			//this.className = "main";
+			var service_selected = event.dataTransfer.getData("service");
 			
 			var idChart_selected = event.target.id.split('-')[1];
 			
 			var graphic=charts[idChart_selected];
 			
-			$('#'+idChart_selected).removeClass("drop_div");
-			
-			if(graphic.type!="line"){
-				this.className = "main";
-			}else{
-				graphic.options['backgroundColor'] = "";
-				graphic.chart.draw(graphic.graphData, graphic.options);
-			}
-				
-			if(sensor_selected!=''){
-				if(!in_array(sensor_selected,graphic.sensor_list)){
-					
-					if(!listeners_numbers.hasOwnProperty(sensor_selected)){
-						//add event listener
-						sensors[sensor_selected].addEventListener('sensor', onSensorEvent, false);
-						listeners_numbers[sensor_selected]=0;
-					}
-					graphic.sensor_active[sensor_selected] = true;
-		            listeners_numbers[sensor_selected]++;
-		            
-		            $('#startstop_cfg_but-'+graphic.id+'-'+sensor_selected).live( 'click',function(event){
-			     		 startStopSensor(graphic.id,sensor_selected);
-			         });
-		            
-		            $('#remove_sensor-'+graphic.id+'-'+sensor_selected).live("click",function(){
-		            	removeSensor(graphic,sensor_selected);
-		    		});
-		           
-		            if(graphic.type!="line"){
-		            	if(graphic.sensor_list[0]!=null){
-		            		removeSensor(graphic,graphic.sensor_list[0]);
-		            	}
-	            		graphic.sensor_list[0]=sensor_selected;		//link new sensor to the gauge
-	            		graphic.serviceAddress_list[0]=sensors[sensor_selected].serviceAddress;
-	            		$('#name-'+graphic.id).text(sensors[sensor_selected].description);
-		            }
-					else{
-						if(graphic.sensor_list.length==0){
-							graphic.graphData.removeColumn(1);
-						}
-						
-						graphic.sensor_list.push(sensor_selected);
-						graphic.serviceAddress_list.push(sensors[sensor_selected].serviceAddress);
-						graphic.graphData.addColumn('number',sensors[sensor_selected].description);
-						
-					}
-				}
-				else
-					alert("Not allowed - This sensor is already in this graph");
-			}else
-				alert("Not allowed");
+
+            //alert("Dropping "+sensors[service_selected].api+ " on " + charts[idChart_selected].type);
+            
+            if(graphic.canDrop(sensors[service_selected].api)){
+
+    			$('#'+idChart_selected).removeClass("drop_div");
+    			
+    			if(charts[idChart_selected].type == "text-label")
+     				this.className = "text-label";
+     			else if(graphic.type!="line-chart"){
+    				this.className = "main";
+    			}else{
+    				graphic.options['backgroundColor'] = "";
+    				graphic.chart.draw(graphic.graphData, graphic.options);
+    			}
+    				
+    			if(service_selected!=''){
+    				if(!in_array(service_selected,graphic.service_list)){
+    					if(!listeners_numbers.hasOwnProperty(service_selected)){
+    						if(sensors[service_selected].api.indexOf(sensors_type) != -1){
+                                //add event listener
+    						    sensors[service_selected].addEventListener('sensor', onSensorEvent, false);
+                            }
+                            else if(sensors[service_selected].api.indexOf(geolocation_type) != -1){
+                                var PositionOptions = {};
+                                PositionOptions.enableHighAccuracy = true;
+                                //PositionOptions.maximumAge = 1000;
+                                PositionOptions.timeout = 1000;
+
+                                //alert(JSON.stringify(sensors[service_selected]));
+                                //sensors[service_selected].watchPosition(onGeolocationEvent, error, PositionOptions);
+                                navigator.geolocation.watchPosition(onGeolocationEvent, error, PositionOptions);
+
+                                
+                            }
+                            listeners_numbers[service_selected]=0;
+    					}
+    					graphic.sensor_active[service_selected] = true;
+    		            listeners_numbers[service_selected]++;
+    		            
+    		            $('#startstop_cfg_but-'+graphic.id+'-'+service_selected).live( 'click',function(event){
+    			     		 startStopSensor(graphic.id,service_selected);
+    			         });
+    		            
+    		            $('#remove_sensor-'+graphic.id+'-'+service_selected).live("click",function(){
+    		            	removeSensor(graphic,service_selected);
+    		    		});
+    		           
+    		            if(graphic.type!="line-chart"){
+    		            	if(graphic.service_list[0]!=null){
+    		            		removeSensor(graphic,graphic.service_list[0]);
+    		            	}
+                            
+    	            		graphic.service_list[0]=service_selected;		//link new sensor to the gauge
+    	            		graphic.serviceAddress_list[0]=sensors[service_selected].serviceAddress;
+    	            		$('#name-'+graphic.id).text(sensors[service_selected].description);
+    		            }
+    					else{
+    						if(graphic.service_list.length==0){
+    							graphic.graphData.removeColumn(1);
+    						}
+    						
+
+    						graphic.service_list.push(service_selected);
+    						graphic.serviceAddress_list.push(sensors[service_selected].serviceAddress);
+    						graphic.graphData.addColumn('number',sensors[service_selected].description);
+    						
+    					}
+    				}
+    				else
+    					alert("Not allowed - This sensor is already in this graph");
+    			}else
+    				alert("Not allowed");
+            }
+            else
+                alert("This drop is not allowed");
 		};
 	};
 
@@ -733,133 +984,156 @@ var explorer_enabled = true;
          	$("#settings-container").fadeIn(1000);
         	 for(var elem in charts){
         		 var graphic= charts[elem];
-        		 if(graphic.type=="line"){
+        		 if(graphic.type=="line-chart"){
         			 $("#chart_div-"+graphic.id).fadeOut();
         			 charts_to_fade.push(graphic.id);
         		 }
          	 }
          	
          	var graphic=charts[idChart];
-         	for(var sensor in graphic.sensor_list){
-         		var html='';
-				html+= "<div id='configuration_div-"+graphic.id+"-"+graphic.sensor_list[sensor]+"' class='configuration_div'>";
-				html+= "	<div id='remove_sensor-"+graphic.id+"-"+graphic.sensor_list[sensor]+"' class='remove_sensor' >X</div> ";
-				html+= "	<div id='sensor_name_config-"+graphic.sensor_list[sensor]+"'>Sensor name: "+sensors[graphic.sensor_list[sensor]].description+"</div>";
-				html+= "	<div id='sensor_id_config-"+graphic.sensor_list[sensor]+"'> Sensor id: "+graphic.sensor_list[sensor]+"</div>";
-				html+= "	<div id='mode' class='param_td'>Mode";
-				html+= "   		<select id='cfg_mode-"+graphic.sensor_list[sensor]+"'>";
-				if(sensors_configuration[graphic.sensor_list[sensor]].eventFireMode=='fixedinterval'){
-					html+= "    	<option selected value='fixedinterval'>Fixed Interval</option>";
-					html+= "    	<option value='valuechange'>Value Change</option>";
-				}else{
-					html+= "    	<option value='fixedinterval'>Fixed Interval</option>";
-					html+= "    	<option selected value='valuechange'>Value Change</option>";
-				}
-				html+= "   		</select>";
-				if(graphic.sensor_active[graphic.sensor_list[sensor]]==true){
-					html+=" 	<input type='button' id='startstop_cfg_but-"+graphic.id+"-"+graphic.sensor_list[sensor]+"' value='Stop'>";
-				}else{
-					html+=" 	<input type='button' id='startstop_cfg_but-"+graphic.id+"-"+graphic.sensor_list[sensor]+"' value='Start'>";
-				}
-				html+= "	</div>";
-				html+= "	<div id='rate' > Rate <input type='text' id='cfg_rate-"+graphic.sensor_list[sensor]+"' class='cfg_element' value='"+sensors_configuration[graphic.sensor_list[sensor]].rate+"' ></div>";
-				html+= "	<div id='timeout'> Timeout <input type='text' id='cfg_timeout-"+graphic.sensor_list[sensor]+"' class='cfg_element' value='"+sensors_configuration[graphic.sensor_list[sensor]].time+"'></div>";
-				if(graphic.type!='line'){
-					html+= "	<div id='range'> Range:		Min <input type='text' id='min_range-"+graphic.sensor_list[sensor]+"' value='"+graphic.minRange+"'>		Max <input type='text' id='max_range-"+graphic.sensor_list[sensor]+"' value='"+graphic.maxRange+"'></div>";
-				}else{
-					html+= "	<div id='color' class='param_td'>Color";
-					html+= "   		<select id='cfg_color-"+graphic.sensor_list[sensor]+"'>";
-					for(var i=0;i<graphic.options.colors.length;i++){
-						if(lineColor[i]==graphic.options.colors[sensor]){
-							html+= "    	<option selected value='"+lineColor[i]+"'>"+lineColor[i]+"</option>";
-						}
-						else{
-							html+= "    	<option value='"+lineColor[i]+"'>"+lineColor[i]+"</option>";
-						}
-					}
-					html+= "   		</select>";	
-				}
-				html+= "</div>";
-				$('#settings-content').append(html);
-         	}
+            
+         	for(var sensor in graphic.service_list){
+                if(sensors[graphic.service_list[sensor]].api.indexOf(sensors_type) != -1){
+                    // Configuration for sensor service
+             		var html='';
+    				html+= "<div id='configuration_div-"+graphic.id+"-"+graphic.service_list[sensor]+"' class='configuration_div'>";
+    				html+= "	<div id='remove_sensor-"+graphic.id+"-"+graphic.service_list[sensor]+"' class='remove_sensor' >X</div> ";
+    				html+= "	<div id='sensor_name_config-"+graphic.service_list[sensor]+"'>Sensor name: "+sensors[graphic.service_list[sensor]].description+"</div>";
+    				html+= "	<div id='sensor_id_config-"+graphic.service_list[sensor]+"'> Sensor id: "+graphic.service_list[sensor]+"</div>";
+    				html+= "	<div id='mode' class='param_td'>Mode";
+    				html+= "   		<select id='cfg_mode-"+graphic.service_list[sensor]+"'>";
+    				if(sensors_configuration[graphic.service_list[sensor]].eventFireMode=='fixedinterval'){
+    					html+= "    	<option selected value='fixedinterval'>Fixed Interval</option>";
+    					html+= "    	<option value='valuechange'>Value Change</option>";
+    				}else{
+    					html+= "    	<option value='fixedinterval'>Fixed Interval</option>";
+    					html+= "    	<option selected value='valuechange'>Value Change</option>";
+    				}
+    				html+= "   		</select>";
+    				if(graphic.sensor_active[graphic.service_list[sensor]]==true){
+    					html+=" 	<input type='button' id='startstop_cfg_but-"+graphic.id+"-"+graphic.service_list[sensor]+"' value='Stop'>";
+    				}else{
+    					html+=" 	<input type='button' id='startstop_cfg_but-"+graphic.id+"-"+graphic.service_list[sensor]+"' value='Start'>";
+    				}
+    				html+= "	</div>";
+    				html+= "	<div id='rate' > Rate <input type='text' id='cfg_rate-"+graphic.service_list[sensor]+"' class='cfg_element' value='"+sensors_configuration[graphic.service_list[sensor]].rate+"' ></div>";
+    				html+= "	<div id='timeout'> Timeout <input type='text' id='cfg_timeout-"+graphic.service_list[sensor]+"' class='cfg_element' value='"+sensors_configuration[graphic.service_list[sensor]].time+"'></div>";
+    				
+                    if(graphic.type!='line-chart'){
+    					html+= "	<div id='range'> Range:		Min <input type='text' id='min_range-"+graphic.service_list[sensor]+"' value='"+graphic.minRange+"'>		Max <input type='text' id='max_range-"+graphic.service_list[sensor]+"' value='"+graphic.maxRange+"'></div>";
+    				}else{
+    					html+= "	<div id='color' class='param_td'>Color";
+    					html+= "   		<select id='cfg_color-"+graphic.service_list[sensor]+"'>";
+    					for(var i=0;i<graphic.options.colors.length;i++){
+    						if(lineColor[i]==graphic.options.colors[sensor]){
+    							html+= "    	<option selected value='"+lineColor[i]+"'>"+lineColor[i]+"</option>";
+    						}
+    						else{
+    							html+= "    	<option value='"+lineColor[i]+"'>"+lineColor[i]+"</option>";
+    						}
+    					}
+    					html+= "   		</select>";	
+    				}
+    				html+= "</div>";
+    				$('#settings-content').append(html);
+                }
+                else if(sensors[graphic.service_list[sensor]].api.indexOf(geolocation_type) != -1){
+                    //TODO Configuration for geolocation service
+                    var html = "";
+                    alert(graphic.type);
+                    if(graphic.type == 'text-label'){
+                        html += "Configuration for Text Label";
+                    }
+                    else if(graphic.type == 'google-map'){
+                        html += "Configuration for Google Map";
+                    }
+                    $('#settings-content').append(html);
+                }
+            }
          	html= "	<div id='save_cfg_but-"+idChart+"' class='save_cfg_but'> <input class='button' type='button' value='Save'></div>";
          	$('#settings-content').append(html);
-         	
          });
 		 
 		 //SAVE BUTTON
          $('#save_cfg_but-'+idChart).live( 'click',function(event){
      		var graphic=charts[idChart];
      		var color=[];
-          	for(var sensor in graphic.sensor_list){
-          		var urate = $("#cfg_rate-"+graphic.sensor_list[sensor]).val();
-     			var utime = $("#cfg_timeout-"+graphic.sensor_list[sensor]).val();
-     			var umode = $("#cfg_mode-"+graphic.sensor_list[sensor]).val();
-     			graphic.minRange=$("#min_range-"+graphic.sensor_list[sensor]).val();
-     			graphic.maxRange=$("#max_range-"+graphic.sensor_list[sensor]).val();
-     			if(graphic.type=='gauge'){
-     				$("#drop_canvas-"+idChart).empty();
-     				var chart=new RGraph.Gauge("drop_canvas-"+idChart, parseInt(graphic.minRange), parseInt(graphic.maxRange), 0);
-     				graphic.chart=chart;
-     			}else if(graphic.type=='thermometer'){
-     				$("#drop_canvas-"+idChart).empty();
-     				var chart=new RGraph.Thermometer("drop_canvas-"+idChart, parseInt(graphic.minRange), parseInt(graphic.maxRange), 0);
-     				graphic.chart=chart;
-     			}
-     			else{
-     				color[sensor]=$("#cfg_color-"+graphic.sensor_list[sensor]).val();
-         			graphic.options.colors[sensor]=color[sensor];
-     			}
-     			sensors_configuration[graphic.sensor_list[sensor]]={
+            
+          	for(var sensor in graphic.service_list){
+                if(sensors[graphic.service_list[sensor]].api.indexOf(sensors_type) != -1){
+              		var urate = $("#cfg_rate-"+graphic.service_list[sensor]).val();
+         			var utime = $("#cfg_timeout-"+graphic.service_list[sensor]).val();
+         			var umode = $("#cfg_mode-"+graphic.service_list[sensor]).val();
+         			graphic.minRange=$("#min_range-"+graphic.service_list[sensor]).val();
+         			graphic.maxRange=$("#max_range-"+graphic.service_list[sensor]).val();
+                    if(graphic.type=='gauge'){
+         				$("#drop_canvas-"+idChart).empty();
+         				var chart=new RGraph.Gauge("drop_canvas-"+idChart, parseInt(graphic.minRange), parseInt(graphic.maxRange), 0);
+         				graphic.chart=chart;
+         			}else if(graphic.type=='thermometer'){
+         				$("#drop_canvas-"+idChart).empty();
+         				var chart=new RGraph.Thermometer("drop_canvas-"+idChart, parseInt(graphic.minRange), parseInt(graphic.maxRange), 0);
+         				graphic.chart=chart;
+         			}
+         			else if (graphic.type=='line-chart'){
+         				color[sensor]=$("#cfg_color-"+graphic.service_list[sensor]).val();
+             			graphic.options.colors[sensor]=color[sensor];
+         			}
+         			sensors_configuration[graphic.service_list[sensor]]={
     					rate:urate,
     					time:utime,
     					eventFireMode:umode
-    			};
-          		sensors[graphic.sensor_list[sensor]].configureSensor({rate: urate, time: utime, eventFireMode: umode}, 
+        			};
+              		sensors[graphic.service_list[sensor]].configureSensor({rate: urate, time: utime, eventFireMode: umode}, 
      					function(){
      					},
      					function (){
      						console.error('Error configuring Sensor ' + service.api);
      					}
      				);
+                }
           	}
           	fadeOutSettings();
-      	 });
-              
+      	 });     
 	}
-	
 
 
 	function deleteChart(idChart_selected){
 		var graphic= charts[idChart_selected];
-		for(var sens in graphic.sensor_list){
-			$('#startstop_cfg_but-'+graphic.id+'-'+graphic.sensor_list[sens]).die();
-			if((listeners_numbers.hasOwnProperty(graphic.sensor_list[sens]))&&(graphic.sensor_active[graphic.sensor_list[sens]])){	//if sensor is inactive, the listener is already removed
-				listeners_numbers[graphic.sensor_list[sens]]--;
-				if(listeners_numbers[graphic.sensor_list[sens]]==0){
-					sensors[graphic.sensor_list[sens]].removeEventListener('sensor', onSensorEvent, false);
-					delete listeners_numbers[graphic.sensor_list[sens]];
+		for(var sens in graphic.service_list){
+			$('#startstop_cfg_but-'+graphic.id+'-'+graphic.service_list[sens]).die();
+			if((listeners_numbers.hasOwnProperty(graphic.service_list[sens]))&&(graphic.sensor_active[graphic.service_list[sens]])){	//if sensor is inactive, the listener is already removed
+				listeners_numbers[graphic.service_list[sens]]--;
+				if(listeners_numbers[graphic.service_list[sens]]==0){
+					if(sensors[graphic.service_list[sens]].api.indexOf(geolocation_type) != -1){
+                        ;//handle;
+                    }
+                    else if(sensors[graphic.service_list[sens]].api.indexOf(sensors_type) != -1){
+                        sensors[graphic.service_list[sens]].removeEventListener('sensor', onSensorEvent, false);
+                    }
+					delete listeners_numbers[graphic.service_list[sens]];
 				}		
 			}
 		}
-		delete charts[idChart_selected];
+		
 		$("#main-"+idChart_selected).remove();
 		$('#delete-'+idChart_selected).die();
 		$('#settings-'+idChart_selected).die();
+        delete charts[idChart_selected];
 	}
 	
 	function removeSensor(graphic, sid){
 		listeners_numbers[sid]--;
 		delete graphic.sensor_active[sid];
 		
-		if(graphic.type=='line'){
-			graphic.graphData.removeColumn(graphic.sensor_list.indexOf(sid)+1);
-			graphic.sensor_list.splice(graphic.sensor_list.indexOf(sid),1);
-			if(graphic.sensor_list.length==0){
+		if(graphic.type=='line-chart'){
+			graphic.graphData.removeColumn(graphic.service_list.indexOf(sid)+1);
+			graphic.service_list.splice(graphic.service_list.indexOf(sid),1);
+			if(graphic.service_list.length==0){
 				graphic.graphData.addColumn('number',null);		//add a null column only for a graphical aspect
 			}
 		}else{
-			graphic.sensor_list=[];
+			graphic.service_list=[];
 			$('#name-'+graphic.id).empty();
 		}
 		
@@ -897,12 +1171,12 @@ var explorer_enabled = true;
 		}
 	}
 	
+
 	function in_array(val, reference_array) {
 	    for(i = 0; i < reference_array.length; i++) {
-		if(val == reference_array[i]) {
-		    return true;
-		}
+    		if(val == reference_array[i]) {
+    		    return true;
+    		}
 	    }
 	    return false;
 	}
-//})();
