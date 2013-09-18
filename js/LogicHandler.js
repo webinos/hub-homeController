@@ -322,7 +322,8 @@ function settingProcessingConnection(source,target){
 		block_list[source].addOutputCallback(target, block_list[target].getOutputCallback());
 	}else if(block_list[target] instanceof Processing){
 		block_list[target].addInputNodes(source, null);
-		block_list[source].setOutputCallback(block_list[target].getProcessingCallback());
+		//block_list[source].setOutputCallback(block_list[target].getProcessingCallback());
+		block_list[source].addOutputCallback(target, block_list[target].getProcessingCallback());
 	}
 }
 
