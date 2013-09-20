@@ -740,11 +740,19 @@ function callExplorer(container) {
     webinos.dashboard
         .open({
                 module: 'explorer',
-                data: { service:'http://webinos.org/api/sensors.*' }
+                data: { 
+                    service:["http://webinos.org/api/sensors.*", "http://www.w3.org/ns/api-perms/geolocation"],
+                    multiselect: true
+                }
+
                 //data: { service:geolocation_type}
               }
             , function(){ console.log("***Dashboard opened");} )
-              .onAction( function (data) { serviceDiscovery(container, data.result); } );
+                .onAction( function (data) { 
+                    for(var i in data.result)
+                        serviceDiscovery(container, data.result[i]); 
+                }
+        );
 	}
 
 
@@ -775,6 +783,9 @@ function bindProperService(service){
             
             addOnDragStartEndSensors(service.id);
             
+            var leftColumn = $('#leftcolumn');
+            leftColumn.tinyscrollbar();
+            
             if(service.api.indexOf(sensors_type) != -1){
                 sensors_configuration[service.id]={
                     rate:500,
@@ -804,6 +815,7 @@ function serviceDiscovery(container, serviceFilter){
             onFound: function(service){
                 if ((service.id === serviceFilter.id) && (service.address === serviceFilter.serviceAddress)) {
                     bindProperService(service);
+
                     save_services(false);
                }
             }
