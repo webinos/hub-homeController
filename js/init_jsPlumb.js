@@ -180,7 +180,9 @@
                     data: { service:'http://webinos.org/api/sensors.*' }
                   }
                 , function(){ console.log("***Dashboard opened");} )
-                  .onAction( function (data) { serviceDiscovery(container, data.result); 
+                  .onAction( function (data) { 
+                    for(var i in data.result)
+                        serviceDiscovery(container, data.result[i]); 
             });
     }
 
@@ -213,7 +215,9 @@
                     data: { service:'http://webinos.org/api/actuators.*' }
                   }
                 , function(){ console.log("***Dashboard opened");} )
-                  .onAction( function (data) { actuatorDiscovery(container, data.result); 
+                  .onAction( function (data) { 
+                    for(var i in data.result)
+                        actuatorDiscovery(container, data.result[i]); 
             });
     }
 
