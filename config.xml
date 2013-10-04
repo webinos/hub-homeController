@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<widget xmlns="http://www.w3.org/ns/widgets" id="http://webinos.org/HAC" version="1.0">
+  <name>Webinos home automation controller gateway</name>
+  <description>Home automation controller for sensors and actuators</description>
+  <content src="index.html" />
+  <icon src="icon.png" />
+  <author>Giuseppe Latorre</author>
+</widget>
+
