@@ -11,59 +11,46 @@ var charts={};				//contain Graphic instances
 var debug;
 var sensors_type = "http://webinos.org/api/sensors";
 var geolocation_type = "http://www.w3.org/ns/api-perms/geolocation";
+var actuators_type = "http://webinos.org/api/actuators";
 
 var explorer_enabled = true;
 var element_counter = 0;
 
 
-var sensor_types = [
-        "http://webinos.org/api/sensors.*"
-/*
-	"http://webinos.org/api/sensors.temperature",
-	"http://webinos.org/api/sensors.humidity",
-	"http://webinos.org/api/sensors.light",
-	"http://webinos.org/api/sensors.voltage",
-	"http://webinos.org/api/sensors.electricity",
-	"http://webinos.org/api/sensors.proximity",
-	"http://webinos.org/api/sensors.heartratemonitor",
-    "http://webinos.org/api/sensors.rpm",
-    "http://webinos.org/api/sensors.vss"*/
-];
-
 var service_types = [
     "http://www.w3.org/ns/api-perms/geolocation",
-    "http://webinos.org/api/sensors.*"
+    "http://webinos.org/api/sensors/*",
+    "http://webinos.org/api/actuators/*"
 ];
 
 var icons = {
-	"http://webinos.org/api/sensors.temperature": "temperature-icon.png",
-	"http://webinos.org/api/sensors.humidity": "humidity-icon.png",
-	"http://webinos.org/api/sensors.light": "light-icon.png",
-	"http://webinos.org/api/sensors.voltage": "voltage-icon.png",
-	"http://webinos.org/api/sensors.electricity":"electricity-icon.png",
-	"http://webinos.org/api/actuators.switch": "switch-icon.png",
-	"http://webinos.org/api/sensors.proximity": "proximity-icon.png",
-	"http://webinos.org/api/actuators.linearmotor": "switch-icon.png",
-	"http://webinos.org/api/sensors.heartratemonitor": "heartratemonitor-icon.png",
-    "http://webinos.org/api/sensors.rpm": "obd-icon.png",
-    "http://webinos.org/api/sensors.vss": "obd-icon.png",
-    
-    "http://webinos.org/api/sensors.load_pct": "obd-icon.png",
-    "http://webinos.org/api/sensors.throttlepos": "obd-icon.png",
-    "http://webinos.org/api/sensors.frp": "obd-icon.png",
-    "http://webinos.org/api/sensors.temp": "obd-icon.png",
-    "http://webinos.org/api/sensors.iat": "obd-icon.png",
-    "http://webinos.org/api/sensors.pidsupp0": "obd-icon.png",
-    "http://webinos.org/api/sensors.dtc_cnt": "obd-icon.png",
-    "http://webinos.org/api/sensors.dtcfrzf": "obd-icon.png",
-    "http://webinos.org/api/sensors.fuelsys": "obd-icon.png",
-    "http://webinos.org/api/sensors.shrtft13": "obd-icon.png",
-    "http://webinos.org/api/sensors.longft13": "obd-icon.png",
-    "http://webinos.org/api/sensors.shrtft24": "obd-icon.png",
-    "http://webinos.org/api/sensors.longft24": "obd-icon.png",
-    "http://webinos.org/api/sensors.map": "obd-icon.png",
-    "http://webinos.org/api/sensors.sparkadv": "obd-icon.png",
-    "http://webinos.org/api/sensors.maf": "obd-icon.png",
+	"http://webinos.org/api/sensors/temperature": "temperature-icon.png",
+	"http://webinos.org/api/sensors/humidity": "humidity-icon.png",
+	"http://webinos.org/api/sensors/light": "light-icon.png",
+	"http://webinos.org/api/sensors/voltage": "voltage-icon.png",
+	"http://webinos.org/api/sensors/electricity":"electricity-icon.png",
+	"http://webinos.org/api/actuators/switch": "switch-icon.png",
+	"http://webinos.org/api/sensors/proximity": "proximity-icon.png",
+	"http://webinos.org/api/actuators/linearmotor": "switch-icon.png",
+	"http://webinos.org/api/sensors/heartratemonitor": "heartratemonitor-icon.png",
+    "http://webinos.org/api/sensors/rpm": "obd-icon.png",
+    "http://webinos.org/api/sensors/vss": "obd-icon.png",
+    "http://webinos.org/api/sensors/load_pct": "obd-icon.png",
+    "http://webinos.org/api/sensors/throttlepos": "obd-icon.png",
+    "http://webinos.org/api/sensors/frp": "obd-icon.png",
+    "http://webinos.org/api/sensors/temp": "obd-icon.png",
+    "http://webinos.org/api/sensors/iat": "obd-icon.png",
+    "http://webinos.org/api/sensors/pidsupp0": "obd-icon.png",
+    "http://webinos.org/api/sensors/dtc_cnt": "obd-icon.png",
+    "http://webinos.org/api/sensors/dtcfrzf": "obd-icon.png",
+    "http://webinos.org/api/sensors/fuelsys": "obd-icon.png",
+    "http://webinos.org/api/sensors/shrtft13": "obd-icon.png",
+    "http://webinos.org/api/sensors/longft13": "obd-icon.png",
+    "http://webinos.org/api/sensors/shrtft24": "obd-icon.png",
+    "http://webinos.org/api/sensors/longft24": "obd-icon.png",
+    "http://webinos.org/api/sensors/map": "obd-icon.png",
+    "http://webinos.org/api/sensors/sparkadv": "obd-icon.png",
+    "http://webinos.org/api/sensors/maf": "obd-icon.png",
     "http://www.w3.org/ns/api-perms/geolocation": "geolocation-icon.png"
 };
 
@@ -451,16 +438,16 @@ CornerGauge.methods({
     }
 });
 
-function FuelGauge(idChart, X, Y){
+function FuelGauge(idChart, X, Y, min, max){
     arguments.callee.superConstructor.call(this, idChart, X, Y);
     this.type="fuel-gauge";
-    this.minRange= 0; //min_gauge_range;
-    this.maxRange= 100; //max_gauge_range;
+    this.minRange= (min)?min:0; //min_gauge_range;
+    this.maxRange= (max)?max:100; //max_gauge_range;
 
     this.allowed_drop = [sensors_type];
     
     $("#target").prepend(this.getHTMLContent());
-    this.chart = new RGraph.Fuel("drop_canvas-"+this.id, min_gauge_range, max_gauge_range, 0);
+    this.chart = new RGraph.Fuel("drop_canvas-"+this.id, this.minRange, this.maxRange, 0);
     RGraph.Effects.Fuel.Grow(this.chart);
 }
 
@@ -510,63 +497,60 @@ OdometerGauge.methods({
     }
 });
 
+
+function CheckBoxGauge(idChart, X, Y){
+    arguments.callee.superConstructor.call(this, idChart, X, Y);
+    this.type="checkbox-gauge";
+    //this.minRange=min_gauge_range;
+    //this.maxRange=max_gauge_range;
+
+    this.allowed_drop = [actuators_type];
     
-function updateUI(service_id, data){
-    for(var elem in charts){
-        var graphic= charts[elem];
-        graphic.values=[];
+    $("#target").prepend(this.getHTMLContent());
 
-        if(in_array(service_id,graphic.service_list)&&(graphic.sensor_active[service_id]==true)){
-            if(data.type.indexOf(sensors_type)!=-1){
-                if( graphic.type == "gauge" || graphic.type == "corner-gauge" || graphic.type == "fuel-gauge" 
-                    || graphic.type == "odometer-gauge" || graphic.type == "thermometer" || graphic.type == "text-label" ){
-                    value = data.value;
-                    var normalized_val = value;
-                    if(graphic.maxRange && value > graphic.maxRange)
-                        normalized_val = graphic.maxRange;
-                    if(graphic.minRange && value < graphic.minRange)
-                        normalized_val = graphic.minRange;
-                    graphic.setVal(normalized_val);
-                }
-                else if(graphic.type == "line-chart"){
-                    var index=graphic.service_list.indexOf(sensor.id);
-                    
-                    graphic.values.push(time);
-                    for(var i=0;i<graphic.service_list.length;i++){
-                        if(i==index){
-                            graphic.values.push(value);
-                        }
-                        else{
-                            if(graphic.sensor_active[graphic.service_list[i]]==true){
-                                graphic.values.push(graphic.old_values[i+1]);
-                            }else{
-                                graphic.values.push(null);
-                            }
-                        }
-                    }
-                    graphic.numberOfValues++;
-                    graphic.graphData.addRow(graphic.values);
-                    graphic.chart.draw(graphic.graphData, graphic.options);
-                    graphic.old_values=graphic.values;
-                    
-                    if(graphic.numberOfValues>150){
-                        graphic.graphData.removeRow(0);
-                    }
-                }
-            }
-            else if(data.type.indexOf(geolocation_type)!=-1){
-                if(graphic.type == "text-label"){
-                    graphic.setVal(data.value.latitude + ", " + data.value.longitude);
-                }
-                else if(graphic.type == "google-map"){
-                    graphic.setCenter(data.value.latitude, data.value.longitude);
-                    graphic.addMarker(data.value.latitude, data.value.longitude);
-                }
+    //$("#drop_canvas-"+this.id+"[type=checkbox]").switchButton({
+    $("#checkbox-"+this.id+"[type=checkbox]").switchButton({
+                width: 80,
+                height: 40,
+                button_width: 60,
+                on_label: "1",
+                off_label: "0",
+            });
 
-            }
-        }
-    }
+    $(document).on("change", "#checkbox-"+this.id, function(event){
+        var val = (event.target.checked) ? 1 : 0;
+        var id = event.target.id.split("-")[1];
+        var graphic = charts[id];
+        graphic.setVal(val);
+    });
 }
+
+
+CheckBoxGauge.subclassFrom(Graphic);
+
+CheckBoxGauge.methods({
+    setVal : function(val) {
+        //this.chart.value = val;
+        //RGraph.Effects.Odo.Grow(this.chart);
+        if(this.service_list.length>0){
+            var service = sensors[this.service_list[0]];
+            service.setValue([val],
+                function(actuatorEvent){},
+                function(actuatorError){}
+            );
+        }
+    },
+    getHTMLContent : function(){
+        var html = arguments.callee.superFunction.call(this);
+        html += "<div class='checkboxgauge' id='drop_canvas-"+this.id+"'><input id='checkbox-"+this.id+"' type='checkbox' value='0'></div></div>";
+        return html;
+    },
+    getCustomSettingsForSensor : function(sensor){
+        return "<div id='range'> Range:     Min <input type='text' id='min_range-"+this.service_list[sensor]+"' value='"+this.minRange+"'>        Max <input type='text' id='max_range-"+this.service_list[sensor]+"' value='"+this.maxRange+"'></div>";
+    }
+});
+
+  
 
 var onGeolocationEvent = function(event){
     var data = {};
@@ -707,8 +691,12 @@ function load_graphics(){
                 else if(contents[i].type == "odometer-gauge"){
                     graphic = new OdometerGauge(idChart, X, Y);
                 }
+                else if(contents[i].type == "checkbox-gauge"){
+                    graphic = new CheckBoxGauge(idChart, X, Y);
+                }
                 else
                     continue;
+
 
                 charts[idChart]=graphic;
 
@@ -741,7 +729,7 @@ function callExplorer(container) {
         .open({
                 module: 'explorer',
                 data: { 
-                    service:["http://webinos.org/api/sensors.*", "http://www.w3.org/ns/api-perms/geolocation"],
+                    service: service_types,
                     multiselect: true
                 }
 
@@ -1066,20 +1054,23 @@ var addDragEventsForGaugesOnTarget = function(contentDiv){
         else if(gauge_selected == "btnOdometer"){
             graphic = new OdometerGauge(idChart, X, Y);
         }
+        else if(gauge_selected == "btnCheckBox"){
+             graphic = new CheckBoxGauge(idChart, X, Y);
+        }
         else{
             alert("This component has not be implemented");
             return;
         }
 
-		//$("#target").prepend(graphic.getHTMLContent());
 		charts[idChart]=graphic;
 
 		var d = document.getElementById("main-"+idChart);
     	d.style.left = graphic.coord.x+'px';
     	d.style.top = graphic.coord.y+'px';
 
-			var divsWithWindowClass = jsPlumb.CurrentLibrary.getSelector(".window");
+		var divsWithWindowClass = jsPlumb.CurrentLibrary.getSelector(".window");
 		jsPlumb.draggable(divsWithWindowClass);
+
 
 		enableDragAndDropSensors("drop_canvas-"+idChart);	
 		enableButtonsLive(idChart);
@@ -1118,7 +1109,6 @@ var addOnDragStartEndSensors = function(ids){
 
 var addDragEventsForSensorsOnGauge = function(idChart){
 	var target = document.getElementById(idChart);
-
 	target.ondragover = function(event){
 		event.preventDefault();
 		event.stopPropagation();
@@ -1131,26 +1121,29 @@ var addDragEventsForSensorsOnGauge = function(idChart){
 		event.stopPropagation();
 		var idChart_selected = event.target.id.split('-')[1];
 
-		if(charts[idChart_selected].type!="line-chart")
-			;//this.className = "main_valid";
-		else{
-			charts[idChart_selected].options['backgroundColor'] = "yellow";
-			charts[idChart_selected].chart.draw(charts[idChart_selected].graphData, charts[idChart_selected].options);			
-		}
+        if(idChart_selected){
+    		if(charts[idChart_selected].type!="line-chart")
+    			;//this.className = "main_valid";
+    		else{
+    			charts[idChart_selected].options['backgroundColor'] = "yellow";
+    			charts[idChart_selected].chart.draw(charts[idChart_selected].graphData, charts[idChart_selected].options);			
+    		}
+        }
+	};
 
-		};
-
-		target.ondragleave = function(event){
-			//remove class "valid"
-			event.stopPropagation();
-			var idChart_selected = event.target.id.split('-')[1];
-			if(charts[idChart_selected].type!="line-chart")
-			;//	this.className = "main";
-		else{
-			charts[idChart_selected].options['backgroundColor'] = "";
-			charts[idChart_selected].chart.draw(charts[idChart_selected].graphData, charts[idChart_selected].options);
-			}
-		};
+	target.ondragleave = function(event){
+		//remove class "valid"
+		event.stopPropagation();
+		var idChart_selected = event.target.id.split('-')[1];
+        if(idChart_selected){
+            if(charts[idChart_selected].type!="line-chart")
+                ;//	this.className = "main";
+            else{
+                charts[idChart_selected].options['backgroundColor'] = "";
+                charts[idChart_selected].chart.draw(charts[idChart_selected].graphData, charts[idChart_selected].options);
+            }
+        }
+	};
 
 		//INPUT ELEMENT ON CHART
 	target.ondrop = function(event){
@@ -1166,26 +1159,33 @@ var addDragEventsForSensorsOnGauge = function(idChart){
 		
 		var graphic=charts[idChart_selected];
 		
-        if(graphic.canDrop(sensors[service_selected].api)){
+        try{
+            if(graphic.canDrop(sensors[service_selected].api)){
 
-			$('#'+idChart_selected).removeClass("drop_div");
-			
-			if(charts[idChart_selected].type == "text-label")
- 				this.className = "text-label";
- 			else if(graphic.type!="line-chart"){
-				this.className = "main";
-			}else{
-				graphic.options['backgroundColor'] = "";
-				graphic.chart.draw(graphic.graphData, graphic.options);
-			}
-				
-			if(service_selected!=''){
-				assign_services_to_graphics(service_selected, graphic);
-			}else
-				alert("Not allowed");
+    			$('#'+idChart_selected).removeClass("drop_div");
+    			
+    			if(charts[idChart_selected].type == "text-label")
+     				this.className = "text-label";
+                else if(graphic.type=="checkbox-gauge"){
+                }
+     			else if(graphic.type!="line-chart"){
+    				this.className = "main";
+    			}else{
+    				graphic.options['backgroundColor'] = "";
+    				graphic.chart.draw(graphic.graphData, graphic.options);
+    			}
+    				
+    			if(service_selected!=''){
+    				assign_services_to_graphics(service_selected, graphic);
+    			}else
+    				alert("Not allowed");
+            }
+            else
+                alert("This drop is not allowed");
         }
-        else
-            alert("This drop is not allowed");
+        catch(e){
+            alert("This drop is not allowed");   
+        }
 	};
 };
 
@@ -1204,6 +1204,8 @@ function assign_services_to_graphics(service_selected, graphic){
                 PositionOptions.timeout = 1000;
                 //sensors[service_selected].watchPosition(onGeolocationEvent, error, PositionOptions);
                 navigator.geolocation.watchPosition(onGeolocationEvent, error, PositionOptions);
+            }
+            else if(sensors[service_selected].api.indexOf(actuators_type) != -1){
             }
             listeners_numbers[service_selected]=0;
         }
@@ -1301,9 +1303,26 @@ function enableButtonsLive(idChart){
      				graphic.chart=chart;
      			}
                 else if(graphic.type=='fuel-gauge'){ //NOTE: this component gives some problems while changing settings
-                    $("#drop_canvas-"+idChart).empty();
+                    $("#drop_canvas-"+idChart).remove();
                     var chart=new RGraph.Fuel("drop_canvas-"+idChart, parseInt(graphic.minRange), parseInt(graphic.maxRange), 0);
                     graphic.chart=chart;
+                    
+                    //GLT
+                    // var tmp_service_list = graphic.service_list
+                    // var tmp_coord = graphic.coord;
+
+                    // var tmp_minrange = graphic.minRange;
+                    // var tmp_maxrange = graphic.maxRange;
+
+                    // $("#main-"+idChart).remove();
+                    // alert(JSON.stringify(tmp_coord));
+                    // graphic = new FuelGauge(idChart, tmp_coord.x , tmp_coord.y, tmp_minrange, tmp_maxrange);
+                    // graphic.service_list = tmp_service_list;
+                    
+                    // charts[idChart] = graphic;
+                    // var d = document.getElementById("main-"+idChart);
+                    // d.style.left = graphic.coord.x+'px';
+                    // d.style.top = graphic.coord.y+'px';
                 }
                 else if(graphic.type=='corner-gauge'){
                     $("#drop_canvas-"+idChart).empty();
@@ -1313,11 +1332,6 @@ function enableButtonsLive(idChart){
                 else if(graphic.type=='odometer-gauge'){
                     $("#drop_canvas-"+idChart).empty();
                     var chart=new RGraph.Odometer("drop_canvas-"+idChart, parseInt(graphic.minRange), parseInt(graphic.maxRange), 0);
-                    graphic.chart=chart;
-                }
-                else if(graphic.type=='thermometer'){
-                    $("#drop_canvas-"+idChart).empty();
-                    var chart=new RGraph.Thermometer("drop_canvas-"+idChart, parseInt(graphic.minRange), parseInt(graphic.maxRange), 0);
                     graphic.chart=chart;
                 }
      			else if (graphic.type=='line-chart'){
