@@ -1,14 +1,4 @@
-	var icons = {
-		"http://webinos.org/api/sensors.temperature": "temperature-icon.png",
-		"http://webinos.org/api/sensors.humidity": "humidity-icon.png",
-		"http://webinos.org/api/sensors.light": "light-icon.png",
-		"http://webinos.org/api/sensors.voltage": "voltage-icon.png",
-		"http://webinos.org/api/sensors.electricity":"electricity-icon.png",
-		"http://webinos.org/api/actuators.switch": "switch-icon.png",
-		"http://webinos.org/api/sensors.proximity": "proximity-icon.png",
-		"http://webinos.org/api/actuators.linearmotor": "switch-icon.png",
-		"http://webinos.org/api/sensors.heartratemonitor": "heartratemonitor-icon.png"
-	};
+
 
 	var sensors = {};
 	var sensorActive = {};

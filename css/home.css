@@ -43,6 +43,10 @@ hr {
 	border-bottom: 3px dashed #ADFF00;
 }
 
+#buttons_content{
+
+}
+
 #header, #footer {
 	position: absolute;
 	width: 100%;
