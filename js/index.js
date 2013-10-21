@@ -1137,8 +1137,10 @@ var addDragEventsForGaugesOnTarget = function(contentDiv){
              graphic = new CheckBoxGauge(idChart, X, Y);
         }
         else{
-            alert(gauge_selected);
-            alert("This component has not been implemented");
+            if(!gauge_selected)
+                alert("You have to drag a gauge from the right bar first");
+            else
+                alert("This component has not been implemented");
             return;
         }
 
