@@ -108,8 +108,8 @@ hr {
     margin-right: 40px;
     margin-left: 40px;
     margin-bottom: 20px;
-    width: 200px;
-    height: 200px;
+    width: 150px;
+    height:150px;
 }
 
 .label_main_page_button{
@@ -119,8 +119,10 @@ hr {
 }
 
 #img_main_title{
-    width: 740px;
-    height:350px;
+    /*width: 740px;
+    height:350px;*/
+    width: 700px;
+    height:320px;
 }
 
 #div_home{
