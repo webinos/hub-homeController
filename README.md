@@ -43,6 +43,7 @@ Assuming that $PZP_HOME is the path where you have cloned your webinos_pzp modul
 </pre>
 
 File API needs to be configured. Here is an example of config.json
+<pre>
 { "name": "file",
   "params": {
     "local": {
@@ -51,6 +52,7 @@ File API needs to be configured. Here is an example of config.json
     }
   }
 }
+</pre>
 
 ####How to install the application from github
 
