@@ -2,10 +2,6 @@
  * 
  *
 */
-    
-
-
-
 
 var charts={};				//contain Graphic instances
 var debug;
@@ -15,6 +11,7 @@ var actuators_type = "http://webinos.org/api/actuators";
 
 var explorer_enabled = true;
 var element_counter = 0;
+var last_chart_id;
 
 
 var service_types = [
@@ -255,28 +252,22 @@ function bindProperService(service){
             
             jQuery("#sensors_table").append(serviceCode);
 
-            //$('#remove_'+service.id).on('click',removeSensorFromExplorer);
-            $(document).on("click", "#remove_"+service.id, removeSensorFromExplorer);
-            
-            //container.tinyscrollbar_update();
-
-            //handle drag&drop for new sensor
-            //GLT
-            //if(Object.keys(charts).length != 0)
+            $(document).on("click", "#remove_"+service.id, removeSensorFromExplorer);            
             document.getElementById(service.id).draggable = true;
-            
             addOnDragStartEndSensors(service.id);
             
             var leftColumn = $('#leftcolumn');
             leftColumn.tinyscrollbar();
             
             if(service.api.indexOf(sensors_type) != -1){
-                sensors_configuration[service.id]={
-                    rate:500,
-                    time:500,
+                var configure_options = {
+                    rate:1000,
+                    timeout:500,
                     eventFireMode: "fixedinterval"
                 };
-                service.configureSensor({rate: 500, time: 500, eventFireMode: "fixedinterval"}, 
+
+                sensors_configuration[service.id]= configure_options;
+                service.configureSensor(configure_options, 
                     function(){
                     },
                     function (){
@@ -620,6 +611,7 @@ var addOnDragStartEndSensors = function(ids){
 	};
 };
 
+
 var addDragEventsForSensorsOnGauge = function(idChart){
 	var target = document.getElementById(idChart);
 
@@ -631,10 +623,12 @@ var addDragEventsForSensorsOnGauge = function(idChart){
 	
 	target.ondragenter = function(event){
 			//add class "valid"
-        debug=event;
 		event.stopPropagation();
 		var idChart_selected = event.target.id.split('-')[1];
-
+        
+        if(idChart_selected != undefined)
+            last_chart_id = idChart_selected;
+        
         if(idChart_selected){
     		if(charts[idChart_selected].type!="line-chart")
     			;//this.className = "main_valid";
@@ -649,6 +643,7 @@ var addDragEventsForSensorsOnGauge = function(idChart){
 		//remove class "valid"
 		event.stopPropagation();
 		var idChart_selected = event.target.id.split('-')[1];
+
         if(idChart_selected){
             if(charts[idChart_selected].type!="line-chart")
                 ;//	this.className = "main";
@@ -668,8 +663,9 @@ var addDragEventsForSensorsOnGauge = function(idChart){
 		event.stopPropagation();
 		
 		var service_selected = event.dataTransfer.getData("service");
-		
 		var idChart_selected = event.target.id.split('-')[1];
+        if (idChart_selected == undefined && last_chart_id != undefined)
+            idChart_selected = last_chart_id;
 		
 		var graphic=charts[idChart_selected];
 		
@@ -753,7 +749,7 @@ function assign_services_to_graphics(service_selected, graphic){
         });
     }
     else
-        alert("Not allowed - This sensor is already in this graph");
+        alert("Not allowed - This service is already associated to this graph");
 }
 
 function enableDragAndDropSensors(idChart){
@@ -820,23 +816,6 @@ function enableButtonsLive(idChart){
                     $("#drop_canvas-"+idChart).remove();
                     var chart=new RGraph.Fuel("drop_canvas-"+idChart, parseInt(graphic.minRange), parseInt(graphic.maxRange), 0);
                     graphic.chart=chart;
-                    
-                    //GLT
-                    // var tmp_service_list = graphic.service_list
-                    // var tmp_coord = graphic.coord;
-
-                    // var tmp_minrange = graphic.minRange;
-                    // var tmp_maxrange = graphic.maxRange;
-
-                    // $("#main-"+idChart).remove();
-                    // alert(JSON.stringify(tmp_coord));
-                    // graphic = new FuelGauge(idChart, tmp_coord.x , tmp_coord.y, tmp_minrange, tmp_maxrange);
-                    // graphic.service_list = tmp_service_list;
-                    
-                    // charts[idChart] = graphic;
-                    // var d = document.getElementById("main-"+idChart);
-                    // d.style.left = graphic.coord.x+'px';
-                    // d.style.top = graphic.coord.y+'px';
                 }
                 else if(graphic.type=='corner-gauge'){
                     $("#drop_canvas-"+idChart).empty();

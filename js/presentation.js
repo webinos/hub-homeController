@@ -251,12 +251,14 @@ function bindProperService(service){
             load_graphics(false);
 
             if(service.api.indexOf(sensors_type) != -1){
-                sensors_configuration[service.id]={
-                    rate:500,
-                    time:500,
+                var configure_options = {
+                    rate:1000,
+                    timeout:500,
                     eventFireMode: "fixedinterval"
                 };
-                service.configureSensor({rate: 500, time: 500, eventFireMode: "fixedinterval"}, 
+
+                sensors_configuration[service.id]= configure_options;
+                service.configureSensor(configure_options, 
                     function(){
                     },
                     function (){

@@ -156,7 +156,7 @@ Thermometer.methods({
     },
     getHTMLContent : function(){
         var html = arguments.callee.superFunction.call(this);
-        html += "<canvas class='main' id='drop_canvas-"+this.id+"' width='100' height='400'></canvas></div></div>";
+        html += "<canvas class='main' id='drop_canvas-"+this.id+"' width='100' height='400'></canvas></div>";
         return html;
     },
     getCustomSettingsForSensor : function(sensor){
@@ -187,7 +187,7 @@ Gauge.methods({
     },
     getHTMLContent : function(){
         var html = arguments.callee.superFunction.call(this);
-        html += "<canvas class='main' id='drop_canvas-"+this.id+"' width='250' height='250'></canvas></div></div>";         
+        html += "<canvas class='main' id='drop_canvas-"+this.id+"' width='250' height='250'></canvas></div>";         
         return html;
     },
     getCustomSettingsForSensor : function(sensor){
@@ -448,7 +448,7 @@ CornerGauge.methods({
     },
     getHTMLContent : function(){
         var html = arguments.callee.superFunction.call(this);
-        html += "<canvas class='main' id='drop_canvas-"+this.id+"' width='250' height='250'></canvas></div></div>";         
+        html += "<canvas class='main' id='drop_canvas-"+this.id+"' width='250' height='250'></canvas></div>";         
         return html;
     },
     getCustomSettingsForSensor : function(sensor){
@@ -478,7 +478,7 @@ FuelGauge.methods({
     },
     getHTMLContent : function(){
         var html = arguments.callee.superFunction.call(this);
-        html += "<canvas class='main' id='drop_canvas-"+this.id+"' width='250' height='250'></canvas></div></div>";         
+        html += "<canvas class='main' id='drop_canvas-"+this.id+"' width='250' height='250'></canvas></div>";         
         return html;
     },getCustomSettingsForSensor : function(sensor){
         return "<div id='range'> Range:     Min <input type='text' id='min_range-"+this.service_list[sensor]+"' value='"+this.minRange+"'>        Max <input type='text' id='max_range-"+this.service_list[sensor]+"' value='"+this.maxRange+"'></div>";
@@ -507,7 +507,7 @@ OdometerGauge.methods({
     },
     getHTMLContent : function(){
         var html = arguments.callee.superFunction.call(this);
-        html += "<canvas class='main' id='drop_canvas-"+this.id+"' width='250' height='250'></canvas></div></div>";         
+        html += "<canvas class='main' id='drop_canvas-"+this.id+"' width='250' height='250'></canvas></div>";         
         return html;
     },
     getCustomSettingsForSensor : function(sensor){
