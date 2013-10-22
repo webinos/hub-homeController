@@ -22,10 +22,11 @@ body {
 
 .button, input[type=button] {
 	background: -moz-linear-gradient(top, #dcff91 0%, #adff00 100%); /* FF3.6+ */
-	background: -webkit-linear-gradient(top, #dcff91 0%,#adff00 100%); /* Chrome10+,Safari5.1+ */
-	background: -o-linear-gradient(top, #dcff91 0%,#adff00 100%); /* Opera 11.10+ */
-	background: -ms-linear-gradient(top, #dcff91 0%,#adff00 100%); /* IE10+ */
-	background: linear-gradient(to bottom, #dcff91 0%,#adff00 100%); /* W3C */
+    background: -webkit-linear-gradient(top, #dcff91 0%,#adff00 100%);  Chrome10+,Safari5.1+ 
+    background: -o-linear-gradient(top, #dcff91 0%,#adff00 100%); /* Opera 11.10+ */
+    background: -ms-linear-gradient(top, #dcff91 0%,#adff00 100%); /* IE10+ */
+    background: linear-gradient(to bottom, #dcff91 0%,#adff00 100%); /* W3C */
+
 	color: #333;
 	display: inline-block;
 	padding: 0.5em 2em;
@@ -166,6 +167,14 @@ hr {
 
 #gauges_list > img, img[draggable=true] {
 	cursor: move;
+    margin-bottom: 5px;
+}
+
+.separator{
+    font-size: 18px;
+    margin-top: 30px;
+    margin-bottom: 10px;
+    color: #99FF66;
 }
 
 .sensor {
