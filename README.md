@@ -13,12 +13,11 @@ Hardware:
 ####How to install the application from github
 
 #####Prerequisites
-Home Controller Hub requires the following APIs
+Home Controller Hub requires the following webinos APIs
 
 * http://webinos.org/api/file
 * http://webinos.org/api/sensors
-* http://webinos.org/api/actuators
-* http://webinos.org/api/w3c/geolocation
+* https://github.com/webinos/webinos-api-iot.git
 
 Assuming that $PZP_HOME is the path where you have cloned your webinos_pzp module, you should exucute the following commands:
 
@@ -42,6 +41,18 @@ Assuming that $PZP_HOME is the path where you have cloned your webinos_pzp modul
   $ cd webinos-api-file
   $ npm install
 </pre>
+
+File API needs to be configured. Here is an example of config.json
+{ "name": "file",
+  "params": {
+    "local": {
+      "server": {"port": 9999, "hostname": "0.0.0.0"},
+      "shares": [{"name": "PC-SHARE", "path": "$HOME"}]
+    }
+  }
+}
+
+####How to install the application from github
 
 #####Install the Home Controller Hub Application
 <pre>
