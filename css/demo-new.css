@@ -219,3 +219,8 @@ width: 50px;
 input.cells_big {
 width: 150px;
 }
+
+.display_value{
+    margin-top: 10px;
+    font-size: large;
+}

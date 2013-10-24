@@ -65,6 +65,7 @@ function Processing(ic, id){
 		if(input_nodes.hasOwnProperty(inputID)){
 			//save value
 			input_nodes[inputID] = val_from_input;
+
 			if(allElementsAreCharged()){
 				//if i have all input values -> execute logic and callback
 				if(inner_callback){
@@ -73,6 +74,20 @@ function Processing(ic, id){
 						for(var i in output_callbacks){
 							output_callbacks[i](result, boxID);
 						}
+					}
+				}
+			}
+		}
+	}
+
+	this.execProcessingCallback = function(){
+		if(allElementsAreCharged()){
+			//if i have all input values -> execute logic and callback
+			if(inner_callback){
+				var result = inner_callback(getArray());
+				if(result!=-1){
+					for(var i in output_callbacks){
+						output_callbacks[i](result, boxID);
 					}
 				}
 			}
@@ -160,8 +175,8 @@ var greaterThan = function(values){
 	//values is an array
 	//values[0] = sx val
 	//values[1] = dx val
-	if(values.length==2){	
-		if(values[0]>values[1])
+	if(values.length==2){
+		if(parseInt(values[0])>parseInt(values[1]))
 			return 1;
 		else
 			return 0;
@@ -173,8 +188,9 @@ var lesserThan = function(values){
 	//values is an array
 	//values[0] = sx val
 	//values[1] = dx val
-	if(values.length==2){	
-		if(values[0]<values[1])
+	if(values.length==2){
+
+		if(parseInt(values[0])<parseInt(values[1]))
 			return 1;
 		else
 			return 0;
@@ -185,7 +201,7 @@ var lesserThan = function(values){
 var ANDManagment = function(values){
 	if(values.length>=2){
 		for(var i in values){
-			if( values[i] == 0)
+			if( parseInt(values[i]) == 0)
 				return 0;
 		}
 		return 1;
@@ -196,7 +212,7 @@ var ANDManagment = function(values){
 var ORManagment = function(values){
 	if(values.length>=2){
 		for(var i in values){
-			if( values[i] == 1)
+			if( parseInt(values[i]) == 1)
 				return 1;
 		}
 		return 0;
@@ -319,7 +335,11 @@ function settingUserInputConnection(source,target, position){
 
 function settingProcessingConnection(source,target){
 	if(block_list[target] instanceof Output){
+
 		block_list[source].addOutputCallback(target, block_list[target].getOutputCallback());
+
+		block_list[source].execProcessingCallback();
+
 	}else if(block_list[target] instanceof Processing){
 		block_list[target].addInputNodes(source, null);
 		//block_list[source].setOutputCallback(block_list[target].getProcessingCallback());

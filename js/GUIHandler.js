@@ -1,14 +1,3 @@
-	var icons = {
-		"http://webinos.org/api/sensors.temperature": "temperature-icon.png",
-		"http://webinos.org/api/sensors.humidity": "humidity-icon.png",
-		"http://webinos.org/api/sensors.light": "light-icon.png",
-		"http://webinos.org/api/sensors.voltage": "voltage-icon.png",
-		"http://webinos.org/api/sensors.electricity":"electricity-icon.png",
-		"http://webinos.org/api/actuators.switch": "switch-icon.png",
-		"http://webinos.org/api/sensors.proximity": "proximity-icon.png",
-		"http://webinos.org/api/actuators.linearmotor": "switch-icon.png",
-		"http://webinos.org/api/sensors.heartratemonitor": "heartratemonitor-icon.png"
-	};
 
 	var sensors = {};
 	var sensorActive = {};
@@ -318,8 +307,10 @@
 			var boxType = dd_box_name.split("_")[0];
 
 
-			var X = event.layerX - $(event.target).position().left;
-			var Y = event.layerY - $(event.target).position().top;
+			// var X = event.layerX - $(event.target).position().left;
+			// var Y = event.layerY - $(event.target).position().top;
+            var X = event.layerX-150;
+            var Y = event.layerY-100;
 
 			var coord = {
 				x:X,
@@ -497,10 +488,11 @@
 
 		var html = "";
 		html += "<div class='window' id='"+idbox+"' >";
-		html += "<div id='remove_"+idbox+"' style='clear:both;'><img width='10px' height='10px' src='./assets/x_min.png' style='float:right; margin-bottom:5px;'></img></div>";
+		//html += "<div id='remove_"+idbox+"' style='clear:both;'><img width='10px' height='10px' src='./assets/x_min.png' style='float:right; margin-bottom:5px;'></img></div>";
+        html += "<div id='remove_"+idbox+"' style='clear:both;'><img width='10px' height='10px' src='./assets/x_min.png' style='float:right;'></img></div>";
 		html += sensor.description+'<br>['+sensor.serviceAddress+']<br><br>';
 		html += '<img width="80px" height="80px" src="./assets/images/'+icons[sensor.api]+'" id="sensorIMG_'+sensor.id+'" /><br><br>';                     
-	    html += "<div id='value_"+sensor.id+"'>-</div>";
+	    html += "<div class='display_value' id='value_"+sensor.id+"'>-</div>";
 	    html += "</div>";
 
 	    $("#main").append(html);
@@ -584,7 +576,7 @@
 		html += '</tr>';
 		html += '</table>';
 		html += '</div>';
-	    html += "<div id='value_"+idbox+"'>-</div>";
+	    html += "<div class='display_value' id='value_"+idbox+"'>-</div>";
 	    html += "</div>";
 
 	    $("#main").append(html);
