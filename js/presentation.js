@@ -16,6 +16,10 @@ var actuators_type = "http://webinos.org/api/actuators";
 var explorer_enabled = true;
 var element_counter = 0;
 
+var num_services = -1;
+var count_services = 0;
+var services_to_handle = {};
+
 
 var service_types = [
     "http://www.w3.org/ns/api-perms/geolocation",
@@ -60,65 +64,124 @@ var onGeolocationEvent = function(event){
 }
 
 var onSensorEvent = function(event){
-	var sensor = sensors && sensors[event.sensorId];
-	var time=new Date(event.timestamp);
-	time=(time.getUTCHours()+2)+ ":"+time.getUTCMinutes()+":"+time.getUTCSeconds();
-	if(sensor){
+    var sensor = sensors && sensors[event.sensorId];
+    var time=new Date(event.timestamp);
+    time=(time.getUTCHours()+2)+ ":"+time.getUTCMinutes()+":"+time.getUTCSeconds();
+    if(sensor){
         var value= event.sensorValues[0] || 0;
         var data = {};
         data.type = sensors_type;
         data.value = value;
-        //updateUI(event.sensorId, data);
-		//console.log("************ SENSOR VALURE: " + value);
-		
-        for(var elem in charts){
-			var graphic= charts[elem];
-			graphic.values=[];
-			if(in_array(sensor.id,graphic.service_list)&&(graphic.sensor_active[sensor.id]==true)){	
+
+        for(var i in services_to_handle[sensor.id]){
+            var graphic= services_to_handle[sensor.id][i];
+            graphic.values=[];
+            if(in_array(sensor.id,graphic.service_list)&&(graphic.sensor_active[sensor.id]==true)){
                 console.log(graphic.type);
-				if( graphic.type == "gauge" || graphic.type == "corner-gauge" || graphic.type == "fuel-gauge" 
-                    || graphic.type == "odometer-gauge" || graphic.type == "thermometer" || graphic.type == "text-label" ){
-					var normalized_val = value;
-					if(graphic.maxRange && value > graphic.maxRange)
-						normalized_val = graphic.maxRange;
-					if(graphic.minRange && value < graphic.minRange)
-						normalized_val = graphic.minRange;
-					graphic.setVal(normalized_val);
-				}
+                if( graphic.type == "gauge" || graphic.type == "corner-gauge" || graphic.type == "fuel-gauge" 
+                        || graphic.type == "odometer-gauge" || graphic.type == "thermometer" || graphic.type == "text-label" ){
+                    var normalized_val = value;
+                    if(graphic.maxRange && value > graphic.maxRange)
+                        normalized_val = graphic.maxRange;
+                    if(graphic.minRange && value < graphic.minRange)
+                        normalized_val = graphic.minRange;
+                    graphic.setVal(normalized_val);
+                }
                 else if(graphic.type == "google-map"){
                     //alert(JSON.stringify(event));
                     graphic.setCenter(0,value);
                     graphic.addMarker(0,value);
                 }
-				else if(graphic.type == "line-chart"){
-					var index=graphic.service_list.indexOf(sensor.id);
+                else if(graphic.type == "line-chart"){
+                    var index=graphic.service_list.indexOf(sensor.id);
+                    graphic.values.push(time);
+                    for(var i=0;i<graphic.service_list.length;i++){
+                        if(i==index){
+                            graphic.values.push(value);
+                        }
+                        else{
+                            if(graphic.sensor_active[graphic.service_list[i]]==true){
+                                graphic.values.push(graphic.old_values[i+1]);
+                            }else{
+                                graphic.values.push(null);
+                            }
+                        }
+                    }
+                    graphic.numberOfValues++;
+                    graphic.graphData.addRow(graphic.values);
+                    graphic.chart.draw(graphic.graphData, graphic.options);
+                    graphic.old_values=graphic.values;
+                    
+                    if(graphic.numberOfValues>150){
+                        graphic.graphData.removeRow(0);
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+// var onSensorEvent = function(event){
+// 	var sensor = sensors && sensors[event.sensorId];
+// 	var time=new Date(event.timestamp);
+// 	time=(time.getUTCHours()+2)+ ":"+time.getUTCMinutes()+":"+time.getUTCSeconds();
+// 	if(sensor){
+//         var value= event.sensorValues[0] || 0;
+//         var data = {};
+//         data.type = sensors_type;
+//         data.value = value;
+//         //updateUI(event.sensorId, data);
+// 		//console.log("************ SENSOR VALURE: " + value);
+		
+//         for(var elem in charts){
+// 			  var graphic= charts[elem];
+// 			  graphic.values=[];
+// 			  if(in_array(sensor.id,graphic.service_list)&&(graphic.sensor_active[sensor.id]==true)){	
+//                 console.log(graphic.type);
+// 				if( graphic.type == "gauge" || graphic.type == "corner-gauge" || graphic.type == "fuel-gauge" 
+//                     || graphic.type == "odometer-gauge" || graphic.type == "thermometer" || graphic.type == "text-label" ){
+// 					var normalized_val = value;
+// 					if(graphic.maxRange && value > graphic.maxRange)
+// 						normalized_val = graphic.maxRange;
+// 					if(graphic.minRange && value < graphic.minRange)
+// 						normalized_val = graphic.minRange;
+// 					graphic.setVal(normalized_val);
+// 				}
+//                 else if(graphic.type == "google-map"){
+//                     //alert(JSON.stringify(event));
+//                     graphic.setCenter(0,value);
+//                     graphic.addMarker(0,value);
+//                 }
+// 				else if(graphic.type == "line-chart"){
+// 					var index=graphic.service_list.indexOf(sensor.id);
 					
-					graphic.values.push(time);
-					for(var i=0;i<graphic.service_list.length;i++){
-						if(i==index){
-							graphic.values.push(value);
-						}
-						else{
-							if(graphic.sensor_active[graphic.service_list[i]]==true){
-								graphic.values.push(graphic.old_values[i+1]);
-							}else{
-								graphic.values.push(null);
-							}
-						}
-					}
-					graphic.numberOfValues++;
-					graphic.graphData.addRow(graphic.values);
-			  		graphic.chart.draw(graphic.graphData, graphic.options);
-			  		graphic.old_values=graphic.values;
+// 					graphic.values.push(time);
+// 					for(var i=0;i<graphic.service_list.length;i++){
+// 						if(i==index){
+// 							graphic.values.push(value);
+// 						}
+// 						else{
+// 							if(graphic.sensor_active[graphic.service_list[i]]==true){
+// 								graphic.values.push(graphic.old_values[i+1]);
+// 							}else{
+// 								graphic.values.push(null);
+// 							}
+// 						}
+// 					}
+// 					graphic.numberOfValues++;
+// 					graphic.graphData.addRow(graphic.values);
+// 			  		graphic.chart.draw(graphic.graphData, graphic.options);
+// 			  		graphic.old_values=graphic.values;
 			  		
-					if(graphic.numberOfValues>150){
-						graphic.graphData.removeRow(0);
-					}
-				}
-			}
-		}
-	}
-};
+// 					if(graphic.numberOfValues>150){
+// 						graphic.graphData.removeRow(0);
+// 					}
+// 				}
+// 			}
+// 		}
+// 	}
+// };
 
 function save_services(ask){
     __Utilities__save_file(sensors, "hub_presentation_explorer.txt", ask);
@@ -128,7 +191,7 @@ function load_services(ask){
      __Utilities__load_file("hub_presentation_explorer.txt",
         function(contents){
             var leftColumn = $('#leftcolumn');
-            
+            num_services = Object.keys(contents).length;
             discover_services(null, contents);
         },
         function(error){
@@ -146,13 +209,16 @@ function save_graphics(){
     __Utilities__save_file(tmp_array,"hub_presentation_page.txt", true);
 }
 
+var graphics_content;
+
 function load_graphics(ask){
     if(ask == null)
         ask = true;
     __Utilities__load_file("hub_presentation_page.txt",
         function(contents){
+            graphics_content = content;
             //alert(JSON.stringify(contents));
-            clearAll_for_graphics();
+            //clearAll_for_graphics();
             for(var i in contents){
                 var graphic;
                 var idChart = "chart_" + (element_counter++);
@@ -204,12 +270,19 @@ function load_graphics(ask){
                 // enableDragAndDropSensors("drop_canvas-"+idChart);   
                  enableButtonsLive(idChart);
 
-                var sl = contents[i].service_list;
-                for(var j in sl){
-                    for(var z in sensors)
-                        if(sensors[z].id == sl[j].id && sensors[z].serviceAddress == sl[j].serviceAddress)
-                            assign_services_to_graphics(z, graphic);
+                //alert(JSON.stringify(contents[i].service_list));
+                for(var j in contents[i].service_list){
+                    var tmp_service = contents[i].service_list[j];
+                    assign_services_to_graphics(tmp_service.id, graphic);
                 }
+                // var sl = contents[i].service_list;
+                // for(var j in sl){
+                //     for(var z in sensors)
+                //         if(sensors[z].id == sl[j].id && sensors[z].serviceAddress == sl[j].serviceAddress){
+                //             alert("Assign "+ sensors[z].id + " to " + graphic.id);
+                //             assign_services_to_graphics(z, graphic);
+                //         }
+                // }
             }
         },
         function(error){
@@ -248,11 +321,11 @@ function bindProperService(service){
             console.log("Service "+service.api+" bound");
             sensors[service.id] = service;
             
-            load_graphics(false);
+            //load_graphics(false);
 
             if(service.api.indexOf(sensors_type) != -1){
                 var configure_options = {
-                    rate:1000,
+                    rate:500,
                     timeout:500,
                     eventFireMode: "fixedinterval"
                 };
@@ -266,6 +339,9 @@ function bindProperService(service){
                     }
                 );
             }
+
+            if(++count_services == num_services)
+                load_graphics(false);
         }
     });
 }
@@ -301,6 +377,8 @@ function clearAll_for_graphics(){
 
 jQuery(document).ready(function() {
     
+    clearAll_for_graphics();
+
     $(window).on('beforeunload', function(e) {    
         //TODO stop all sensors
         clearAll_for_graphics();
@@ -384,8 +462,10 @@ function discover_filesystem(){
 								function (filesystem) {
 									root_directory = filesystem.root;
 
-                                    if(explorer_enabled)
+                                    //if(explorer_enabled)
                                         load_services(false);
+                                     
+                                     //load_graphics(false);
 								},
 								function (error) {
 									alert("Error requesting filesystem (#" + error.code + ")");
@@ -400,12 +480,22 @@ function discover_filesystem(){
 }
 
 
+
 function assign_services_to_graphics(service_selected, graphic){
     if(!in_array(service_selected,graphic.service_list)){
-        if(!listeners_numbers.hasOwnProperty(service_selected)){
+        //if(!listeners_numbers.hasOwnProperty(service_selected)){
             if(sensors[service_selected].api.indexOf(sensors_type) != -1){
                 //add event listener
-                sensors[service_selected].addEventListener('sensor', onSensorEvent, false);
+                
+                //GLT new engine --------------
+                if(!services_to_handle[service_selected]){
+                    services_to_handle[service_selected] = [];
+                    sensors[service_selected].addEventListener('sensor', onSensorEvent, false);
+                }
+                services_to_handle[service_selected].push(graphic);
+
+                //sensors[service_selected].addEventListener('sensor', onSensorEvent, false);
+                //------------------------------
             }
             else if(sensors[service_selected].api.indexOf(geolocation_type) != -1){
                 var PositionOptions = {};
@@ -418,7 +508,7 @@ function assign_services_to_graphics(service_selected, graphic){
             else if(sensors[service_selected].api.indexOf(actuators_type) != -1){
             }
             listeners_numbers[service_selected]=0;
-        }
+        //}
         graphic.sensor_active[service_selected] = true;
         listeners_numbers[service_selected]++;
        
@@ -440,6 +530,7 @@ function assign_services_to_graphics(service_selected, graphic){
             graphic.graphData.addColumn('number',sensors[service_selected].description);
         }
 
+        //alert('#startstop_cfg_but-'+graphic.id+'-'+service_selected);
         $(document).on("click", '#startstop_cfg_but-'+graphic.id+'-'+service_selected, function(event){
             startStopSensor(graphic.id,service_selected);
         });
@@ -556,6 +647,7 @@ function enableButtonsLive(idChart){
   	 });     
 }
 
+
 function deleteChart(idChart_selected){
 	var graphic= charts[idChart_selected];
 	for(var sens in graphic.service_list){
@@ -582,16 +674,24 @@ function deleteChart(idChart_selected){
 
 function startStopSensor(chartId,sid){
 	if(charts[chartId].sensor_active[sid] == true){	//stop the sensor listening
-		$('#startstop_cfg_but-'+chartId+'-'+sid).prop('value','Start');
-		charts[chartId].sensor_active[sid] = false;
+        for(var i in services_to_handle[sid]){
+            $('#startstop_cfg_but-'+services_to_handle[sid][i].id+'-'+sid).prop('value','Start');    
+            charts[services_to_handle[sid][i].id].sensor_active[sid] = false;
+        }
+		
+		
 		listeners_numbers[sid]--;
 		if(listeners_numbers[sid]==0){
 			sensors[sid].removeEventListener('sensor', onSensorEvent, false);
 			delete listeners_numbers[sid];
 		}	
 	}else{	//active the sensor listening
-		charts[chartId].sensor_active[sid] = true;
-		$('#startstop_cfg_but-'+chartId+'-'+sid).prop('value','Stop');
+        for(var i in services_to_handle[sid]){
+            $('#startstop_cfg_but-'+services_to_handle[sid][i].id+'-'+sid).prop('value','Stop');    
+            charts[services_to_handle[sid][i].id].sensor_active[sid] = true;
+        }
+		//charts[chartId].sensor_active[sid] = true;
+		//$('#startstop_cfg_but-'+chartId+'-'+sid).prop('value','Stop');
 		
 		if(!listeners_numbers.hasOwnProperty(sid)){
 			//add event listener
