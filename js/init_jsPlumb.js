@@ -170,6 +170,12 @@
         $('#loadRules').live( 'click',function(event){
             load_rules();
         });
+
+        $(document).on("click","#but_home", function(event){
+            
+            clearAll_for_rules();
+            window.location = "index.html";
+        });
     });
 
 
