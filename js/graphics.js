@@ -141,7 +141,8 @@ function Thermometer(idChart, X, Y){
         this.maxRange=max_temperature_range;
     
     this.allowed_drop = [sensors_type];
-    
+    this.old_value = -1;
+
     $("#target").prepend(this.getHTMLContent());
     this.chart = new RGraph.Thermometer("drop_canvas-"+this.id, min_gauge_range, max_gauge_range, 0);
     RGraph.Effects.Thermometer.Grow(this.chart);
@@ -151,8 +152,12 @@ Thermometer.subclassFrom(Graphic);
 
 Thermometer.methods({
     setVal : function(val) {
-        this.chart.value = val;
-        RGraph.Effects.Thermometer.Grow(this.chart);
+        val = Number(val);
+        if(this.old_value != val){
+            this.chart.value = val;
+            RGraph.Effects.Thermometer.Grow(this.chart);
+            this.old_value = val;
+        }
     },
     getHTMLContent : function(){
         var html = arguments.callee.superFunction.call(this);
@@ -172,7 +177,8 @@ function Gauge(idChart, X, Y){
     this.maxRange=max_gauge_range;
 
     this.allowed_drop = [sensors_type];
-    
+    this.old_value = -1;
+
     $("#target").prepend(this.getHTMLContent());
     this.chart = new RGraph.Gauge("drop_canvas-"+this.id, min_gauge_range, max_gauge_range, 0);
     RGraph.Effects.Gauge.Grow(this.chart);
@@ -182,8 +188,12 @@ Gauge.subclassFrom(Graphic);
 
 Gauge.methods({
     setVal : function(val) {
-        this.chart.value = val;
-        RGraph.Effects.Gauge.Grow(this.chart);
+        val = Number(val);
+        if(this.old_value != val){
+            this.chart.value = val;
+            RGraph.Effects.Gauge.Grow(this.chart);
+            this.old_value = val;
+        }
     },
     getHTMLContent : function(){
         var html = arguments.callee.superFunction.call(this);
@@ -434,6 +444,8 @@ function CornerGauge(idChart, X, Y){
 
     this.allowed_drop = [sensors_type];
     
+    this.old_value = -1;
+    
     $("#target").prepend(this.getHTMLContent());
     this.chart = new RGraph.CornerGauge("drop_canvas-"+this.id, min_gauge_range, max_gauge_range, 0);
     RGraph.Effects.CornerGauge.Grow(this.chart);
@@ -443,8 +455,12 @@ CornerGauge.subclassFrom(Graphic);
 
 CornerGauge.methods({
     setVal : function(val) {
-        this.chart.value = val;
-        RGraph.Effects.CornerGauge.Grow(this.chart);
+        val = Number(val);
+        if(this.old_value != val){
+            this.chart.value = val;
+            RGraph.Effects.CornerGauge.Grow(this.chart);
+            this.old_value = val;
+        }
     },
     getHTMLContent : function(){
         var html = arguments.callee.superFunction.call(this);
@@ -463,7 +479,8 @@ function FuelGauge(idChart, X, Y, min, max){
     this.maxRange= (max)?max:100; //max_gauge_range;
 
     this.allowed_drop = [sensors_type];
-    
+    this.old_value = -1;
+
     $("#target").prepend(this.getHTMLContent());
     this.chart = new RGraph.Fuel("drop_canvas-"+this.id, this.minRange, this.maxRange, 0);
     RGraph.Effects.Fuel.Grow(this.chart);
@@ -473,8 +490,12 @@ FuelGauge.subclassFrom(Graphic);
 
 FuelGauge.methods({
     setVal : function(val) {
-        this.chart.value = val;
-        RGraph.Effects.Fuel.Grow(this.chart);
+        val = Number(val);
+        if(this.old_value != val){
+            this.chart.value = val;
+            RGraph.Effects.Fuel.Grow(this.chart);
+            this.old_value = val;
+        }
     },
     getHTMLContent : function(){
         var html = arguments.callee.superFunction.call(this);
@@ -488,13 +509,14 @@ FuelGauge.methods({
 function OdometerGauge(idChart, X, Y){
     arguments.callee.superConstructor.call(this, idChart, X, Y);
     this.type="odometer-gauge";
-    this.minRange=min_gauge_range;
-    this.maxRange=max_gauge_range;
+    this.minRange=0;//min_gauge_range;
+    this.maxRange=100;//max_gauge_range;
 
     this.allowed_drop = [sensors_type];
+    this.old_value = -1;
     
     $("#target").prepend(this.getHTMLContent());
-    this.chart = new RGraph.Odometer("drop_canvas-"+this.id, min_gauge_range, max_gauge_range, 0);
+    this.chart = new RGraph.Odometer("drop_canvas-"+this.id, this.minRange, this.maxRange, 0);
     RGraph.Effects.Odo.Grow(this.chart);
 }
 
@@ -502,8 +524,12 @@ OdometerGauge.subclassFrom(Graphic);
 
 OdometerGauge.methods({
     setVal : function(val) {
-        this.chart.value = val;
-        RGraph.Effects.Odo.Grow(this.chart);
+        val = Number(val);
+        if(this.old_value != val){
+            this.chart.value = val;
+            RGraph.Effects.Odo.Grow(this.chart);
+            this.old_value = val;
+        }
     },
     getHTMLContent : function(){
         var html = arguments.callee.superFunction.call(this);

@@ -116,6 +116,13 @@
     /***************  ON READY FUNCTION FOR JsPlump Library   *********************/
 
     jsPlumb.bind("ready", function() {
+
+        $(window).on('beforeunload', function(e) {    
+        //TODO stop all sensors
+            clearAll_for_rules();
+            //return true;
+        });
+        
         //jsPlumb.reset();
         jsPlumb.setRenderMode(jsPlumb.SVG);
         jsPlumbDemo.init();
