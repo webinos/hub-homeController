@@ -3,10 +3,6 @@
  *
 */
     
-
-
-
-
 var charts={};				//contain Graphic instances
 var debug;
 var sensors_type = "http://webinos.org/api/sensors";
@@ -61,7 +57,17 @@ var onGeolocationEvent = function(event){
             break;
         }
     }
-    updateUI(id,data);
+
+    var actuator = sensors && sensors[id];
+    if(actuator){
+        for(var i in services_to_handle[id]){
+            var graphic= services_to_handle[id][i];
+            if(graphic.type == "google-map"){
+                graphic.setCenter(event.coords.latitude, event.coords.longitude);
+                graphic.addMarker(event.coords.latitude, event.coords.longitude);
+            }
+        }
+    }
 }
 
 var onSensorEvent = function(event){
@@ -86,10 +92,6 @@ var onSensorEvent = function(event){
 
 //                    graphic.setVal(normalized_val);
                     graphic.setVal(value);
-                }
-                else if(graphic.type == "google-map"){
-                    graphic.setCenter(0,value);
-                    graphic.addMarker(0,value);
                 }
                 else if(graphic.type == "line-chart"){
                     var time=new Date(event.timestamp);
@@ -167,7 +169,7 @@ function load_graphics(ask){
                     if(found_services.indexOf(tmp_service.id) != -1)
                         service_ok = true;
                 }
-
+                
                 if(service_ok){
                     var graphic;
                     var idChart = "chart_" + (element_counter++);
@@ -257,11 +259,14 @@ function bindProperService(service){
                     }
                 );
             }
-
-            //alert(count_services +"=="+ num_services);
-            if(++count_services == num_services){
-                load_graphics(false);
+            else if(service.api.indexOf(geolocation_type) != -1){
+                
             }
+            // alert(count_services +"=="+ num_services);
+            // if(++count_services == num_services){
+            //     alert("chiamo load")
+            //     load_graphics(false);
+            // }
         }
     });
 }
@@ -278,8 +283,20 @@ function clearAll_for_graphics(){
     }
 }
 
+function show_wait(){
+    $("#wait_div").show();
+}
+
+function hide_wait(){
+    $("#wait_div").hide();
+    load_graphics(false);
+}
+
 jQuery(document).ready(function() {
     
+    show_wait();
+    setTimeout(hide_wait,2000);
+
     clearAll_for_graphics();
 
     $(window).on('beforeunload', function(e) {    
@@ -387,31 +404,36 @@ function discover_filesystem(){
 	});
 }
 
+function onPositionError(err){
 
+}
 
 function assign_services_to_graphics(service_selected, graphic){
     if(!in_array(service_selected,graphic.service_list)){
-        
+        if(!services_to_handle[service_selected]){
+            services_to_handle[service_selected] = [];
+            
+        }
         if(sensors[service_selected].api.indexOf(sensors_type) != -1){
-            //add event listener
-            //GLT new engine --------------
-            if(!services_to_handle[service_selected]){
-                services_to_handle[service_selected] = [];
-                sensors[service_selected].addEventListener('sensor', onSensorEvent, false);
-            }
+            sensors[service_selected].addEventListener('sensor', onSensorEvent, false);
+            // var sensor_listener = function(e) {
+            //     onSensorEvent(sensors[service_selected],e);
+            // };
+            // sensors[service_selected].addEventListener('sensor', sensor_listener, false);
             services_to_handle[service_selected].push(graphic);
-
-            //sensors[service_selected].addEventListener('sensor', onSensorEvent, false);
-            //------------------------------
         }
         else if(sensors[service_selected].api.indexOf(geolocation_type) != -1){
             service_ok = true;
             var PositionOptions = {};
             PositionOptions.enableHighAccuracy = true;
-            //PositionOptions.maximumAge = 1000;
+            PositionOptions.maximumAge = 1000;
             PositionOptions.timeout = 1000;
             //sensors[service_selected].watchPosition(onGeolocationEvent, error, PositionOptions);
-            navigator.geolocation.watchPosition(onGeolocationEvent, error, PositionOptions);
+
+            services_to_handle[service_selected].push(graphic);
+            
+            var w_id = navigator.geolocation.watchPosition(onGeolocationEvent, onPositionError, PositionOptions);
+            services_to_handle[service_selected]["watch_id"] = w_id;
         }
         else if(sensors[service_selected].api.indexOf(actuators_type) != -1){
         }
@@ -562,7 +584,7 @@ function deleteChart(idChart_selected){
 			listeners_numbers[graphic.service_list[sens]]--;
 			if(listeners_numbers[graphic.service_list[sens]]==0){
 				if(sensors[graphic.service_list[sens]].api.indexOf(geolocation_type) != -1){
-                    ;//handle;
+                    navigator.geolocation.clearWatch(services_to_handle[graphic.service_list[sens]]["watch_id"]);
                 }
                 else if(sensors[graphic.service_list[sens]].api.indexOf(sensors_type) != -1){
                     sensors[graphic.service_list[sens]].removeEventListener('sensor', onSensorEvent, false);

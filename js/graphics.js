@@ -401,8 +401,8 @@ function GoogleMap(idChart, X, Y){
     var latlng = new google.maps.LatLng(42.745334,12.738430);
     var options = { zoom: 12,
         center: latlng,
-        mapTypeId: google.maps.MapTypeId.ROADMAP,
-        draggable : false
+        mapTypeId: google.maps.MapTypeId.ROADMAP
+        //,draggable : false
     };
 
     //this.chart = new google.maps.Map(document.getElementById("drop_canvas-"+this.id), options);
@@ -573,6 +573,12 @@ function CheckBoxGauge(idChart, X, Y){
 CheckBoxGauge.subclassFrom(Graphic);
 
 CheckBoxGauge.methods({
+    changeVal : function(val){
+        val = (val == 0) ? false : true;
+        //alert("set " + val + " on "+this.id);
+        //alert($("#checkbox-"+this.id));
+        $("#checkbox-"+this.id).attr('checked', val);
+    },
     setVal : function(val) {
         //this.chart.value = val;
         //RGraph.Effects.Odo.Grow(this.chart);
@@ -591,5 +597,9 @@ CheckBoxGauge.methods({
     },
     getCustomSettingsForSensor : function(sensor){
         return "<div id='range'> Range:     Min <input type='text' id='min_range-"+this.service_list[sensor]+"' value='"+this.minRange+"'>        Max <input type='text' id='max_range-"+this.service_list[sensor]+"' value='"+this.maxRange+"'></div>";
+    },
+    startListen : function(){
+        if(this.service_list && this.service_list[0])
+            sensors[this.service_list[0]].addEventListener('actuator', this.onActuatorEvent , false);
     }
 });

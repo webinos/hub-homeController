@@ -57,13 +57,14 @@ function __Utilities__save_file(data, file_name, ask){
 	                    }
 
 	                    writer.onwrite = function (evt) {
-	                        if (!written) {
-	                            written = true;
-	                            writer.write(new Blob([JSON.stringify(data)]));
-	                        }
+	                        console.log("Services has been saved");
 	                    }
 	                    
-	                    writer.truncate(0);
+	                    if (!written) {
+                            written = true;
+                            writer.write(new Blob([JSON.stringify(data)]));
+                        }
+                        //writer.truncate(0);
 	                }, 
 	                function (error){
 	                    alert("Error retrieving file writer (#" + error.name + ")");

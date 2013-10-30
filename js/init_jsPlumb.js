@@ -202,7 +202,7 @@
     function serviceDiscovery(container, serviceFilter){
         webinos.discovery.findServices(new ServiceType(serviceFilter.api), {
             onFound: function (service) {
-                if ((service.id === serviceFilter.id) && (service.address === serviceFilter.serviceAddress) && (typeof(sensors[service.id]) === "undefined")) {
+                if ((service.id === serviceFilter.id) && (service.serviceAddress === serviceFilter.address) && (typeof(sensors[service.id]) === "undefined")) {
                     //found a new sensors
                     sensors[service.id] = service;
                     sensorActive[service.id] = 0;

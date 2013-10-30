@@ -76,7 +76,7 @@ var onSensorEvent = function(event){
 			var graphic= charts[elem];
 			graphic.values=[];
 			if(in_array(sensor.id,graphic.service_list)&&(graphic.sensor_active[sensor.id]==true)){	
-                console.log(graphic.type);
+                //console.log(graphic.type);
 				if( graphic.type == "gauge" || graphic.type == "corner-gauge" || graphic.type == "fuel-gauge" 
                     || graphic.type == "odometer-gauge" || graphic.type == "thermometer" || graphic.type == "text-label" ){
 					var normalized_val = value;
@@ -245,7 +245,7 @@ function bindProperService(service){
     service.bind({
         onBind:function(){
             console.log("Service "+service.api+" bound");
-            sensors[service.id] = service;
+            
             var serviceCode = "<div class='sensor'>"+
                               "<div id='remove_"+service.id+"' style='clear:both;'><img width='10px' height='10px' src='./assets/x_min.png' style='float:right; margin-left:-40px;'></img></div>"+
                               "<img width='120px' height='120px' src='./assets/images/"+icons[service.api]+"'' id='"+service.id+"' draggable='false' /><p>"+service.description+"</p></div>";
@@ -288,9 +288,11 @@ function serviceDiscovery(container, serviceFilter){
         new ServiceType(serviceFilter.api)
       , {
             onFound: function(service){
-                if ((service.id === serviceFilter.id) && (service.address === serviceFilter.serviceAddress)) {
-                    bindProperService(service);
 
+
+                if ((service.id === serviceFilter.id) && (service.serviceAddress === serviceFilter.address) && (typeof(sensors[service.id]) === "undefined")) {
+                    sensors[service.id] = service;
+                    bindProperService(service);
                     save_services(false);
                }
             }
@@ -414,7 +416,8 @@ function discover_services(container, filter){
             onFound: function (service) { 
                 //sensorActive[service.id] = false;
                 
-                if(!filter || (filter && filter[service.id])){
+                if( (!filter || (filter && filter[service.id])) && (typeof(sensors[service.id]) === "undefined")){
+                    sensors[service.id] = service;
                     bindProperService(service);
                 }
             }
@@ -672,23 +675,24 @@ var addDragEventsForSensorsOnGauge = function(idChart){
         try{
             if(graphic.canDrop(sensors[service_selected].api)){
 
-    			$('#'+idChart_selected).removeClass("drop_div");
-    			
-    			if(charts[idChart_selected].type == "text-label")
-     				this.className = "text-label";
-                else if(graphic.type=="checkbox-gauge"){
+                if(service_selected!=''){
+                    assign_services_to_graphics(service_selected, graphic);
+                    $('#'+idChart_selected).removeClass("drop_div");
+                    if(charts[idChart_selected].type == "text-label")
+                        this.className = "text-label";
+                    else if(graphic.type=="checkbox-gauge"){
+                        //sensors[service_selected].addEventListener("actuator", onActuatorEvent, false);
+                    }
+                    else if(graphic.type!="line-chart"){
+                        this.className = "main";
+                    }else{
+                        graphic.options['backgroundColor'] = "";
+                        graphic.chart.draw(graphic.graphData, graphic.options);
+                    }
                 }
-     			else if(graphic.type!="line-chart"){
-    				this.className = "main";
-    			}else{
-    				graphic.options['backgroundColor'] = "";
-    				graphic.chart.draw(graphic.graphData, graphic.options);
-    			}
-    				
-    			if(service_selected!=''){
-    				assign_services_to_graphics(service_selected, graphic);
-    			}else
-    				alert("Not allowed");
+                else
+                    alert("Not allowed");
+    			
             }
             else
                 alert("This drop is not allowed");
