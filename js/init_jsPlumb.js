@@ -1,3 +1,7 @@
+var service_types = [
+    "http://webinos.org/api/sensors/*",
+    "http://webinos.org/api/actuators/*"
+];
 
     var _initialised = false,
         connections = [],
@@ -116,13 +120,6 @@
     /***************  ON READY FUNCTION FOR JsPlump Library   *********************/
 
     jsPlumb.bind("ready", function() {
-
-        $(window).on('beforeunload', function(e) {    
-        //TODO stop all sensors
-            clearAll_for_rules();
-            //return true;
-        });
-        
         //jsPlumb.reset();
         jsPlumb.setRenderMode(jsPlumb.SVG);
         jsPlumbDemo.init();
@@ -138,8 +135,7 @@
             findSensorServices(leftColumn);
         }
         else{
-            $("#refresh").append("<div id='explorer_sensor_button' class='button'>Add Sensor From Explorer</div>");
-            $("#refresh").append("<div id='explorer_actuator_button' class='button'>Add Actuator From Explorer</div>");
+            //$("#refresh").append("<div id='explorer_actuator_button' class='button'>Add Sensor or Actuator From Explorer</div>");
         }
 
         $(window).resize(function() {
@@ -154,11 +150,6 @@
 
         $('#refresh_button').live( 'click',function(event){
                 findSensorServices(leftColumn);
-        });
-
-        $('#explorer_sensor_button').live( 'click',function(event){
-            var leftColumn = $('#leftcolumn');
-            callExplorerSensor(leftColumn);
         });
 
         $('#explorer_actuator_button').live( 'click',function(event){
@@ -183,19 +174,37 @@
             clearAll_for_rules();
             window.location = "index.html";
         });
+
+        $('#close').on("click", function(event){
+            var popup = $("#settings-container");
+            popup.fadeOut();
+        });
+
+        $(window).on('beforeunload', function(e) {    
+            clearAll_for_rules();
+        }); 
     });
+    
 
-
-    function callExplorerSensor(container) {
+    function callExplorerActuator(container) {
         webinos.dashboard
             .open({
                     module: 'explorer',
-                    data: { service:'http://webinos.org/api/sensors.*' }
+                    data: { 
+                        service: service_types,
+                        multiselect: true
+                    }
                   }
                 , function(){ console.log("***Dashboard opened");} )
-                  .onAction( function (data) { 
-                    for(var i in data.result)
-                        serviceDiscovery(container, data.result[i]); 
+                  .onAction( function (data) {
+                    for(var i in data.result){
+                        if(data.result[i].api.indexOf("sensors") !== -1)
+                            serviceDiscovery(container, data.result[i]); 
+                        else
+                            actuatorDiscovery(container, data.result[i]);
+                    }
+                            
+                    
             });
     }
 
@@ -209,8 +218,6 @@
                     service.configureSensor({rate: 500, eventFireMode: "fixedinterval"}, 
                         function(){
                             myConfigureSensor(service);
-                            //save on file the new sensor added
-                            save_rules_sa_explorer();
                         },
                         function (){
                             console.error('Error configuring Sensor ' + service.api);
@@ -221,26 +228,11 @@
         });
     }
 
-    function callExplorerActuator(container) {
-        webinos.dashboard
-            .open({
-                    module: 'explorer',
-                    data: { service:'http://webinos.org/api/actuators.*' }
-                  }
-                , function(){ console.log("***Dashboard opened");} )
-                  .onAction( function (data) { 
-                    for(var i in data.result)
-                        actuatorDiscovery(container, data.result[i]); 
-            });
-    }
-
     function actuatorDiscovery(container, serviceFilter){
         webinos.discovery.findServices(new ServiceType(serviceFilter.api), {
             onFound: function (service) {
-                if ((service.id === serviceFilter.id) && (service.address === serviceFilter.serviceAddress) && (typeof(actuators[service.id]) === "undefined")) {
+                if ((service.id === serviceFilter.id) && (service.serviceAddress === serviceFilter.address) && (typeof(actuators[service.id]) === "undefined")) {
                     myConfigureActuator(service);
-                    //save on file the new actuator added
-                    save_rules_sa_explorer();
                 }
             }
         });

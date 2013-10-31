@@ -2,8 +2,8 @@
   font-family: 'Open Sans';
   font-style: normal;
   font-weight: 400;
- 	src:local('Open Sans'),
- 		local('OpenSans'),
+    src:local('Open Sans'),
+        local('OpenSans'),
 }
 
 /*
@@ -51,7 +51,7 @@ body.rules > #leftcolumn {
 #sensors_table, #actuators_table, #operations_table{
     margin: 0;
     float: left;
-	width: 128px;
+    width: 128px;
     border-right: 2px dashed #111;
     padding: 0 5px;
     min-height: 100%;
@@ -73,14 +73,14 @@ body.rules > #leftcolumn {
 }
 
 #sensors_table img, #actuators_table img, #operations_table img{
-	cursor: move;
+    cursor: move;
 }
 .addr {
     color: #999;
 }
 
 .sensorBlock, .operationBlock, .actuatorBlock {
-	margin: 5px;
+    margin: 5px;
     width: 150px;
     height: 100px;
     /*per centrare il testo*/
@@ -160,15 +160,15 @@ a:hover {
 }
 
 .selected {
-	color:rgb(189,11,11) !important;
+    color:rgb(189,11,11) !important;
 }
 
 .window, .label {
     background-color:white;
     text-align:center;
     z-index:23;
-	cursor: move;
-	box-shadow: 0 0 20px #fff;
+    cursor: move;
+    box-shadow: 0 0 20px #fff;
    -o-box-shadow: 0 0 20px #fff;
    -webkit-box-shadow: 0 0 20px #fff;
    -moz-box-shadow: 0 0 20px #fff;
@@ -223,4 +223,31 @@ width: 150px;
 .display_value{
     margin-top: 10px;
     font-size: large;
+}
+
+.colum_popup{
+    width: 185px;
+    height: 260px;
+    float: left;
+    margin: 5px;
+    border: 2px dotted rgb(255,115,115);
+}
+
+.textarea_popup{
+    width: 380px;
+    height: 60px;
+    margin: 5px;
+}
+
+.tr_popup{
+    border-bottom: 2px dotted rgb(255,115,115);
+    width: 185px;
+}
+
+.facebook_appID_popup{
+    width: 380px;
+    height: 120px;
+    float: left;
+    margin: 5px;
+    border: 2px dotted rgb(255,115,115);
 }

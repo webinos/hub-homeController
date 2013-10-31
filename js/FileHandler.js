@@ -2,6 +2,7 @@ var root_directory = {};
 
 var file_name_for_rules = "hub_rules.txt";
 var file_name_sensor_actuator_explorer = "hub_rules_explorer.txt";
+var file_name_facebook_configure = "hub_facebook_configure.txt";
 
 function save_file(data, file_name){
 	root_directory.getFile(file_name, {create: true, exclusive: false}, 
@@ -14,13 +15,15 @@ function save_file(data, file_name){
 					}
 
 					writer.onwrite = function (evt) {
-						if (!written) {
-							written = true;
-							writer.write(new Blob([JSON.stringify(data)]));
-						}
-					}
-					
-					writer.truncate(0);
+                            
+                    }
+                    
+                    if (!written) {
+                            written = true;
+                            writer.write(new Blob([JSON.stringify(data)]));
+                    }
+
+                    //writer.truncate(0);
 				}, 
 				function (error){
 					alert("Error retrieving file writer (#" + error.name + ")");
@@ -105,6 +108,8 @@ function load_file(askConfirm, file_name, show_rules, id, type){
 							for(var t=0; t<contents.explorer_actuators.length; t++){
 								searchActuators(contents.explorer_actuators[t].actuatorID, contents.explorer_actuators[t].actuatorAddress);
 							}
+						} else if(file_name == file_name_facebook_configure){
+							GUIaskForAppID(contents.appID);
 						}
 					}
 					catch(err){
@@ -113,7 +118,13 @@ function load_file(askConfirm, file_name, show_rules, id, type){
 				}
 
 				myentry.file(function (fileR) {
+					
 					r.readAsText(fileR);
+
+					if(file_name == file_name_facebook_configure){
+						GUIaskForAppID("");
+					}
+
 				}, function (error) {
 					alert("Error retrieving file (#" + error.name + ")");
 				});
@@ -357,4 +368,10 @@ function clearAll_for_rules(){
 
 	block_list = {};
 	connections = [];
+}
+
+function save_facebook_config(data){
+	var facebook_config_data = {};
+	facebook_config_data["appID"] = data;
+	save_file(facebook_config_data, file_name_facebook_configure);	
 }
