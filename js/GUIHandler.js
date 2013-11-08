@@ -53,9 +53,12 @@
             }
         }
 
+        var formatted_serviceAddress = getFormattedAddress(address, 10);
+
         var sensorCode = '<div id="code_'+ sensor.id +'" class="sensor">';
-        sensorCode += "<div id='remove_"+sensor.id+"' style='clear:both;'><img width='10px' height='10px' src='./assets/x_min.png' style='float:right; margin-left:-40px;'></img></div>";
-        sensorCode += '<img style="clear:both;" width="80px" height="80px" src="./assets/images/'+icons[sensor.api]+'" id="'+div_id+'" /><p>'+sensor.description+'<br><span class="addr">['+address+']</span></p>';
+        sensorCode += "<div id='remove_"+sensor.id+"' style='clear:both;'><img width='15px' height='15px' src='./assets/x_min.png' style='float:right; margin-left:-40px;'></img></div>";
+        //sensorCode += '<img style="clear:both;" width="80px" height="80px" src="./assets/images/'+icons[sensor.api]+'" id="'+div_id+'" /><p>'+sensor.description+'<br><span class="addr">['+address+']</span></p>';
+        sensorCode += '<img style="clear:both;" width="80px" height="80px" src="./assets/images/'+icons[sensor.api]+'" id="'+div_id+'" /><p>'+sensor.description+'<br><span class="addr">['+formatted_serviceAddress+']</span></p>';
         sensorCode += '</div>'; 
         jQuery("#sensors_table").append(sensorCode);
 
@@ -67,6 +70,9 @@
         setMinHeight();
 
         $('#remove_'+sensor.id).on('click',removeSensor);
+
+        //save on file the new sensor added
+        save_rules_sa_explorer();
 
     }
 
@@ -98,42 +104,55 @@
 
     }
 
-    function myConfigureActuator(service){
-        actuators[service.id] = service;
-        var div_id = "actuator_"+service.id;
+    function myConfigureActuator(serviceFounded){
 
-        var user_name = service.serviceAddress.split("@")[0];
-        var host = "";
-        var device = "";
-        var address = user_name;
+    	var service = serviceFounded;
+    	serviceFounded.bind({
+	        onBind:function(serviceBinded){
+	        	actuators[serviceBinded.id] = serviceBinded;
+	        	service = serviceBinded;
 
-        if(service.serviceAddress.indexOf("@") !== -1){
-            address += "<br>";
-            var tmp = service.serviceAddress.substring(service.serviceAddress.indexOf("@")+1).split("/");
-            host = tmp[0];
-            address += host;
-            if(typeof tmp[1] != "undefined"){
-                address += "<br>";
-                device = tmp[1];
-                address += device;
-            }
-        }
+	        	//save on file the new actuator added
+                save_rules_sa_explorer();
 
-        var actuatorCode = '<div id="code_'+ service.id +'" class="sensor">';
-        actuatorCode += "<div id='remove_"+service.id+"' style='clear:both;'><img width='10px' height='10px' src='./assets/x_min.png' style='float:right; margin-left:-40px;'></img></div>";
-        actuatorCode += '<img width="80px" height="80px" src="./assets/images/'+icons[service.api]+'" id="'+div_id+'" /><p>'+service.description+'<br><span class="addr">['+address+']</span></p>'
-        actuatorCode += '</div>';
-        jQuery("#actuators_table").append(actuatorCode);
-       	
-       	var leftColumn = $('#leftcolumn');
-        leftColumn.tinyscrollbar_update();
+		        //actuators[service.id] = service;
+		        var div_id = "actuator_"+service.id;
 
-        initDragAndDrop(div_id);
+		        var user_name = service.serviceAddress.split("@")[0];
+		        var host = "";
+		        var device = "";
+		        var address = user_name;
 
-        setMinHeight();
+		        if(service.serviceAddress.indexOf("@") !== -1){
+		            address += "<br>";
+		            var tmp = service.serviceAddress.substring(service.serviceAddress.indexOf("@")+1).split("/");
+		            host = tmp[0];
+		            address += host;
+		            if(typeof tmp[1] != "undefined"){
+		                address += "<br>";
+		                device = tmp[1];
+		                address += device;
+		            }
+		        }
 
-        $('#remove_'+service.id).on('click',removeActuator);
+                var formatted_serviceAddress = getFormattedAddress(address, 10);
+		        var actuatorCode = '<div id="code_'+ service.id +'" class="sensor">';
+		        actuatorCode += "<div id='remove_"+service.id+"' style='clear:both;'><img width='15px' height='15px' src='./assets/x_min.png' style='float:right; margin-left:-40px;'></img></div>";
+		        //actuatorCode += '<img width="80px" height="80px" src="./assets/images/'+icons[service.api]+'" id="'+div_id+'" /><p>'+service.description+'<br><span class="addr">['+address+']</span></p>'
+                actuatorCode += '<img width="80px" height="80px" src="./assets/images/'+icons[service.api]+'" id="'+div_id+'" /><p>'+service.description+'<br><span class="addr">['+formatted_serviceAddress+']</span></p>'
+		        actuatorCode += '</div>';
+		        jQuery("#actuators_table").append(actuatorCode);
+		       	
+		       	var leftColumn = $('#leftcolumn');
+		        leftColumn.tinyscrollbar_update();
 
+		        initDragAndDrop(div_id);
+
+		        setMinHeight();
+
+		        $('#remove_'+service.id).on('click',removeActuator);
+	        }
+	    });
     }
 
     removeActuator = function(event){
@@ -224,7 +243,7 @@
 /******   *****   *****   *****   *****   *****   *****   *****   *****/
 
 	function searchSensors(id, serviceAddress){
-		webinos.discovery.findServices(new ServiceType("http://webinos.org/api/sensors.*"), {
+		webinos.discovery.findServices(new ServiceType("http://webinos.org/api/sensors/*"), {
 			onFound: function (service) {
 				//found a new sensors
 				if((service.id === id) && (service.serviceAddress === serviceAddress) && (typeof(sensors[service.id]) === "undefined")){
@@ -249,7 +268,7 @@
 	}
 
 	function searchActuators(id, serviceAddress){
-		webinos.discovery.findServices(new ServiceType("http://webinos.org/api/actuators.*"), {
+		webinos.discovery.findServices(new ServiceType("http://webinos.org/api/actuators/*"), {
 			onFound: function (service) {
 				//found a new sensors
 				if((service.id === id) && (service.serviceAddress === serviceAddress) && (typeof(actuators[service.id]) === "undefined")){
@@ -306,11 +325,10 @@
 			var boxID = dd_box_name.split("_")[1];
 			var boxType = dd_box_name.split("_")[0];
 
-
-			// var X = event.layerX - $(event.target).position().left;
-			// var Y = event.layerY - $(event.target).position().top;
-            var X = event.layerX-150;
-            var Y = event.layerY-100;
+			//var X = event.layerX - $(event.target).position().left;
+			//var Y = event.layerY - $(event.target).position().top;
+			var X = event.layerX - 150;
+			var Y = event.layerY - 100;
 
 			var coord = {
 				x:X,
@@ -418,7 +436,7 @@
 
 		var html="";
 		html += "<div class='window' id='"+idbox+"'>";
-		html += "<div id='remove_"+idbox+"' style='clear:both;'><img width='10px' height='10px' src='./assets/x_min.png' style='float:right; margin-bottom:5px;'></img></div>";
+		html += "<div id='remove_"+idbox+"' style='clear:both;'><img width='15px' height='15px' src='./assets/x_min.png' style='float:right; margin-bottom:5px;'></img></div>";
 		html += "<div style='clear:both;'>";
 		if(type=="greater")
 			html += '<img width="80px" height="80px" src="./assets/greater.png" id="greater" /><br><br>';
@@ -486,13 +504,14 @@
 
 		idbox = dd_box_name+"_"+num_boxes;
 
+        var formatted_serviceAddress = getFormattedAddress(sensor.serviceAddress, 16);
 		var html = "";
 		html += "<div class='window' id='"+idbox+"' >";
-		//html += "<div id='remove_"+idbox+"' style='clear:both;'><img width='10px' height='10px' src='./assets/x_min.png' style='float:right; margin-bottom:5px;'></img></div>";
-        html += "<div id='remove_"+idbox+"' style='clear:both;'><img width='10px' height='10px' src='./assets/x_min.png' style='float:right;'></img></div>";
-		html += sensor.description+'<br>['+sensor.serviceAddress+']<br><br>';
+		html += "<div id='remove_"+idbox+"' style='clear:both;'><img width='15px' height='15px' src='./assets/x_min.png' style='float:right; margin-bottom:5px;'></img></div>";
+		//html += sensor.description+'<br>['+sensor.serviceAddress+']<br><br>';
+        html += sensor.description+'<br>['+formatted_serviceAddress+']<br><br>';
 		html += '<img width="80px" height="80px" src="./assets/images/'+icons[sensor.api]+'" id="sensorIMG_'+sensor.id+'" /><br><br>';                     
-	    html += "<div class='display_value' id='value_"+sensor.id+"'>-</div>";
+	    html += "<div id='value_"+sensor.id+"'>-</div>";
 	    html += "</div>";
 
 	    $("#main").append(html);
@@ -552,16 +571,10 @@
 
 /*****************     ACTUATOR   ******************/
 
-	this.GUIActuatorBox = function(coord, actuator, dd_box_name){
-
-		//increment num_boxes add on target
-		num_boxes++;
-
-		idbox = dd_box_name+"_"+num_boxes;
-
+	function generalActuatorGUI(idbox, actuator){
 		var html = "";
 		html += "<div class='window' id='"+idbox+"' >";
-		html += "<div id='remove_"+idbox+"' style='clear:both;'><img width='10px' height='10px' src='./assets/x_min.png' style='float:right; margin-bottom:5px;'></img></div>";
+		html += "<div id='remove_"+idbox+"' style='clear:both;'><img width='15px' height='15px' src='./assets/x_min.png' style='float:right; margin-bottom:5px;'></img></div>";
 		html += actuator.description+'<br>['+actuator.serviceAddress+']<br><br>';
 		html += '<img width="80px" height="80px" src="./assets/images/'+icons[actuator.api]+'" id="actuatorIMG_'+actuator.id+'" /><br><br>';
 		html += '<div style="text-align:center">';
@@ -576,8 +589,39 @@
 		html += '</tr>';
 		html += '</table>';
 		html += '</div>';
-	    html += "<div class='display_value' id='value_"+idbox+"'>-</div>";
+	    html += "<div id='value_"+idbox+"'>-</div>";
 	    html += "</div>";
+	    return html;
+	}
+
+	function externalWebServiceGUI(idbox, actuator){
+		var html = "";
+		html += "<div class='window' id='"+idbox+"' >";
+		html += "<div id='remove_"+idbox+"' style='clear:both;'><img width='15px' height='15px' src='./assets/x_min.png' style='float:right; margin-bottom:5px;'></img></div>";
+		html += "<div id='config_"+idbox+"' style='clear:both;'><img  width='17px' height='17px'  src='./assets/config_min.png' style='float:right; margin-bottom:5px; margin-left:5px;'></img></div>"
+		html += actuator.description+'<br>['+actuator.serviceAddress+']<br><br>';
+		html += '<img width="80px" height="80px" src="./assets/images/'+icons[actuator.api]+'" id="actuatorIMG_'+actuator.id+'" /><br><br>';
+	    html += "<div id='value_"+idbox+"'>-</div>";
+	    html += "</div>";
+	    return html;
+	}
+
+	this.GUIActuatorBox = function(coord, actuator, dd_box_name){
+
+		//increment num_boxes add on target
+		num_boxes++;
+
+		idbox = dd_box_name+"_"+num_boxes;
+
+		var html = "";
+
+		if(actuator.api.indexOf("twitter") !== -1 || actuator.api.indexOf("facebook") !== -1){
+			html = externalWebServiceGUI(idbox, actuator);
+		}else{
+			html = generalActuatorGUI(idbox, actuator);
+			//no value for now
+			values_sa[actuator.id] = "{}";
+		}
 
 	    $("#main").append(html);
 
@@ -596,7 +640,100 @@
 			removeActuatorBox(boxID);
 		});
 
+        $(document).on("click", '#config_'+idbox, function(event){
+			var boxID = this.id.substring(7);
+			$('#settings-content').empty();
+     		$("#settings-container").fadeIn(1000);
+     		createPostGUI(boxID);
+		});
+
+        //only for FACEBOOK! - TO HANDLER THE LOGIN
+		if(actuator.api.indexOf("facebook") !== -1){
+			LoadAppIDForFacebook();
+		}
+
         return idbox;
+	}
+
+
+	function LoadAppIDForFacebook(){
+		//for facebook - i'm waiting for file api reading (file api search if there is an APP ID)
+		//for all rest type of actuator - there isn't any problem		
+		load_file(false,file_name_facebook_configure, null, null, null);
+	}
+
+
+	function createPostGUI(boxID){
+
+		$('#settings-content').empty();
+
+		var listTRSensor = {};
+		var listTRActuator = {};
+		var html = "";
+		html += "<div>";
+		html += "<div id='input_popup' class='colum_popup'>";
+		html += '<table>';
+		for(var t in block_list){
+			if(t.indexOf("sensor") !== -1){
+				var idS = t.split("_")[1];
+				//if the sensor is not yet insert inside the object
+				if(!(idS in listTRSensor)){
+					html += '<tr id="tr_'+idS+'" class="tr_popup">';
+					html += '<td>'+sensors[idS].description+'</td>';
+					html += '</tr>';
+					listTRSensor[idS] = idS;
+				}
+			}
+		}
+		html += '</table>';
+		html += "</div>";
+
+		html += "<div id='output_popup' class='colum_popup'>";
+		html += '<table>';
+		for(var t in block_list){
+			if(t.indexOf("actuator") !== -1){
+				var idA = t.split("_")[1];
+				//if the actuator is not yet insert inside the object
+				if(!(idA in listTRActuator)){
+					//if the sensor or actuator is not twitter or facebook
+					if(actuators[idA].api.indexOf("twitter") === -1 && actuators[idA].api.indexOf("facebook") === -1){
+						html += '<tr id="tr_'+idA+'" class="tr_popup">';
+						html += '<td>'+actuators[idA].description+'</td>';
+						html += '</tr>';
+						listTRActuator[idA] = idA;
+					}
+				}	
+			}
+		}
+		html += '</table>';
+		html += "</div>";
+
+		html += "<\div>";
+		html += "<div><textarea id='textarea_post' class='textarea_popup'></textarea></div>";
+		html += "<input type='button' value='Save Config' id='btn_post_config'/>";
+		$('#settings-content').append(html);
+
+		for(var h in listTRSensor){
+			$("#tr_"+h).on('click', function(event){
+				var id = this.id.substring(3);
+			    var str = "[SENSOR]"+id+"[/SENSOR]";
+			    $('#textarea_post').val($('#textarea_post').val()+str); 
+			});
+		}
+		for(var h in listTRActuator){
+			$("#tr_"+h).on('click', function(event){
+				var id = this.id.substring(3);
+			    var str = "[ACTUATOR]"+id+"[/ACTUATOR]";
+			    $('#textarea_post').val($('#textarea_post').val()+str); 
+			});
+		}
+
+		$("#btn_post_config").on('click', function(event){
+			//save the content of post inside the object - textToPost [key = idBox; val = Post]
+		    textToPost[boxID] = $('#textarea_post').val();
+		    var popup = $("#settings-container");
+            popup.fadeOut();
+		});
 	}
 
 	function removeActuatorBox(boxID){
@@ -630,7 +767,7 @@
 
 		var html="";
 		html += "<div class='window' id='"+idbox+"'>";
-		html += "<div id='remove_"+idbox+"' style='clear:both;'><img width='10px' height='10px' src='./assets/x_min.png' style='float:right; margin-bottom:5px;'></img></div>";
+		html += "<div id='remove_"+idbox+"' style='clear:both;'><img width='15px' height='15px' src='./assets/x_min.png' style='float:right; margin-bottom:5px;'></img></div>";
 		html += "<div style='clear:both;'>";
 		if(type=="and")
 			html += '<img width="80px" height="80px" src="./assets/and.png" id="and" /><br><br>';
@@ -691,7 +828,7 @@
 
 		var html = "";
 		html += "<div class='window' id='"+idbox+"' >";
-		html += "<div id='remove_"+idbox+"' style='clear:both;'><img width='10px' height='10px' src='./assets/x_min.png' style='float:right; margin-bottom:5px;'></img></div>";
+		html += "<div id='remove_"+idbox+"' style='clear:both;'><img width='15px' height='15px' src='./assets/x_min.png' style='float:right; margin-bottom:5px;'></img></div>";
 		html += "Insert a value:<br/><br/>";
 	    html += "<input type='text' id='input_val_"+idbox+"' /><br/><br/>";
 	    html += "</div>";
@@ -730,3 +867,19 @@
 
         return idbox;
 	}
+
+function getFormattedAddress(address, width){
+    var sa = address.split('.');
+    var formatted_serviceAddress = sa[0];
+    for(var i=1; i<sa.length; i++){
+        if(sa[i-1].length + sa[i].length < width){
+            if(i < sa.length-1)
+                formatted_serviceAddress += "." + sa[i];
+            else
+                formatted_serviceAddress += "." + sa[i];
+        }
+        else
+            formatted_serviceAddress += ".<br>" + sa[i]; 
+    }
+    return formatted_serviceAddress;   
+}

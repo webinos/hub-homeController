@@ -18,12 +18,14 @@
 <script src="js/GUIHandler.js"></script>
 <script src="js/LogicHandler.js"></script>
 <script src="js/FileHandler.js"></script>
+<script src="js/loginFB.js"></script>
 
 </head>
 <body class="rules">
     <div id="leftcolumn" class="scroll-container rules">
         <div id="div_home">
-            <input type="button" value="Home" id="but_home"/>
+            <input type="button" value="Home" id="but_home" />
+            <input type="button" id='explorer_actuator_button' value="Add Sensor or Actuator From Explorer" />
         </div>
         <div class="scroll-scrollbar"><div class="scroll-track"><div class="scroll-thumb"><div class="scroll-end"></div></div></div></div>
 		<div class="scroll-viewport">
@@ -56,6 +58,14 @@
 
         <div id="footer">
             <p>This is the Footer</p>
+        </div>
+    </div>
+
+    <!-- CONFIG -->
+    <div id="settings-container" style='display:none'>
+        <div id="popup">
+            <div id="close">&times;</div>
+            <div id="settings-content"></div>
         </div>
     </div>
 

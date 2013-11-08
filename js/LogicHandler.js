@@ -4,6 +4,12 @@ var block_list = {};
 
 var textinput_array = new Array();
 
+//only for twitter and facebook - [key = idBox; val = PostText]
+var textToPost = {};
+
+//all actual value for sensors and actuators - [key = id_Sensor_or_Actuato; val = value]
+var values_sa = {};
+
 function Input(id){
 	var inputID = id;
 	//var processing_callback;
@@ -163,6 +169,9 @@ var onSensorEvent = function(event){
 		//$("#value_"+sensor.id).text(sensor.values);
 		$("[id=value_"+sensor.id+"]").text(sensor.values);
 
+		//save the actual value in object values_sa
+		values_sa[sensor.id] = sensor.values;
+
 		for(var n in block_list){
 			if(n.indexOf(sensor.id) !== -1)
 				block_list[n].input_callback(sensor.values);
@@ -222,64 +231,105 @@ var ORManagment = function(values){
 
 var setActuatorState = function(state,aid){
 	var actuatorID = aid.split("_")[1];
+    var val_array = new Array(); 
+
     actuator = actuators[actuatorID];
-    actuator.bind({
-        onBind:function(service){
-        	var r = service.range;
-        	var val_array=new Array(); 
 
-        	//if the user has setted a specific value for "true" and "false" - I send these values to the actuator!
-        	if( $('#actuator_false_'+aid).val()!=="" || $('#actuator_true_'+aid).val()!=="" ){
-        		if(state > 0){
-        			if($('#actuator_true_'+aid).val()!=="")
-        				val_array[0]=parseFloat($('#actuator_true_'+aid).val());
-        			else
-        				val_array[0]=parseFloat(1);
-        		}
-        		else{
-        			if($('#actuator_false_'+aid).val()!=="")
-        				val_array[0]=parseFloat($('#actuator_false_'+aid).val());
-        			else
-        				val_array[0]=parseFloat(0);
-        		}
-        	}
-        	else{
-        		//now, I verify if the actuator is binary or decimal
-	        	if(r[0].length==2){
-	        		if(r[0][0]==0 && r[0][1]==1){
-	        			//binary actuator
-	        			if(state>0)
-	        				val_array[0]=parseFloat(1);
-	        			else
-	        				val_array[0]=parseFloat(0);
-	        		}else{
-	        			//"decimal" actuator
-	        			val_array[0]=parseFloat(state);
-	        		}
-	        	}else{
-	        		val_array[0]=parseFloat(state);
-	        	}
-        	}
-            try{
+    if(actuator.api.indexOf("twitter") !== -1 || actuator.api.indexOf("facebook") !== -1){
+    	val_array = getValueForExernalServices(aid);
+    }
+    else{
+    	val_array = getValueForRealActuator(aid, actuatorID, state);
+	}
 
-                actuator.setValue(val_array,
-                    function(actuatorEvent){
-                        $("#value_"+aid).empty();
-						$("#value_"+aid).text(actuatorEvent.actualValue[0]);
-                    },
-                    function(actuatorError){
-                        //alert("[ERROR] on actuators set state: "+JSON.stringify(actuatorError));
-                    }
-                );
-            }
-            catch(err){
-                console.log("Not a valid webinos actuator: " + err.message);
-            }
-        }
-    });
+	try{
+		actuator.setValue(val_array,
+	        function(actuatorEvent){
+	        	//TODO - It's necessary to implement the callback for facebook and twitter driver
+	            $("#value_"+aid).empty();
+				$("#value_"+aid).text(actuatorEvent.actualValue[0]);
+				values_sa[actuatorEvent.actuatorId] = actuatorEvent.actualValue[0];
+	        },
+	        function(actuatorError){
+	        }
+	    );
+    }
+    catch(err){
+        console.log("Not a valid webinos actuator: " + err.message);
+    }
 }
 
 
+function getValueForExernalServices(aid){
+    var text = textToPost[aid];
+	var regExpress = / /;
+	var text_sensor_split = text.split(regExpress);
+	var str_post = "";
+	for(var t in text_sensor_split){
+		if( text_sensor_split[t].indexOf("[SENSOR]") !== -1 ){
+			var regExpressSensor = /[(SENSOR)\].\[\/(SENSOR)]/;
+			var tmp_1 = text_sensor_split[t].split(regExpressSensor);
+			for(var y in tmp_1){
+				if((tmp_1[y] in values_sa))
+					str_post = str_post + " " + values_sa[tmp_1[y]];
+				else
+					str_post = str_post + " " + tmp_1[y];
+			}
+		}else if( text_sensor_split[t].indexOf("[ACTUATOR]") !== -1 ){
+			var regExpressActuator = /[(ACTUATOR)\].\[\/(ACTUATOR)]/;
+			var tmp_2 = text_sensor_split[t].split(regExpressActuator);
+			for(var y in tmp_2){
+				//values_sa
+				if((tmp_2[y] in values_sa))
+					str_post = str_post + " " + values_sa[tmp_2[y]];
+				else
+					str_post = str_post + " " + tmp_2[y];
+			}
+		}else{
+			str_post = str_post + " " + text_sensor_split[t];
+		}
+	}
+
+	return new Array(str_post);
+}
+
+function getValueForRealActuator(aid, actuatorID, state){
+	var r = actuators[actuatorID].range;
+	var val_array = new Array();
+	//if the user has setted a specific value for "true" and "false" - I send these values to the actuator!
+	if( $('#actuator_false_'+aid).val()!=="" || $('#actuator_true_'+aid).val()!=="" ){
+		if(state > 0){
+			if($('#actuator_true_'+aid).val()!=="")
+				val_array[0]=parseFloat($('#actuator_true_'+aid).val());
+			else
+				val_array[0]=parseFloat(1);
+		}
+		else{
+			if($('#actuator_false_'+aid).val()!=="")
+				val_array[0]=parseFloat($('#actuator_false_'+aid).val());
+			else
+				val_array[0]=parseFloat(0);
+		}
+	}
+	else{
+		//now, I verify if the actuator is binary or decimal
+    	if(r[0].length==2){
+    		if(r[0][0]==0 && r[0][1]==1){
+    			//binary actuator
+    			if(state>0)
+    				val_array[0]=parseFloat(1);
+    			else
+    				val_array[0]=parseFloat(0);
+    		}else{
+    			//"decimal" actuator
+    			val_array[0]=parseFloat(state);
+    		}
+    	}else{
+    		val_array[0]=parseFloat(state);
+    	}
+	}
+	return val_array;
+}
 
 /***************************  HELP FUNCTION TO ASSOCIATE LOGIC WITH GUI  ***************************/
 
