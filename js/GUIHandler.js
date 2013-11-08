@@ -53,9 +53,12 @@
             }
         }
 
+        var formatted_serviceAddress = getFormattedAddress(address, 10);
+
         var sensorCode = '<div id="code_'+ sensor.id +'" class="sensor">';
         sensorCode += "<div id='remove_"+sensor.id+"' style='clear:both;'><img width='15px' height='15px' src='./assets/x_min.png' style='float:right; margin-left:-40px;'></img></div>";
-        sensorCode += '<img style="clear:both;" width="80px" height="80px" src="./assets/images/'+icons[sensor.api]+'" id="'+div_id+'" /><p>'+sensor.description+'<br><span class="addr">['+address+']</span></p>';
+        //sensorCode += '<img style="clear:both;" width="80px" height="80px" src="./assets/images/'+icons[sensor.api]+'" id="'+div_id+'" /><p>'+sensor.description+'<br><span class="addr">['+address+']</span></p>';
+        sensorCode += '<img style="clear:both;" width="80px" height="80px" src="./assets/images/'+icons[sensor.api]+'" id="'+div_id+'" /><p>'+sensor.description+'<br><span class="addr">['+formatted_serviceAddress+']</span></p>';
         sensorCode += '</div>'; 
         jQuery("#sensors_table").append(sensorCode);
 
@@ -132,9 +135,11 @@
 		            }
 		        }
 
+                var formatted_serviceAddress = getFormattedAddress(address, 10);
 		        var actuatorCode = '<div id="code_'+ service.id +'" class="sensor">';
 		        actuatorCode += "<div id='remove_"+service.id+"' style='clear:both;'><img width='15px' height='15px' src='./assets/x_min.png' style='float:right; margin-left:-40px;'></img></div>";
-		        actuatorCode += '<img width="80px" height="80px" src="./assets/images/'+icons[service.api]+'" id="'+div_id+'" /><p>'+service.description+'<br><span class="addr">['+address+']</span></p>'
+		        //actuatorCode += '<img width="80px" height="80px" src="./assets/images/'+icons[service.api]+'" id="'+div_id+'" /><p>'+service.description+'<br><span class="addr">['+address+']</span></p>'
+                actuatorCode += '<img width="80px" height="80px" src="./assets/images/'+icons[service.api]+'" id="'+div_id+'" /><p>'+service.description+'<br><span class="addr">['+formatted_serviceAddress+']</span></p>'
 		        actuatorCode += '</div>';
 		        jQuery("#actuators_table").append(actuatorCode);
 		       	
@@ -499,10 +504,12 @@
 
 		idbox = dd_box_name+"_"+num_boxes;
 
+        var formatted_serviceAddress = getFormattedAddress(sensor.serviceAddress, 16);
 		var html = "";
 		html += "<div class='window' id='"+idbox+"' >";
 		html += "<div id='remove_"+idbox+"' style='clear:both;'><img width='15px' height='15px' src='./assets/x_min.png' style='float:right; margin-bottom:5px;'></img></div>";
-		html += sensor.description+'<br>['+sensor.serviceAddress+']<br><br>';
+		//html += sensor.description+'<br>['+sensor.serviceAddress+']<br><br>';
+        html += sensor.description+'<br>['+formatted_serviceAddress+']<br><br>';
 		html += '<img width="80px" height="80px" src="./assets/images/'+icons[sensor.api]+'" id="sensorIMG_'+sensor.id+'" /><br><br>';                     
 	    html += "<div id='value_"+sensor.id+"'>-</div>";
 	    html += "</div>";
@@ -860,3 +867,19 @@
 
         return idbox;
 	}
+
+function getFormattedAddress(address, width){
+    var sa = address.split('.');
+    var formatted_serviceAddress = sa[0];
+    for(var i=1; i<sa.length; i++){
+        if(sa[i-1].length + sa[i].length < width){
+            if(i < sa.length-1)
+                formatted_serviceAddress += "." + sa[i];
+            else
+                formatted_serviceAddress += "." + sa[i];
+        }
+        else
+            formatted_serviceAddress += ".<br>" + sa[i]; 
+    }
+    return formatted_serviceAddress;   
+}

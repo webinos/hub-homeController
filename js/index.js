@@ -25,6 +25,7 @@ var service_types = [
 google.load("visualization", "1", {packages:["corechart"]});
 
 var sensors = {};
+var services_to_save = {};
 var sensors_configuration = {};		//to store sensor's rate,timeout and mode 
 var sensorActive = {};
 var listeners = new Array();
@@ -34,11 +35,11 @@ var listeners_numbers={};	//for counting the number of listeners per sensor
 var chart_selected;
 var charts_to_fade=[];
 
-var min_temperature_range=-30;
-var max_temperature_range=70;
+// var min_temperature_range=-30;
+// var max_temperature_range=70;
 
-var min_gauge_range=-10;
-var max_gauge_range=65;
+// var min_gauge_range=-10;
+// var max_gauge_range=65;
 var lineColor=['blue','red','orange','green','violet','brown','pink','yellow'];
   
 
@@ -121,8 +122,23 @@ var onSensorEvent = function(event){
 	}
 };
 
+function prapareServicesToBeSaved(){
+    services_to_save = {};
+    for(var i in sensors){
+        var tmp = {
+            id : sensors[i].id,
+            api : sensors[i].api,
+            serviceAddress : sensors[i].serviceAddress,
+            serviceConfiguration : sensors_configuration[sensors[i].id]
+        };
+        services_to_save[sensors[i].id] = tmp;
+    }
+}
+
 function save_services(ask){
-    __Utilities__save_file(sensors, "hub_presentation_explorer.txt", ask);
+    prapareServicesToBeSaved();
+    __Utilities__save_file(services_to_save, "hub_presentation_explorer.txt", ask);
+    //__Utilities__save_file(sensors, "hub_presentation_explorer.txt", ask);
 }
 
 function load_services(ask){
@@ -138,13 +154,15 @@ function load_services(ask){
     );
 }
 
-function save_graphics(){
+function save_graphics(ask){
+    if(ask == undefined)
+        ask = true;
     var tmp_array = [];
     for(var elem in charts){
         var graphic= charts[elem];
         tmp_array.push(graphic.toObject());
     }
-    __Utilities__save_file(tmp_array,"hub_presentation_page.txt", true);
+    __Utilities__save_file(tmp_array,"hub_presentation_page.txt", ask);
 }
 
 function load_graphics(){
@@ -157,38 +175,40 @@ function load_graphics(){
                 var idChart = "chart_" + (element_counter++);
                 var X = contents[i].coord.x;
                 var Y = contents[i].coord.y;
+                var min = Number(contents[i].minRange);
+                var max = Number(contents[i].maxRange);
 
                 if(contents[i].type == "gauge")
-                    graphic = new Gauge(idChart, X, Y);
-                else if(contents[i].type == "thermometer"){
-                    graphic = new Thermometer(idChart, X, Y);
-                }
-                else if(contents[i].type == "text-label"){
-                    graphic = new TextLabel(idChart, X, Y);
-                }
-                else if(contents[i].type == "line-chart"){
-                    graphic = new LineChart(idChart, X, Y);
-                }
-                else if(contents[i].type == "historical-chart"){
-                    graphic = new HistoricalChart(idChart, X, Y);
-                }
-                else if(contents[i].type == "google-map"){
-                    graphic = new GoogleMap(idChart, X, Y);
-                }
-                else if(contents[i].type == "corner-gauge"){
-                    graphic = new CornerGauge(idChart, X, Y);
-                }
-                else if(contents[i].type == "fuel-gauge"){
-                    graphic = new FuelGauge(idChart, X, Y);
-                }
-                else if(contents[i].type == "odometer-gauge"){
-                    graphic = new OdometerGauge(idChart, X, Y);
-                }
-                else if(contents[i].type == "checkbox-gauge"){
-                    graphic = new CheckBoxGauge(idChart, X, Y);
-                }
-                else
-                    continue;
+                        graphic = new Gauge(idChart, X, Y, min, max);
+                    else if(contents[i].type == "thermometer"){
+                        graphic = new Thermometer(idChart, X, Y, min, max);
+                    }
+                    else if(contents[i].type == "text-label"){
+                        graphic = new TextLabel(idChart, X, Y, min, max);
+                    }
+                    else if(contents[i].type == "line-chart"){
+                        graphic = new LineChart(idChart, X, Y, min, max);
+                    }
+                    else if(contents[i].type == "historical-chart"){
+                        graphic = new HistoricalChart(idChart, X, Y, min, max);
+                    }
+                    else if(contents[i].type == "google-map"){
+                        graphic = new GoogleMap(idChart, X, Y, min, max);
+                    }
+                    else if(contents[i].type == "corner-gauge"){
+                        graphic = new CornerGauge(idChart, X, Y, min, max);
+                    }
+                    else if(contents[i].type == "fuel-gauge"){
+                        graphic = new FuelGauge(idChart, X, Y, min, max);
+                    }
+                    else if(contents[i].type == "odometer-gauge"){
+                        graphic = new OdometerGauge(idChart, X, Y, min, max);
+                    }
+                    else if(contents[i].type == "checkbox-gauge"){
+                        graphic = new CheckBoxGauge(idChart, X, Y, min, max);
+                    }
+                    else
+                        continue;
 
 
                 charts[idChart]=graphic;
@@ -246,13 +266,19 @@ function bindProperService(service){
         onBind:function(){
             console.log("Service "+service.api+" bound");
             
-            var serviceCode = "<div class='sensor'>"+
-                              "<div id='remove_"+service.id+"' style='clear:both;'><img width='10px' height='10px' src='./assets/x_min.png' style='float:right; margin-left:-40px;'></img></div>"+
-                              "<img width='120px' height='120px' src='./assets/images/"+icons[service.api]+"'' id='"+service.id+"' draggable='false' /><p>"+service.description+"</p></div>";
+            var serviceCode = "<div id='servicediv_" +service.id+"' class='sensor'>"+
+                              "<div id='remove_"+service.id+"' style='clear:both;'><img width='15px' height='15px' src='./assets/x_min.png' style='float:right; margin-left:-40px;'></img></div>"+
+                              "<img width='110px' height='110px' src='./assets/images/"+icons[service.api]+"'' id='"+service.id+"' draggable='false' /><p>"+service.description+"</p></div>";
             
             jQuery("#sensors_table").append(serviceCode);
 
-            $(document).on("click", "#remove_"+service.id, removeSensorFromExplorer);            
+            $(document).on("click", "#remove_"+service.id, function(event){
+                $("#servicediv_"+service.id).unbind('click',this);
+                delete sensors[service.id];
+                save_services(false);
+                $("#servicediv_"+service.id).remove();
+            });
+            
             document.getElementById(service.id).draggable = true;
             addOnDragStartEndSensors(service.id);
             
@@ -260,28 +286,24 @@ function bindProperService(service){
             leftColumn.tinyscrollbar();
             
             if(service.api.indexOf(sensors_type) != -1){
-                var configure_options = {
-                    rate:1000,
-                    timeout:500,
-                    eventFireMode: "fixedinterval"
-                };
-
-                sensors_configuration[service.id]= configure_options;
-                service.configureSensor(configure_options, 
-                    function(){
-                    },
-                    function (){
-                        console.error('Error configuring Sensor ' + service.api);
-                    }
-                );
+                var configure_options;
+                if(sensors_configuration[service.id]){
+                    configure_options = sensors_configuration[service.id];
+                }
+                else{
+                    configure_options = {
+                        rate:1000,
+                        timeout:500,
+                        eventFireMode: "fixedinterval"
+                    };
+                    sensors_configuration[service.id]= configure_options;
+                }
             }
+            save_services(false);   
         }
     });
 }
 
-function removeSensorFromExplorer(){
-
-}
 
 function serviceDiscovery(container, serviceFilter){
     webinos.discovery.findServices(
@@ -293,7 +315,7 @@ function serviceDiscovery(container, serviceFilter){
                 if ((service.id === serviceFilter.id) && (service.serviceAddress === serviceFilter.address) && (typeof(sensors[service.id]) === "undefined")) {
                     sensors[service.id] = service;
                     bindProperService(service);
-                    save_services(false);
+//                    save_services(false);
                }
             }
           , onError: error
@@ -332,17 +354,14 @@ jQuery(document).ready(function() {
 		//discover_filesystem();
 	});
 	
-	//$('#clearCharts').live( 'click',function(event){
     $(document).on("click","#clearCharts", function(event){
 	  clearAll_for_graphics();
 	});
 
-    //$('#saveCharts').live( 'click',function(event){
     $(document).on("click","#saveCharts", function(event){
         save_graphics();
     });
 
-    //$('#loadCharts').live( 'click',function(event){
     $(document).on("click","#loadCharts", function(event){
         load_graphics();         
     });		
@@ -408,7 +427,7 @@ function fadeOutSettings(){
 	charts_to_fade=[];
 }
 
-function discover_services(container, filter){
+function discover_services(container, saved_services){
     jQuery("#sensors_table").empty();
     for ( var i in service_types) {
         var type = service_types[i];
@@ -416,8 +435,9 @@ function discover_services(container, filter){
             onFound: function (service) { 
                 //sensorActive[service.id] = false;
                 
-                if( (!filter || (filter && filter[service.id])) && (typeof(sensors[service.id]) === "undefined")){
+                if( (!saved_services || (saved_services && saved_services[service.id])) && (typeof(sensors[service.id]) === "undefined")){
                     sensors[service.id] = service;
+                    sensors_configuration[service.id] = saved_services[service.id]["serviceConfiguration"];
                     bindProperService(service);
                 }
             }
@@ -787,7 +807,7 @@ function enableButtonsLive(idChart){
      	 }
      	
      	var graphic=charts[idChart];
-    
+        
         var setting_page = graphic.getSettingPage();
         setting_page += " <div id='save_cfg_but-"+idChart+"' class='save_cfg_but'> <input class='button' type='button' value='Save'></div>";
         $('#settings-content').append(setting_page);
@@ -808,28 +828,34 @@ function enableButtonsLive(idChart){
      			graphic.maxRange=$("#max_range-"+graphic.service_list[sensor]).val();
                 if(graphic.type=='gauge'){
      				$("#drop_canvas-"+idChart).empty();
+
      				var chart=new RGraph.Gauge("drop_canvas-"+idChart, parseInt(graphic.minRange), parseInt(graphic.maxRange), 0);
      				graphic.chart=chart;
+                    RGraph.Effects.Gauge.Grow(graphic.chart);
      			}
                 else if(graphic.type=='thermometer'){
      				$("#drop_canvas-"+idChart).empty();
      				var chart=new RGraph.Thermometer("drop_canvas-"+idChart, parseInt(graphic.minRange), parseInt(graphic.maxRange), 0);
      				graphic.chart=chart;
+                    RGraph.Effects.Thermometer.Grow(graphic.chart);
      			}
                 else if(graphic.type=='fuel-gauge'){ //NOTE: this component gives some problems while changing settings
-                    $("#drop_canvas-"+idChart).remove();
-                    var chart=new RGraph.Fuel("drop_canvas-"+idChart, parseInt(graphic.minRange), parseInt(graphic.maxRange), 0);
-                    graphic.chart=chart;
+                    // $("#drop_canvas-"+idChart).empty();
+                    // var chart=new RGraph.Fuel("drop_canvas-"+idChart, parseInt(graphic.minRange), parseInt(graphic.maxRange), 0);
+                    // graphic.chart=chart;
+                    // RGraph.Effects.Fuel.Grow(graphic.chart);
                 }
                 else if(graphic.type=='corner-gauge'){
                     $("#drop_canvas-"+idChart).empty();
                     var chart=new RGraph.CornerGauge("drop_canvas-"+idChart, parseInt(graphic.minRange), parseInt(graphic.maxRange), 0);
                     graphic.chart=chart;
+                    RGraph.Effects.CornerGauge.Grow(graphic.chart);
                 }
                 else if(graphic.type=='odometer-gauge'){
                     $("#drop_canvas-"+idChart).empty();
                     var chart=new RGraph.Odometer("drop_canvas-"+idChart, parseInt(graphic.minRange), parseInt(graphic.maxRange), 0);
                     graphic.chart=chart;
+                    RGraph.Effects.Odo.Grow(graphic.chart);
                 }
      			else if (graphic.type=='line-chart'){
      				color[sensor]=$("#cfg_color-"+graphic.service_list[sensor]).val();
@@ -837,11 +863,12 @@ function enableButtonsLive(idChart){
      			}
      			sensors_configuration[graphic.service_list[sensor]]={
 					rate:urate,
-					time:utime,
+					timeout:utime,
 					eventFireMode:umode
     			};
           		sensors[graphic.service_list[sensor]].configureSensor({rate: urate, time: utime, eventFireMode: umode}, 
  					function(){
+                        save_services(false);
  					},
  					function (){
  						console.error('Error configuring Sensor ' + service.api);
@@ -849,6 +876,7 @@ function enableButtonsLive(idChart){
  				);
             }
       	}
+        save_graphics(false);
       	fadeOutSettings();
   	 });     
 }
@@ -864,7 +892,7 @@ function deleteChart(idChart_selected){
                     ;//handle;
                 }
                 else if(sensors[graphic.service_list[sens]].api.indexOf(sensors_type) != -1){
-                    sensors[graphic.service_list[sens]].removeEventListener('sensor', onSensorEvent, false);
+                    //sensors[graphic.service_list[sens]].removeEventListener('sensor', onSensorEvent, false);
                 }
 				delete listeners_numbers[graphic.service_list[sens]];
 			}		
@@ -893,7 +921,7 @@ function removeSensor(graphic, sid){
 	}
 	
 	if(listeners_numbers[sid]==0){
-		sensors[sid].removeEventListener('sensor', onSensorEvent, false);
+		//sensors[sid].removeEventListener('sensor', onSensorEvent, false);
 		delete listeners_numbers[sid];
 	}	
 	
@@ -909,7 +937,7 @@ function startStopSensor(chartId,sid){
 		charts[chartId].sensor_active[sid] = false;
 		listeners_numbers[sid]--;
 		if(listeners_numbers[sid]==0){
-			sensors[sid].removeEventListener('sensor', onSensorEvent, false);
+			//sensors[sid].removeEventListener('sensor', onSensorEvent, false);
 			delete listeners_numbers[sid];
 		}	
 	}else{	//active the sensor listening
@@ -918,7 +946,7 @@ function startStopSensor(chartId,sid){
 		
 		if(!listeners_numbers.hasOwnProperty(sid)){
 			//add event listener
-			sensors[sid].addEventListener('sensor', onSensorEvent, false);
+			//sensors[sid].addEventListener('sensor', onSensorEvent, false);
 			charts[chartId].sensor_active[sid]=true; 
             listeners_numbers[sid]=0;
 		}
