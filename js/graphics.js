@@ -140,7 +140,6 @@ Graphic.methods({
 });
 
 
-
 function Thermometer(idChart, X, Y, min, max){
     arguments.callee.superConstructor.call(this, idChart, X, Y, min, max);
     
@@ -268,7 +267,7 @@ function LineChart(idChart, X, Y, min, max){
         this.chart.draw(this.graphData, this.options);
     }
     catch(e){
-        alert("Failed to load google chart. Please check your Internet connection.");
+        throw {message: "Failed to load google chart. Please check your Internet connection."};
     }
 }
 
@@ -425,9 +424,8 @@ function GoogleMap(idChart, X, Y){
         this.chart = new google.maps.Map(document.getElementById("chart_div-"+this.id), options);
     }
     catch(e){
-        alert("Failed to load google map. Please check your Internet connection.")
+        throw {message: "Failed to load google map. Please check your Internet connection."};
     }
-    
 }
 
 GoogleMap.subclassFrom(Graphic);
