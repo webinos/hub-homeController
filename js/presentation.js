@@ -265,14 +265,6 @@ function bindProperService(service){
                     sensors_configuration[service.id]= configure_options;
                 }
 
-                // var configure_options = {
-                //     rate:500,
-                //     timeout:500,
-                //     eventFireMode: "fixedinterval"
-                // };
-
-                // sensors_configuration[service.id]= configure_options;
-                
                 service.configureSensor(configure_options, 
                     function(){
                         configured_services++;
@@ -282,14 +274,9 @@ function bindProperService(service){
                     }
                 );
             }
-            else{ //if(service.api.indexOf(geolocation_type) != -1){
+            else{
                 configured_services++;
             }
-            // alert(count_services +"=="+ num_services);
-            // if(++count_services == num_services){
-            //     alert("chiamo load")
-            //     load_graphics(false);
-            // }
         }
     });
 }
@@ -307,17 +294,6 @@ function clearAll_for_graphics(){
 }
 var intervalwaitid = 0;
 
-// function show_wait(){
-//     alert("pippo");
-//     if(configured_services < services_count){
-//         $("#wait_div").show();
-//     }
-//     else{
-//         clearInterval(intervalwaitid);
-//         hide_wait();
-//     }
-//     //$("#wait_div").show();
-// }
 function show_wait(){
     //alert(configured_services+"---"+services_count);
     if(configured_services < services_count){
@@ -335,12 +311,6 @@ function hide_wait(){
 }
 
 jQuery(document).ready(function() {
-    
-    
-    //setTimeout(hide_wait,1000);
-
-    //setTimeout(show_wait,3000);
-
     clearAll_for_graphics();
 
     $(window).on('beforeunload', function(e) {    
@@ -520,13 +490,6 @@ function assign_services_to_graphics(service_selected, graphic){
 
 
 function enableButtonsLive(idChart){
-	//$('#delete-'+idChart).live( 'click',function(event){
-    // $(document).on("click", '#delete-'+idChart, function(event){
-    //  	deleteChart(this.id.split('-')[1]);
-    //  });
-
-
-	//$('#settings-'+idChart).live( 'click',function(event){
     $(document).on("click", '#settings-'+idChart, function(event){
     	$('#settings-content').empty();
      	$("#settings-container").fadeIn(1000);
@@ -569,25 +532,9 @@ function enableButtonsLive(idChart){
      				graphic.chart=chart;
      			}
                 else if(graphic.type=='fuel-gauge'){ //NOTE: this component gives some problems while changing settings
-                    $("#drop_canvas-"+idChart).remove();
-                    var chart=new RGraph.Fuel("drop_canvas-"+idChart, parseInt(graphic.minRange), parseInt(graphic.maxRange), 0);
-                    graphic.chart=chart;
-                    
-                    //GLT
-                    // var tmp_service_list = graphic.service_list
-                    // var tmp_coord = graphic.coord;
-
-                    // var tmp_minrange = graphic.minRange;
-                    // var tmp_maxrange = graphic.maxRange;
-
-                    // $("#main-"+idChart).remove();
-                    // graphic = new FuelGauge(idChart, tmp_coord.x , tmp_coord.y, tmp_minrange, tmp_maxrange);
-                    // graphic.service_list = tmp_service_list;
-                    
-                    // charts[idChart] = graphic;
-                    // var d = document.getElementById("main-"+idChart);
-                    // d.style.left = graphic.coord.x+'px';
-                    // d.style.top = graphic.coord.y+'px';
+                    // $("#drop_canvas-"+idChart).remove();
+                    // var chart=new RGraph.Fuel("drop_canvas-"+idChart, parseInt(graphic.minRange), parseInt(graphic.maxRange), 0);
+                    // graphic.chart=chart;
                 }
                 else if(graphic.type=='corner-gauge'){
                     $("#drop_canvas-"+idChart).empty();
@@ -605,7 +552,7 @@ function enableButtonsLive(idChart){
      			}
      			sensors_configuration[graphic.service_list[sensor]]={
 					rate:urate,
-					time:utime,
+					timeout:utime,
 					eventFireMode:umode
     			};
           		sensors[graphic.service_list[sensor]].configureSensor({rate: urate, time: utime, eventFireMode: umode}, 

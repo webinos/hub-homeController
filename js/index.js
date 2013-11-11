@@ -265,6 +265,7 @@ function bindProperService(service){
     service.bind({
         onBind:function(){
             console.log("Service "+service.api+" bound");
+            sensors[service.id] = service;
             
             var serviceCode = "<div id='servicediv_" +service.id+"' class='sensor'>"+
                               "<div id='remove_"+service.id+"' style='clear:both;'><img width='15px' height='15px' src='./assets/x_min.png' style='float:right; margin-left:-40px;'></img></div>"+
@@ -313,7 +314,8 @@ function serviceDiscovery(container, serviceFilter){
 
 
                 if ((service.id === serviceFilter.id) && (service.serviceAddress === serviceFilter.address) && (typeof(sensors[service.id]) === "undefined")) {
-                    sensors[service.id] = service;
+                    //alert("Add to sensors2");
+                    //sensors[service.id] = service;
                     bindProperService(service);
 //                    save_services(false);
                }
@@ -436,7 +438,8 @@ function discover_services(container, saved_services){
                 //sensorActive[service.id] = false;
                 
                 if( (!saved_services || (saved_services && saved_services[service.id])) && (typeof(sensors[service.id]) === "undefined")){
-                    sensors[service.id] = service;
+                    //alert("Add to sensors1");
+                    //sensors[service.id] = service;
                     sensors_configuration[service.id] = saved_services[service.id]["serviceConfiguration"];
                     bindProperService(service);
                 }
@@ -541,70 +544,75 @@ var addDragEventsForGaugesOnTarget = function(contentDiv){
 		//remove class "valid"
 		this.className = "scroll-overview";
 		
-		//for the position
-		// var X = event.layerX - $(event.target).position().left;
-		// var Y = event.layerY - $(event.target).position().top;
-        var X = event.layerX-140;
-        var Y = event.layerY-140;
-		var gauge_selected = event.dataTransfer.getData("gauges");
-		var idChart = "chart_" + (element_counter++);
+		try{
+    		// var X = event.layerX - $(event.target).position().left;
+    		// var Y = event.layerY - $(event.target).position().top;
+            var X = event.layerX-140;
+            var Y = event.layerY-140;
+    		var gauge_selected = event.dataTransfer.getData("gauges");
+    		var idChart = "chart_" + (element_counter++);
 
-		var graphic = new Graphic();
-		
-		if(gauge_selected == "btnGauge"){
-			graphic = new Gauge(idChart, X, Y);
-		}
-		else if(gauge_selected == "btnTherm"){
-			graphic = new Thermometer(idChart, X, Y);
-		}
-		else if(gauge_selected == "text-label"){
-			graphic = new TextLabel(idChart, X, Y);
-		}
-		else if(gauge_selected == "line-chart"){
-			graphic = new LineChart(idChart, X, Y);
-		}
-        else if(gauge_selected == "btnHistorical"){
-            graphic = new HistoricalChart(idChart, X, Y);
+    		
+            var graphic= new Graphic();
+    		
+    		if(gauge_selected == "btnGauge"){
+    			graphic = new Gauge(idChart, X, Y);
+    		}
+    		else if(gauge_selected == "btnTherm"){
+    			graphic = new Thermometer(idChart, X, Y);
+    		}
+    		else if(gauge_selected == "text-label"){
+    			graphic = new TextLabel(idChart, X, Y);
+    		}
+    		else if(gauge_selected == "line-chart"){
+    			graphic = new LineChart(idChart, X, Y);
+    		}
+            else if(gauge_selected == "btnHistorical"){
+                graphic = new HistoricalChart(idChart, X, Y);
+            }
+            else if(gauge_selected == "google-map"){
+                graphic = new GoogleMap(idChart, X, Y);
+            }
+            else if(gauge_selected == "btnCorner"){
+                graphic = new CornerGauge(idChart, X, Y);
+            }
+            else if(gauge_selected == "btnFuel"){
+                graphic = new FuelGauge(idChart, X, Y);
+            }
+            else if(gauge_selected == "btnOdometer"){
+                graphic = new OdometerGauge(idChart, X, Y);
+            }
+            else if(gauge_selected == "btnCheckBox"){
+                 graphic = new CheckBoxGauge(idChart, X, Y);
+            }
+            else{
+                if(!gauge_selected)
+                    alert("You have to drag a gauge from the right bar first");
+                else
+                    alert("This component has not been implemented");
+                return;
+            }
+
+    		charts[idChart]=graphic;
+
+    		var d = document.getElementById("main-"+idChart);
+        	d.style.left = graphic.coord.x+'px';
+        	d.style.top = graphic.coord.y+'px';
+
+    		var divsWithWindowClass = jsPlumb.CurrentLibrary.getSelector(".window");
+    		jsPlumb.draggable(divsWithWindowClass);
+
+
+    		enableDragAndDropSensors("drop_canvas-"+idChart);	
+    		enableButtonsLive(idChart);
+
+    		contentDiv.tinyscrollbar_update();
+
+    		event.stopPropagation();
         }
-        else if(gauge_selected == "google-map"){
-            graphic = new GoogleMap(idChart, X, Y);
+        catch(e){
+            alert(e.message);
         }
-        else if(gauge_selected == "btnCorner"){
-            graphic = new CornerGauge(idChart, X, Y);
-        }
-        else if(gauge_selected == "btnFuel"){
-            graphic = new FuelGauge(idChart, X, Y);
-        }
-        else if(gauge_selected == "btnOdometer"){
-            graphic = new OdometerGauge(idChart, X, Y);
-        }
-        else if(gauge_selected == "btnCheckBox"){
-             graphic = new CheckBoxGauge(idChart, X, Y);
-        }
-        else{
-            if(!gauge_selected)
-                alert("You have to drag a gauge from the right bar first");
-            else
-                alert("This component has not been implemented");
-            return;
-        }
-
-		charts[idChart]=graphic;
-
-		var d = document.getElementById("main-"+idChart);
-    	d.style.left = graphic.coord.x+'px';
-    	d.style.top = graphic.coord.y+'px';
-
-		var divsWithWindowClass = jsPlumb.CurrentLibrary.getSelector(".window");
-		jsPlumb.draggable(divsWithWindowClass);
-
-
-		enableDragAndDropSensors("drop_canvas-"+idChart);	
-		enableButtonsLive(idChart);
-
-		contentDiv.tinyscrollbar_update();
-
-		event.stopPropagation();
 	};
 };
 
@@ -773,7 +781,7 @@ function assign_services_to_graphics(service_selected, graphic){
         });
     }
     else
-        alert("Not allowed - This service is already associated to this graph");
+        alert("This service is already associated to this graph");
 }
 
 function enableDragAndDropSensors(idChart){
