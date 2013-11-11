@@ -59,7 +59,7 @@ function Processing(ic, id){
 	var allElementsAreCharged = function(){
 		var flag = true;
 		for(var ids in input_nodes){
-			if(input_nodes[ids].length === 0 || input_nodes[ids]==null){
+			if(input_nodes[ids].length == 0 || input_nodes[ids] == null){
 				flag = false;
 				break;
 			}
@@ -136,13 +136,23 @@ function Processing(ic, id){
 function Output(cb, id){
 	var inner_callback = cb;
 	var boxID = id;
+	var val_array = [];
 
 	var output_callback = function(state){
 		if(inner_callback){
 			if(boxID!=null)
-				inner_callback(state, boxID);
+				val_array = inner_callback({
+					"state" : state,
+					"boxID" : boxID,
+					"prevVal" : val_array
+				});
+		/*
+		if(inner_callback){
+			if(boxID!=null)
+				val_array = inner_callback(state, boxID);
 			else
-				inner_callback(state);
+				val_array = inner_callback(state);
+		*/
 		}
 	}
 
@@ -229,7 +239,14 @@ var ORManagment = function(values){
 	return -1;	
 }
 
-var setActuatorState = function(state,aid){
+var setActuatorState = function(argumentsObj){
+	//argumentsObj is an object
+	//argumentsObj.state = state
+	//argumentsObj.aid = boxID
+	//argumentsObj.prevVal = val setted on previous loop
+	var state = argumentsObj.state;
+	var aid = argumentsObj.boxID;
+
 	var actuatorID = aid.split("_")[1];
     var val_array = new Array(); 
 
@@ -242,21 +259,25 @@ var setActuatorState = function(state,aid){
     	val_array = getValueForRealActuator(aid, actuatorID, state);
 	}
 
-	try{
-		actuator.setValue(val_array,
-	        function(actuatorEvent){
-	        	//TODO - It's necessary to implement the callback for facebook and twitter driver
-	            $("#value_"+aid).empty();
-				$("#value_"+aid).text(actuatorEvent.actualValue[0]);
-				values_sa[actuatorEvent.actuatorId] = actuatorEvent.actualValue[0];
-	        },
-	        function(actuatorError){
-	        }
-	    );
-    }
-    catch(err){
-        console.log("Not a valid webinos actuator: " + err.message);
-    }
+
+	if(val_array[0] != argumentsObj.prevVal[0]){
+		try{
+			actuator.setValue(val_array,
+		        function(actuatorEvent){
+		            $("#value_"+aid).empty();
+					$("#value_"+aid).text(actuatorEvent.actualValue[0]);
+					values_sa[actuatorEvent.actuatorId] = actuatorEvent.actualValue[0];
+		        },
+		        function(actuatorError){
+		        }
+		    );
+	    }
+	    catch(err){
+	        console.log("Not a valid webinos actuator: " + err.message);
+	    }
+	}
+	
+    return val_array;
 }
 
 
@@ -270,20 +291,25 @@ function getValueForExernalServices(aid){
 			var regExpressSensor = /[(SENSOR)\].\[\/(SENSOR)]/;
 			var tmp_1 = text_sensor_split[t].split(regExpressSensor);
 			for(var y in tmp_1){
-				if((tmp_1[y] in values_sa))
+				if((tmp_1[y] in values_sa) && tmp_1[y].length != 0){
 					str_post = str_post + " " + values_sa[tmp_1[y]];
-				else
-					str_post = str_post + " " + tmp_1[y];
+				}
+				else {
+					if (tmp_1[y].length != 0)
+						str_post = str_post + " " + tmp_1[y];
+				}
 			}
 		}else if( text_sensor_split[t].indexOf("[ACTUATOR]") !== -1 ){
 			var regExpressActuator = /[(ACTUATOR)\].\[\/(ACTUATOR)]/;
 			var tmp_2 = text_sensor_split[t].split(regExpressActuator);
 			for(var y in tmp_2){
-				//values_sa
-				if((tmp_2[y] in values_sa))
+				if((tmp_2[y] in values_sa) && tmp_2[y].length != 0){
 					str_post = str_post + " " + values_sa[tmp_2[y]];
-				else
-					str_post = str_post + " " + tmp_2[y];
+				}
+				else{
+					if (tmp_2[y].length != 0)
+						str_post = str_post + " " + tmp_2[y];
+				}
 			}
 		}else{
 			str_post = str_post + " " + text_sensor_split[t];
@@ -377,7 +403,9 @@ function settingUserInputConnection(source,target, position){
 		//event onchange or onkeyup?
 		$('#input_val_'+source).on('keyup', function(){
 			var vall = this.value;
-		    block_list[source].input_callback(vall);
+			//if vall is not empty
+			//if(vall.length != 0)
+		    	block_list[source].input_callback(vall);
 		});
 		textinput_array.push(source);
 	}
