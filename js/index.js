@@ -251,7 +251,7 @@ function callExplorer(container) {
             , function(){ console.log("***Dashboard opened");} )
                 .onAction( function (data) { 
                     for(var i in data.result)
-                        serviceDiscovery(container, data.result[i]); 
+                        serviceDiscovery_afterExplorer(container, data.result[i]); 
                 }
         );
 	}
@@ -261,15 +261,17 @@ function error(error) {
     alert('Error: ' + error.message + ' (Code: #' + error.code + ')');
 }
 
-function bindProperService(service){
+function bindProperService(service, save){
     service.bind({
         onBind:function(){
             console.log("Service "+service.api+" bound");
             sensors[service.id] = service;
             
             var serviceCode = "<div id='servicediv_" +service.id+"' class='sensor'>"+
-                              "<div id='remove_"+service.id+"' style='clear:both;'><img width='15px' height='15px' src='./assets/x_min.png' style='float:right; margin-left:-40px;'></img></div>"+
-                              "<img width='110px' height='110px' src='./assets/images/"+icons[service.api]+"'' id='"+service.id+"' draggable='false' /><p>"+service.description+"</p></div>";
+                              "<div id='remove_"+service.id+"' style='clear:both;'><img width='15px' height='15px' src='./assets/x_min.png' style='float:left; margin-left:10px;'></img></div>"+
+                              "<img width='130px' height='130px' src='./assets/images/"+icons[service.api]+"'' id='"+service.id+"' draggable='false' /><div>"+service.description+"</div>"+
+                              "</div>";
+
             
             jQuery("#sensors_table").append(serviceCode);
 
@@ -300,13 +302,14 @@ function bindProperService(service){
                     sensors_configuration[service.id]= configure_options;
                 }
             }
-            save_services(false);   
+            if(save)
+                save_services(false);   
         }
     });
 }
 
 
-function serviceDiscovery(container, serviceFilter){
+function serviceDiscovery_afterExplorer(container, serviceFilter){
     webinos.discovery.findServices(
         new ServiceType(serviceFilter.api)
       , {
@@ -316,7 +319,7 @@ function serviceDiscovery(container, serviceFilter){
                 if ((service.id === serviceFilter.id) && (service.serviceAddress === serviceFilter.address) && (typeof(sensors[service.id]) === "undefined")) {
                     //alert("Add to sensors2");
                     //sensors[service.id] = service;
-                    bindProperService(service);
+                    bindProperService(service, true);
 //                    save_services(false);
                }
             }
@@ -441,7 +444,7 @@ function discover_services(container, saved_services){
                     //alert("Add to sensors1");
                     //sensors[service.id] = service;
                     sensors_configuration[service.id] = saved_services[service.id]["serviceConfiguration"];
-                    bindProperService(service);
+                    bindProperService(service, false);
                 }
             }
         });
