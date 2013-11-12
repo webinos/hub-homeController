@@ -138,7 +138,9 @@ function load_services(ask){
             //num_services = Object.keys(contents).length;
             services_count = Object.keys(contents).length;
             show_wait();
-            //intervalwaitid = setInterval(show_wait,1000);
+            
+            setTimeout(hide_wait,60000,false);
+            
             discover_services(null, contents);
         },
         function(error){
@@ -294,20 +296,33 @@ function clearAll_for_graphics(){
 }
 var intervalwaitid = 0;
 
+var continue_to_wait = true;
+var ui_loaded = false;
+
 function show_wait(){
     //alert(configured_services+"---"+services_count);
-    if(configured_services < services_count){
-        $("#wait_div").show();
-        setTimeout(show_wait,1000);
+    if(continue_to_wait){
+        if(configured_services < services_count){
+            $("#wait_div").show();
+            setTimeout(show_wait,1000);
+        }
+        else
+            hide_wait(true);
+        //$("#wait_div").show();
     }
-    else
-        hide_wait();
-    //$("#wait_div").show();
 }
 
-function hide_wait(){
+function hide_wait(load){
     $("#wait_div").hide();
-    load_graphics(false);
+    if(load){
+        load_graphics(false);
+        ui_loaded = true;
+    }
+    if(!load){
+        continue_to_wait = false;
+        if(!ui_loaded)
+            alert("Error loading remote services");
+    }
 }
 
 jQuery(document).ready(function() {
