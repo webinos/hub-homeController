@@ -4,6 +4,9 @@
 
 	var actuators = {};
 
+	var devsOrientation = {};
+	var devsOrientationActive = {};
+
 	var num_boxes = 0;
 	var that = this;
 
@@ -363,6 +366,10 @@
 					result = that.GUIBoolBox(coord, boxID, dd_box_name);
 					addProcessingBox(result);
 					break;
+				case "devOrientation":
+					result = that.GUIDeviceOrientation(coord, devsOrientation[boxID], dd_box_name);
+					addInputBox(result);
+					break;
 				default:
 					alert("Error - on DRAG AND DROP");
 			}
@@ -537,7 +544,7 @@
         //to remove box
         $('#remove_'+idbox).on('click', function(){
         	var boxID = this.id.substring(7);
-        	removeSensorBox(boxID)
+        	removeSensorBox(boxID);
 		});
 
         return idbox;
@@ -760,6 +767,124 @@
         for(var h=0; h<endps.length; h++){
         	jsPlumb.deleteEndpoint(endps[h]);
         }
+		deleteBox(boxID);
+		$("#"+boxID).remove();
+	}
+
+/*****************     DEVICE ORIENTATION   ******************/
+
+	function GUIdeviceOrientationRightSide(service){
+        
+        var div_id = "devOrientation_"+service.id;
+
+        var user_name = service.serviceAddress.split("@")[0];
+        var host = "";
+        var device = "";
+        var address = user_name;
+
+        if(service.serviceAddress.indexOf("@") !== -1){
+            address += "<br>";
+            var tmp = service.serviceAddress.substring(service.serviceAddress.indexOf("@")+1).split("/");
+            host = tmp[0];
+            address += host;
+            if(typeof tmp[1] != "undefined"){
+                address += "<br>";
+                device = tmp[1];
+                address += device;
+            }
+        }
+
+        var formatted_serviceAddress = getFormattedAddress(address, 10);
+        var html = '<div id="code_'+ service.id +'" class="sensor">';
+        html += '<img width="80px" height="80px" src="./assets/images/'+icons[service.api]+'" id="'+div_id+'" /><p>'+service.description+'<br><span class="addr">['+formatted_serviceAddress+']</span></p>'
+        html += '</div>';
+        jQuery("#sensors_table").append(html);
+       	
+       	var leftColumn = $('#leftcolumn');
+        leftColumn.tinyscrollbar_update();
+
+        initDragAndDrop(div_id);
+
+        setMinHeight();
+	}
+
+	this.GUIDeviceOrientation = function(coord, device, dd_box_name){
+		//increment num_boxes add on target
+		num_boxes++;
+
+		idbox = dd_box_name+"_"+num_boxes;
+
+		//AT THE MOMENT -> go to function 'onDeviceOrientationEvent'
+		idDeviceOrientation = device.id;
+
+        var formatted_serviceAddress = getFormattedAddress(device.serviceAddress, 16);
+		var html = "";
+		html += "<div class='window' id='"+idbox+"' >";
+		html += "<div id='remove_"+idbox+"' style='clear:both;'><img width='15px' height='15px' src='./assets/x_min.png' style='float:right; margin-bottom:5px;'></img></div>";
+        html += device.description+'<br>['+formatted_serviceAddress+']<br><br>';
+		html += '<img width="80px" height="80px" src="./assets/images/'+icons[device.api]+'" id="sensorIMG_'+device.id+'" /><br><br>';    
+		html += "<select id='select_"+idbox+"'>";
+  		html += "<option value='alfa'>Alfa</option>";
+  		html += "<option value='beta'>Beta</option>";
+  		html += "<option value='gamma'>Gamma</option>";
+		html += "</select>";              
+	    html += "<div id='value_alfa_"+device.id+"'>Alfa: -</div>";
+	    html += "<div id='value_beta_"+device.id+"'>Beta: -</div>";
+	    html += "<div id='value_gamma_"+device.id+"'>Gamma: -</div>";
+	    html += "</div>";
+
+	    $("#main").append(html);
+
+	    var d = document.getElementById(idbox);
+		d.style.left = coord.x+'px';
+		d.style.top = coord.y+'px';
+		
+		jsPlumb.addEndpoint(idbox, { anchor:"BottomCenter" }, blueRectangle());
+    	
+    	var divsWithWindowClass = jsPlumb.CurrentLibrary.getSelector(".window");
+        jsPlumb.draggable(divsWithWindowClass);
+
+        //add eventListener
+		device.addEventListener("deviceorientation", onDeviceOrientationEvent, false);
+		devsOrientationActive[device.id] = (devsOrientationActive[device.id] + 1);
+
+        //to remove box
+        $('#remove_'+idbox).on('click', function(){
+        	var boxID = this.id.substring(7);
+        	removeDeviceOrientationBox(boxID);
+		});
+
+        return idbox;
+	}
+
+	function removeDeviceOrientationBox(boxID){
+
+    	//remove listener
+        var deviceID = boxID.split("_")[1];
+
+        //NOT CORRECTLY --> ????
+        devsOrientation[deviceID].removeEventListener("deviceorientation", onDeviceOrientationEvent, false);
+        devsOrientationActive[device.id] = (devsOrientationActive[device.id] - 1);
+
+        //remove connections
+    	var connTMP = [];
+		for (var j = 0; j < connections.length; j++){
+			if(connections[j].sourceId == boxID){
+				var param = connections[j].getParameters();
+                removeInputConnection(connections[j].sourceId, connections[j].targetId, param.position);
+			}else{
+				connTMP.push(connections[j]);
+			}
+		}
+		connections = connTMP;
+
+		//remove GUI for endpoints
+		var endps = jsPlumb.getEndpoints(boxID);
+        for(var h=0; h<endps.length; h++){
+        	jsPlumb.deleteEndpoint(endps[h]);
+        }
+
+        //remove GUI for box
 		deleteBox(boxID);
 		$("#"+boxID).remove();
 	}

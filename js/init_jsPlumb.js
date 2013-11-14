@@ -15,6 +15,9 @@ var service_types = [
                 }else if(conn.sourceId.indexOf("userInput") !== -1){
                     var param = conn.getParameters();
                     settingUserInputConnection(conn.sourceId, conn.targetId, param.position);
+                }if(conn.sourceId.indexOf("devOrientation") !== -1){
+                    var param = conn.getParameters();
+                    settingSensorConnection(conn.sourceId, conn.targetId, param.position);
                 }else if(conn.sourceId.indexOf("operation") !== -1){
                     settingProcessingConnection(conn.sourceId, conn.targetId);
                 }else if(conn.sourceId.indexOf("bool") !== -1){
@@ -31,6 +34,9 @@ var service_types = [
                 if (idx != -1) connections.splice(idx, 1);
 
                 if(conn.sourceId.indexOf("sensor") !== -1){
+                    var param = conn.getParameters();
+                    removeInputConnection(conn.sourceId, conn.targetId, param.position);
+                }if(conn.sourceId.indexOf("devOrientation") !== -1){
                     var param = conn.getParameters();
                     removeInputConnection(conn.sourceId, conn.targetId, param.position);
                 }else if(conn.sourceId.indexOf("userInput") !== -1){
@@ -148,6 +154,9 @@ var service_types = [
         //search file system and save the root directory.
         findFileSystem(leftColumn);
 
+        //search device orientation api
+        deviceOrientationDiscovery();
+
 /*
         $('#refresh_button').live( 'click',function(event){
                 findSensorServices(leftColumn);
@@ -172,7 +181,6 @@ var service_types = [
         });
 
         $(document).on("click","#but_home", function(event){
-            
             clearAll_for_rules();
             window.location = "index.html";
         });
@@ -236,6 +244,21 @@ var service_types = [
                 if ((service.id === serviceFilter.id) && (service.serviceAddress === serviceFilter.address) && (typeof(actuators[service.id]) === "undefined")) {
                     myConfigureActuator(service, true);
                 }
+            }
+        });
+    }
+
+    function deviceOrientationDiscovery(){
+        webinos.discovery.findServices(new ServiceType('http://webinos.org/api/deviceorientation'), {
+            onFound: function (service) {
+                service.bindService({
+                    onBind:function(){
+                        devsOrientation[service.id] = service;
+
+                        //GUI
+                        GUIdeviceOrientationRightSide(service);
+                    }
+                });
             }
         });
     }
