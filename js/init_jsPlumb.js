@@ -129,7 +129,7 @@ var service_types = [
 
         var contentDiv = $('#content');
         contentDiv.tinyscrollbar();
-
+/*
         if(!explorer_enabled){
             $("#refresh").append("<div id='refresh_button' class='button'>Refresh</div>");
             findSensorServices(leftColumn);
@@ -137,7 +137,7 @@ var service_types = [
         else{
             //$("#refresh").append("<div id='explorer_actuator_button' class='button'>Add Sensor or Actuator From Explorer</div>");
         }
-
+*/
         $(window).resize(function() {
             leftColumn.tinyscrollbar_update();
             contentDiv.tinyscrollbar_update();
@@ -148,9 +148,11 @@ var service_types = [
         //search file system and save the root directory.
         findFileSystem(leftColumn);
 
+/*
         $('#refresh_button').live( 'click',function(event){
                 findSensorServices(leftColumn);
         });
+*/
 
         $('#explorer_actuator_button').live( 'click',function(event){
             var leftColumn = $('#leftcolumn');
@@ -217,7 +219,7 @@ var service_types = [
                     sensorActive[service.id] = 0;
                     service.configureSensor({rate: 500, eventFireMode: "fixedinterval"}, 
                         function(){
-                            myConfigureSensor(service);
+                            myConfigureSensor(service, true);
                         },
                         function (){
                             console.error('Error configuring Sensor ' + service.api);
@@ -232,7 +234,7 @@ var service_types = [
         webinos.discovery.findServices(new ServiceType(serviceFilter.api), {
             onFound: function (service) {
                 if ((service.id === serviceFilter.id) && (service.serviceAddress === serviceFilter.address) && (typeof(actuators[service.id]) === "undefined")) {
-                    myConfigureActuator(service);
+                    myConfigureActuator(service, true);
                 }
             }
         });
