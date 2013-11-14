@@ -33,7 +33,7 @@
         initDragAndDrop("userInput_input");
 	}
 
-	function myConfigureSensor(sensor){
+	function myConfigureSensor(sensor, isToSave){
         var div_id = "sensor_"+sensor.id;
         
         var user_name = sensor.serviceAddress.split("@")[0];
@@ -72,7 +72,9 @@
         $('#remove_'+sensor.id).on('click',removeSensor);
 
         //save on file the new sensor added
-        save_rules_sa_explorer();
+        if(isToSave == true)
+        	save_rules_sa_explorer();
+        
 
     }
 
@@ -104,7 +106,7 @@
 
     }
 
-    function myConfigureActuator(serviceFounded){
+    function myConfigureActuator(serviceFounded, isToSave){
 
     	var service = serviceFounded;
     	serviceFounded.bind({
@@ -113,7 +115,8 @@
 	        	service = serviceBinded;
 
 	        	//save on file the new actuator added
-                save_rules_sa_explorer();
+	        	if(isToSave == true)
+                	save_rules_sa_explorer();
 
 		        //actuators[service.id] = service;
 		        var div_id = "actuator_"+service.id;
@@ -208,7 +211,7 @@
     }
 
 /******   This function is used only in case you don't use explorer  *****/
-
+/*
 	var findSensorServices = function(container){
 		jQuery("#sensors_table").empty();
 		jQuery("#actuators_table").empty();
@@ -224,7 +227,7 @@
 						onBind:function(){
 		        			service.configureSensor({rate: 500, eventFireMode: "fixedinterval"}, 
 		        				function(){
-		        					myConfigureSensor(service);
+		        					myConfigureSensor(service, false);
 								},
 								function (){
 									console.error('Error configuring Sensor ' + service.api);
@@ -234,14 +237,15 @@
 					});
 					
 				}else if(service.api.indexOf("actuators.") !== -1){
-					myConfigureActuator(service);
+					myConfigureActuator(service, false);
 				}
 			}
 		});
 	}
-
+*/
 /******   *****   *****   *****   *****   *****   *****   *****   *****/
 
+	//used on load of the html page - i read in the file "file_name_sensor_actuator_explorer" && search the sensor
 	function searchSensors(id, serviceAddress){
 		webinos.discovery.findServices(new ServiceType("http://webinos.org/api/sensors/*"), {
 			onFound: function (service) {
@@ -254,7 +258,7 @@
 						onBind:function(){
 		        			service.configureSensor({rate: 500, eventFireMode: "fixedinterval"}, 
 		        				function(){
-		        					myConfigureSensor(service);
+		        					myConfigureSensor(service, false);
 								},
 								function (){
 									console.error('Error configuring Sensor ' + service.api);
@@ -267,12 +271,13 @@
 		});
 	}
 
+	//used on load of the html page - i read in the file "file_name_sensor_actuator_explorer" && search the actuator
 	function searchActuators(id, serviceAddress){
 		webinos.discovery.findServices(new ServiceType("http://webinos.org/api/actuators/*"), {
 			onFound: function (service) {
 				//found a new sensors
 				if((service.id === id) && (service.serviceAddress === serviceAddress) && (typeof(actuators[service.id]) === "undefined")){
-					myConfigureActuator(service);
+					myConfigureActuator(service, false);
 				}
 			}
 		});
@@ -709,7 +714,10 @@
 		html += "</div>";
 
 		html += "<\div>";
-		html += "<div><textarea id='textarea_post' class='textarea_popup'></textarea></div>";
+		var textPosted = "";
+		if(textToPost[boxID]!=undefined && textToPost[boxID]!="")
+			textPosted = textToPost[boxID];
+		html += "<div><textarea id='textarea_post' class='textarea_popup'>"+textPosted+"</textarea></div>";
 		html += "<input type='button' value='Save Config' id='btn_post_config'/>";
 		$('#settings-content').append(html);
 
