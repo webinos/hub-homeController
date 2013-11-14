@@ -3,14 +3,18 @@ var FB_APP_ID = "";
 
 var init_fb_done = "";
 
+var initDone = false;
+
+
 function initFacebook()
 {
     if(init_fb_done != FB_APP_ID){
+        FB._initialized = false;
         FB.init({
           appId  : FB_APP_ID,
-          status : true, // check login status
-          cookie : true, // enable cookies to allow the server to access the session
-          xfbml  : true  // parse XFBML
+          status : false, // check login status
+          cookie : false, // enable cookies to allow the server to access the session
+          xfbml  : false  // parse XFBML
         });
         FB.getLoginStatus(onFacebookLoginStatus);
     }else{
@@ -23,7 +27,7 @@ function initFacebook()
 function facebookLogin()
 {
     //in another tab of browser
-    //var CallbackURL = "http://local.funnyf7.com:8080/apps/webinos-app-hub-homeController/success.html";
+    //var CallbackURL = "http://localhost.com:8080/apps/webinos-app-hub-homeController/success.html";
     var part1_callback = window.location.href.split("rules.html");
     var cb = part1_callback[0] + "success.html";
     console.log(cb);
@@ -65,7 +69,6 @@ function onFacebookLoginStatus(response)
 	js.src = "//connect.facebook.net/en_US/all.js";
 	ref.parentNode.insertBefore(js, ref);
 }(document));
-
 
 
 function GUIaskForAppID(actualAppID){

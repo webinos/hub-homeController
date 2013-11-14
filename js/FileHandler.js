@@ -37,8 +37,9 @@ function save_file(data, file_name){
 }
 
 /*
+	askConfirm = true if you want an alert to ask a confirm
 	file_name
-	show_rules = show in the scree or not.
+	show_rules = show in the screen or not.
 	id = sensor or actuator id to remove in the file.
 	type = is a sensor or is an actuator?
 */
@@ -168,9 +169,13 @@ function save_rules(askConfirm){
 					if(x.split("_")[0] == "userInput")
 						return $('#input_val_'+x).val();
 					else if(x.split("_")[0] == "actuator"){
+						var textPosted = "";
+						if(textToPost[x] != undefined)
+							textPosted = textToPost[x];
 						return ({
 							"false":$('#actuator_false_'+x).val(),
-							"true":$('#actuator_true_'+x).val()
+							"true":$('#actuator_true_'+x).val(),
+							"textPosted" : textPosted
 						});
 					}
 					else
@@ -267,6 +272,7 @@ function paintOneBlock(box){
 			result = that.GUIActuatorBox(box.coord, actuators[box.boxSpecific], id);
 			$("#actuator_false_"+result).val(box.userInputValue.false);
 			$("#actuator_true_"+result).val(box.userInputValue.true);
+			textToPost[result] = box.userInputValue.textPosted;
 			addOutputBox(result);
 			break;
 		case "bool":
