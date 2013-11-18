@@ -178,6 +178,9 @@ function save_rules(askConfirm){
 							"textPosted" : textPosted
 						});
 					}
+					else if(x.split("_")[0] == "devOrientation"){
+						return $("#select_"+x).val();
+					}
 					else
 						return "";
 				})(),
@@ -279,6 +282,15 @@ function paintOneBlock(box){
 			result = that.GUIBoolBox(box.coord, box.boxSpecific, id);
 			addProcessingBox(result);
 			break;
+		case "devOrientation":
+			result = that.GUIDeviceOrientation(box.coord, devsOrientation[box.boxSpecific], id);
+			//$("#select_"+result).val(box.userInputValue);
+			$("#select_"+result+" option").each(function(){
+				if($(this).val() === box.userInputValue)
+					$(this).attr("selected",true);
+			});
+			addInputBox(result);
+			break;
 		default:
 			alert("Error");
 	}
@@ -354,12 +366,20 @@ function addConnectionBetweenTwoBoxes(box, boxIDassociated){
 
 function clearAll_for_rules(){
 
-	//remove event listener:
+	//remove event listener for sensor
 	for(i in sensorActive){
 		numListenerToRemove = sensorActive[i];
 		for(var x=0; x<numListenerToRemove; x++)
 			sensors[i].removeEventListener('sensor', onSensorEvent, false);
         sensorActive[i] = 0;
+	}
+
+	//remove event listener for device orientation
+	for(i in devsOrientationActive){
+		numListenerToRemove = devsOrientationActive[i];
+		for(var x=0; x<numListenerToRemove; x++)
+			devsOrientation[i].removeEventListener('sensor', onDeviceOrientationEvent, false);
+        devsOrientationActive[i] = 0;
 	}
 
 	for(x in block_list){

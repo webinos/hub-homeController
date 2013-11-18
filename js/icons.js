@@ -29,5 +29,6 @@ var icons = {
     "http://www.w3.org/ns/api-perms/geolocation": "geolocation-icon.png",
     "http://webinos.org/api/actuators/twitter": "twitter-icon.png",
     "http://webinos.org/api/actuators/facebook": "facebook-icon.png",
-    "http://webinos.org/api/actuators/drone-motor": "drone-icon.png"
+    "http://webinos.org/api/actuators/drone-motor": "drone-icon.png",
+    "http://webinos.org/api/deviceorientation": "deviceorientation-icon.png"
 };

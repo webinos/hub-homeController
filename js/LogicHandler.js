@@ -189,6 +189,41 @@ var onSensorEvent = function(event){
 	}
 }
 
+//event doesn't containt id of device
+var idDeviceOrientation;
+var onDeviceOrientationEvent = function(event){
+    // gamma is the left-to-right tilt in degrees, where right is positive
+	var tiltLR = event.gamma;
+	// beta is the front-to-back tilt in degrees, where front is positive
+	var tiltFB = event.beta;
+	// alpha is the compass direction the device is facing in degrees
+	var dir = event.alpha;
+
+	$("[id=value_alfa_"+idDeviceOrientation+"]").empty();
+	$("[id=value_alfa_"+idDeviceOrientation+"]").text("Alfa: " + dir);
+
+	$("[id=value_beta_"+idDeviceOrientation+"]").empty();
+	$("[id=value_beta_"+idDeviceOrientation+"]").text("Beta: " + tiltFB);
+
+	$("[id=value_gamma_"+idDeviceOrientation+"]").empty();
+	$("[id=value_gamma_"+idDeviceOrientation+"]").text("Gamma: "+ tiltLR);
+
+	//WHERE IS THE ID?
+	//***** {"alpha":95,"beta":44,"gamma":22,"type":"deviceorientation","target":null,"currentTarget":null,"eventPhase":null,"bubbles":false,"cancelable":false,"timestamp":1384443337059} 
+	//console.log("***** " + JSON.stringify(event));
+
+	for(var n in block_list){
+		if(n.indexOf(idDeviceOrientation) !== -1){
+			if($("#select_"+n).val() == "alfa")
+				block_list[n].input_callback(dir);
+			else if($("#select_"+n).val() == "beta")
+				block_list[n].input_callback(tiltFB);
+			else if($("#select_"+n).val() == "gamma")
+				block_list[n].input_callback(tiltLR);
+		}
+	}
+}
+
 
 var greaterThan = function(values){
 	//values is an array
