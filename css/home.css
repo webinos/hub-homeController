@@ -15,7 +15,7 @@ body {
     font-family: Verdana, Arial, Helvetica, sans-serif;
     font-size: 13px;
     color:#333;
-    background-image: radial-gradient(#444,#000);
+    background-image: -webkit-radial-gradient(#444,#000);
     padding: 0 170px;
 }
 
@@ -412,6 +412,22 @@ hr {
 	border-top: 4px dashed #adff00;
 	margin-top: 10px;
 	padding-top: 10px;
+}
+
+.service_displayname{
+    font-weight: bold;
+    text-align: center;
+}
+
+.service_description{
+    border-top: solid 2px;
+    border-bottom: solid 2px;
+    text-align: center;
+    font-style: italic;
+}
+
+.service_devicename{
+    color: #99FF66;
 }
 
 /* tiny scroll */

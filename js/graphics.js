@@ -1,3 +1,5 @@
+var lineColor=['blue','red','orange','green','violet','brown','pink','yellow'];
+
 Function.prototype.subclassFrom=function(superClassFunc) {
     if (superClassFunc == null) {
         this.prototype={};
@@ -217,7 +219,7 @@ function TextLabel(idChart, X, Y, min, max){
     arguments.callee.superConstructor.call(this, idChart, X, Y, min, max);
 
     this.type="text-label";
-    this.allowed_drop = [sensors_type, geolocation_type];
+    this.allowed_drop = [sensors_type, geolocation_type, deviceOrientation_type];
 
     $("#target").prepend(this.getHTMLContent());
     this.chart = document.getElementById("drop_canvas-"+this.id);
@@ -245,7 +247,7 @@ TextLabel.methods({
 function LineChart(idChart, X, Y, min, max){
     arguments.callee.superConstructor.call(this, idChart, X, Y, min, max);
     this.type="line-chart";
-    this.allowed_drop = [sensors_type, geolocation_type];
+    this.allowed_drop = [sensors_type, geolocation_type, deviceOrientation_type];
 
     try{
         this.graphData=new google.visualization.DataTable();
@@ -274,10 +276,13 @@ function LineChart(idChart, X, Y, min, max){
 LineChart.subclassFrom(Graphic);
 
 LineChart.methods({
-    setVal : function(val) {
-        alert("check here");
-        //this.chart.value = val;
-        //RGraph.Effects.Gauge.Grow(this.chart);
+    setVal : function(val) { //val is an array e.g. ['2004', 1000, 400]
+        if(!this.values)
+            this.values = [];
+        this.values.push(val);
+        if(this.values.length > 150)
+            this.value.slice(0,1);
+        this.chart.draw(google.visualization.arrayToDataTable(this.values),this.options);    
     },
     getHTMLContent : function(){
         var html = arguments.callee.superFunction.call(this);

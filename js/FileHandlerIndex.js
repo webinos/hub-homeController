@@ -1,4 +1,4 @@
-function __Utilities__load_file(file_name, successCallback, errorCallback, ask){
+function __Utilities__load_file(root_directory, file_name, successCallback, errorCallback, ask){
 	var conf;
 	if(ask)
 		conf = confirm("Do you want to continue loading?");
@@ -40,7 +40,7 @@ function __Utilities__load_file(file_name, successCallback, errorCallback, ask){
 }
 
 
-function __Utilities__save_file(data, file_name, ask){
+function __Utilities__save_file(root_directory, data, file_name, ask){
 	var conf;
 	if(ask)
 		conf = confirm("Do you want to continue saving?");

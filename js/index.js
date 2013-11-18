@@ -3,124 +3,39 @@
  *
 */
 
-var charts={};				//contain Graphic instances
-var debug;
+var charts={};	//contain Graphic instances
 var sensors_type = "http://webinos.org/api/sensors";
 var geolocation_type = "http://www.w3.org/ns/api-perms/geolocation";
 var actuators_type = "http://webinos.org/api/actuators";
+var deviceOrientation_type = "http://webinos.org/api/deviceorientation";
 
-var explorer_enabled = true;
 var element_counter = 0;
 var last_chart_id;
-
-
 var service_types = [
-    "http://www.w3.org/ns/api-perms/geolocation",
+    geolocation_type,
     "http://webinos.org/api/sensors/*",
-    "http://webinos.org/api/actuators/*"
+    "http://webinos.org/api/actuators/*",
+    deviceOrientation_type
 ];
-
-
-
-google.load("visualization", "1", {packages:["corechart"]});
-
 var sensors = {};
 var services_to_save = {};
-var sensors_configuration = {};		//to store sensor's rate,timeout and mode 
+var sensors_configuration = {};     //to store sensor's rate,timeout and mode 
 var sensorActive = {};
-var listeners = new Array();
-
-var listeners_numbers={};	//for counting the number of listeners per sensor
-
+//var listeners = new Array();
+var listeners_numbers={};   //for counting the number of listeners per sensor
+var local_filesystem;
+var remote_filesystems = [];
 var chart_selected;
 var charts_to_fade=[];
 
-// var min_temperature_range=-30;
-// var max_temperature_range=70;
-
-// var min_gauge_range=-10;
-// var max_gauge_range=65;
-var lineColor=['blue','red','orange','green','violet','brown','pink','yellow'];
-  
-
-var onGeolocationEvent = function(event){
-    var data = {};
-    data.type = geolocation_type;
-    data.value = {latitude:event.coords.latitude, longitude:event.coords.longitude};
-    
-    // horrible workaround. The problem is that a geolocation event doesn't contain a service id
-    var id;
-    for(var i in sensors){
-        if(sensors[i].api == geolocation_type){
-            id = sensors[i].id;
-            break;
-        }
-    }
+google.load("visualization", "1", {packages:["corechart"]});
 
 
-    updateUI(id,data);
+function getId(service){
+    var deviceName = service.serviceAddress.substr(service.serviceAddress.lastIndexOf("/")+1);
+    deviceName = deviceName.split('.').join("");
+    return service.id+""+deviceName;
 }
-
-var onSensorEvent = function(event){
-	var sensor = sensors && sensors[event.sensorId];
-	var time=new Date(event.timestamp);
-	time=(time.getUTCHours()+2)+ ":"+time.getUTCMinutes()+":"+time.getUTCSeconds();
-	if(sensor){
-        var value= event.sensorValues[0] || 0;
-        var data = {};
-        data.type = sensors_type;
-        data.value = value;
-        //updateUI(event.sensorId, data);
-		//console.log("************ SENSOR VALURE: " + value);
-		
-        for(var elem in charts){
-			var graphic= charts[elem];
-			graphic.values=[];
-			if(in_array(sensor.id,graphic.service_list)&&(graphic.sensor_active[sensor.id]==true)){	
-                //console.log(graphic.type);
-				if( graphic.type == "gauge" || graphic.type == "corner-gauge" || graphic.type == "fuel-gauge" 
-                    || graphic.type == "odometer-gauge" || graphic.type == "thermometer" || graphic.type == "text-label" ){
-					var normalized_val = value;
-					if(graphic.maxRange && value > graphic.maxRange)
-						normalized_val = graphic.maxRange;
-					if(graphic.minRange && value < graphic.minRange)
-						normalized_val = graphic.minRange;
-					graphic.setVal(normalized_val);
-				}
-                else if(graphic.type == "google-map"){
-                    //alert(JSON.stringify(event));
-                    graphic.setCenter(0,value);
-                    graphic.addMarker(0,value);
-                }
-				else if(graphic.type == "line-chart"){
-					var index=graphic.service_list.indexOf(sensor.id);
-					
-					graphic.values.push(time);
-					for(var i=0;i<graphic.service_list.length;i++){
-						if(i==index){
-							graphic.values.push(value);
-						}
-						else{
-							if(graphic.sensor_active[graphic.service_list[i]]==true){
-								graphic.values.push(graphic.old_values[i+1]);
-							}else{
-								graphic.values.push(null);
-							}
-						}
-					}
-					graphic.numberOfValues++;
-					graphic.graphData.addRow(graphic.values);
-			  		graphic.chart.draw(graphic.graphData, graphic.options);
-			  		graphic.old_values=graphic.values;
-			  		
-					if(graphic.numberOfValues>150){
-						graphic.graphData.removeRow(0);
-					}
-				}
-			}
-		}
-	}
-};
 
 function prapareServicesToBeSaved(){
     services_to_save = {};
@@ -131,18 +46,21 @@ function prapareServicesToBeSaved(){
             serviceAddress : sensors[i].serviceAddress,
             serviceConfiguration : sensors_configuration[sensors[i].id]
         };
-        services_to_save[sensors[i].id] = tmp;
+        //services_to_save[sensors[i].id] = tmp;
+        //GLT ID
+        services_to_save[i] = tmp;
     }
 }
 
 function save_services(ask){
     prapareServicesToBeSaved();
-    __Utilities__save_file(services_to_save, "hub_presentation_explorer.txt", ask);
-    //__Utilities__save_file(sensors, "hub_presentation_explorer.txt", ask);
+    for(var i=0; i<remote_filesystems.length; i++)
+        __Utilities__save_file(remote_filesystems[i], services_to_save, "hub_presentation_explorer.txt", ask);  
+    __Utilities__save_file(local_filesystem, services_to_save, "hub_presentation_explorer.txt", ask);
 }
 
 function load_services(ask){
-     __Utilities__load_file("hub_presentation_explorer.txt",
+     __Utilities__load_file(local_filesystem, "hub_presentation_explorer.txt",
         function(contents){
             var leftColumn = $('#leftcolumn');
             leftColumn.tinyscrollbar();
@@ -162,11 +80,20 @@ function save_graphics(ask){
         var graphic= charts[elem];
         tmp_array.push(graphic.toObject());
     }
-    __Utilities__save_file(tmp_array,"hub_presentation_page.txt", ask);
+    var conf;
+    if(ask)
+        conf = confirm("Do you want to continue saving?");
+    else
+        conf = true;
+    if(conf){
+        for(var i=0; i<remote_filesystems.length; i++)
+            __Utilities__save_file(remote_filesystems[i], tmp_array,"hub_presentation_page.txt", false);
+        __Utilities__save_file(local_filesystem, tmp_array,"hub_presentation_page.txt", false);
+    }
 }
 
 function load_graphics(){
-    __Utilities__load_file("hub_presentation_page.txt",
+    __Utilities__load_file(local_filesystem, "hub_presentation_page.txt",
         function(contents){
             //alert(JSON.stringify(contents));
             clearAll_for_graphics();
@@ -262,36 +189,43 @@ function error(error) {
 }
 
 function bindProperService(service, save){
-    service.bind({
+    service.bindService({
         onBind:function(){
             console.log("Service "+service.api+" bound");
-            sensors[service.id] = service;
-            
-            var serviceCode = "<div id='servicediv_" +service.id+"' class='sensor'>"+
-                              "<div id='remove_"+service.id+"' style='clear:both;'><img width='15px' height='15px' src='./assets/x_min.png' style='float:left; margin-left:10px;'></img></div>"+
-                              "<img width='130px' height='130px' src='./assets/images/"+icons[service.api]+"'' id='"+service.id+"' draggable='false' /><div>"+service.description+"</div>"+
-                              "</div>";
+            var service_app_id = getId(service);
+            sensors[service_app_id] = service;
+
+            var icon = icons[service.api] || icons["default"];
+            var deviceName = service.serviceAddress.substr(service.serviceAddress.lastIndexOf("/")+1);
+            var serviceCode =   "<div id='servicediv_" +service_app_id+"' class='sensor'>"+
+                                "<div id='remove_"+service_app_id+"' style='clear:both;'><img width='15px' height='15px' src='./assets/x_min.png' style='float:left; margin-left:10px;'></img></div>"+
+                                "<img width='130px' height='130px' src='./assets/images/"+icon+"'' id='"+service_app_id+"' draggable='false' />"+
+                                "<div class='service_displayname'>"+service.displayName+"</div>"+
+                                "<div class='service_description'>"+service.description+"</div>"+
+                                "<div class='service_devicename'>"+deviceName+"</div>"+
+                                "</div>";
 
             
             jQuery("#sensors_table").append(serviceCode);
+            
+            $(document).on("click", "#remove_"+service_app_id, function(event){
 
-            $(document).on("click", "#remove_"+service.id, function(event){
-                $("#servicediv_"+service.id).unbind('click',this);
-                delete sensors[service.id];
+                $("#servicediv_"+service_app_id).unbind('click',this);
+                delete sensors[service_app_id];
                 save_services(false);
-                $("#servicediv_"+service.id).remove();
+                $("#servicediv_"+service_app_id).remove();
             });
             
-            document.getElementById(service.id).draggable = true;
-            addOnDragStartEndSensors(service.id);
+            document.getElementById(service_app_id).draggable = true;
+            addOnDragStartEndSensors(service_app_id);
             
             var leftColumn = $('#leftcolumn');
-            leftColumn.tinyscrollbar();
-            
+            leftColumn.tinyscrollbar();  
+
             if(service.api.indexOf(sensors_type) != -1){
                 var configure_options;
-                if(sensors_configuration[service.id]){
-                    configure_options = sensors_configuration[service.id];
+                if(sensors_configuration[service_app_id]){
+                    configure_options = sensors_configuration[service_app_id];
                 }
                 else{
                     configure_options = {
@@ -299,7 +233,7 @@ function bindProperService(service, save){
                         timeout:500,
                         eventFireMode: "fixedinterval"
                     };
-                    sensors_configuration[service.id]= configure_options;
+                    sensors_configuration[service_app_id]= configure_options;
                 }
             }
             if(save)
@@ -314,9 +248,7 @@ function serviceDiscovery_afterExplorer(container, serviceFilter){
         new ServiceType(serviceFilter.api)
       , {
             onFound: function(service){
-
-
-                if ((service.id === serviceFilter.id) && (service.serviceAddress === serviceFilter.address) && (typeof(sensors[service.id]) === "undefined")) {
+                if ((service.id === serviceFilter.id) && (service.serviceAddress === serviceFilter.address) /*&& (typeof(sensors[service.id]) === "undefined")*/) {
                     //alert("Add to sensors2");
                     //sensors[service.id] = service;
                     bindProperService(service, true);
@@ -349,14 +281,7 @@ jQuery(document).ready(function() {
     $(document).on("click", "#refresh", function(event){
 		var leftColumn = $('#leftcolumn');
 		leftColumn.tinyscrollbar();
-		
-		if(explorer_enabled)
-			callExplorer(leftColumn);
-		else{
-		    discover_sensors(leftColumn);
-        }
-		
-		//discover_filesystem();
+		callExplorer(leftColumn);
 	});
 	
     $(document).on("click","#clearCharts", function(event){
@@ -380,14 +305,7 @@ jQuery(document).ready(function() {
 
     var contentDiv = $('#content');
     contentDiv.tinyscrollbar();
-
-    if(!explorer_enabled){
-		//discover_sensors(leftColumn,false);
-        discover_services(leftColumn);
-	}
-	else{
-		$("#refresh").text("Add From Explorer").button("refresh");
-    }
+    $("#refresh").text("Add From Explorer").button("refresh");
 
 	discover_filesystem();
 	$(window).resize(function() {
@@ -398,7 +316,6 @@ jQuery(document).ready(function() {
 
 	initDragAndDropGauges(contentDiv);
 
-	
 	var popup = $("#settings-container");
 	popup.click(function(){
 		/*
@@ -438,13 +355,16 @@ function discover_services(container, saved_services){
         var type = service_types[i];
         webinos.discovery.findServices(new ServiceType(type), {
             onFound: function (service) { 
-                //sensorActive[service.id] = false;
-                
-                if( (!saved_services || (saved_services && saved_services[service.id])) && (typeof(sensors[service.id]) === "undefined")){
-                    //alert("Add to sensors1");
-                    //sensors[service.id] = service;
-                    sensors_configuration[service.id] = saved_services[service.id]["serviceConfiguration"];
-                    bindProperService(service, false);
+                var service_app_id = getId(service);
+
+                //if( (!saved_services || (saved_services && saved_services[service.id])) /*&& (typeof(sensors[service.id]) === "undefined")*/){
+                if( (!saved_services || (saved_services && saved_services[service_app_id])) /*&& (typeof(sensors[service.id]) === "undefined")*/){
+                    //if(saved_services[service.id].serviceAddress == service.serviceAddress){
+                    if(saved_services[service_app_id].serviceAddress == service.serviceAddress){
+                        //sensors_configuration[service.id] = saved_services[service.id]["serviceConfiguration"];
+                        sensors_configuration[service_app_id] = saved_services[service_app_id]["serviceConfiguration"];
+                        bindProperService(service, false);
+                    }
                 }
             }
         });
@@ -453,27 +373,27 @@ function discover_services(container, saved_services){
 
 
 function discover_filesystem(){
-	webinos.discovery.findServices(new ServiceType("http://webinos.org/api/*"), {
+	webinos.discovery.findServices(new ServiceType("http://webinos.org/api/file"), {
 		onFound: function (service) {
-			if(service.api.indexOf("file") !== -1){
-				if(service.serviceAddress === webinos.session.getPZPId()){
-					service.bindService({
-						onBind: function () {
-							service.requestFileSystem(1, 1024, 
-								function (filesystem) {
-									root_directory = filesystem.root;
-
-                                    if(explorer_enabled)
-                                        load_services(false);
-								},
-								function (error) {
-									alert("Error requesting filesystem (#" + error.code + ")");
-								}
-							);					
+			service.bindService({
+				onBind: function () {
+					service.requestFileSystem(1, 1024, 
+						function (filesystem) {
+							//root_directory = filesystem.root;
+                            if(service.serviceAddress === webinos.session.getPZPId()){
+                                local_filesystem = filesystem.root;
+                                load_services(false);
+                            }
+                            else{
+                                remote_filesystems.push(filesystem.root);
+                            }
+						},
+						function (error) {
+							alert("Error requesting filesystem (#" + error.code + ")");
 						}
-					});
+					);					
 				}
-			}
+			});
 		}
 	});
 }
@@ -540,7 +460,6 @@ var addDragEventsForGaugesOnTarget = function(contentDiv){
 	}
 
 	target.ondrop = function(event){
-        debug=event;
 		if(event.preventDefault){
 			event.preventDefault(); 
 		}
@@ -705,7 +624,6 @@ var addDragEventsForSensorsOnGauge = function(idChart){
 		
         try{
             if(graphic.canDrop(sensors[service_selected].api)){
-
                 if(service_selected!=''){
                     assign_services_to_graphics(service_selected, graphic);
                     $('#'+idChart_selected).removeClass("drop_div");
@@ -735,52 +653,55 @@ var addDragEventsForSensorsOnGauge = function(idChart){
 };
 
 
-function assign_services_to_graphics(service_selected, graphic){
-    if(!in_array(service_selected,graphic.service_list)){
-        if(!listeners_numbers.hasOwnProperty(service_selected)){
-            if(sensors[service_selected].api.indexOf(sensors_type) != -1){
+function assign_services_to_graphics(service_app_id, graphic){
+    //if(!in_array(service_app_id,graphic.service_list)){
+    if(graphic.service_list.indexOf(service_app_id) == -1){
+        if(!listeners_numbers.hasOwnProperty(service_app_id)){
+            if(sensors[service_app_id].api.indexOf(sensors_type) != -1){
                 //add event listener
                 //GLT
-                //sensors[service_selected].addEventListener('sensor', onSensorEvent, false);
+                //sensors[service_app_id].addEventListener('sensor', onSensorEvent, false);
             }
-            else if(sensors[service_selected].api.indexOf(geolocation_type) != -1){
+            else if(sensors[service_app_id].api.indexOf(geolocation_type) != -1){
                 // var PositionOptions = {};
                 // PositionOptions.enableHighAccuracy = true;
                 // PositionOptions.timeout = 1000;
-                // //sensors[service_selected].watchPosition(onGeolocationEvent, error, PositionOptions);
+                // //sensors[service_app_id].watchPosition(onGeolocationEvent, error, PositionOptions);
                 // navigator.geolocation.watchPosition(onGeolocationEvent, error, PositionOptions);
             }
-            else if(sensors[service_selected].api.indexOf(actuators_type) != -1){
+            else if(sensors[service_app_id].api.indexOf(actuators_type) != -1){
             }
-            listeners_numbers[service_selected]=0;
+            listeners_numbers[service_app_id]=0;
         }
-        graphic.sensor_active[service_selected] = true;
-        listeners_numbers[service_selected]++;
+        graphic.sensor_active[service_app_id] = true;
+        listeners_numbers[service_app_id]++;
        
-        if(graphic.type!="line-chart"){
+        if(graphic.type != "line-chart"){
             if(graphic.service_list[0]!=null){
                 removeSensor(graphic,graphic.service_list[0]);
             }
             
-            graphic.service_list[0]=service_selected;       //link new sensor to the gauge
-            graphic.serviceAddress_list[0]=sensors[service_selected].serviceAddress;
-            $('#name-'+graphic.id).text(sensors[service_selected].description);
+            graphic.service_list[0]=service_app_id;       //link new sensor to the gauge
+            graphic.serviceAddress_list[0]=sensors[service_app_id].serviceAddress;
+            var deviceName = sensors[service_app_id].serviceAddress.substr(sensors[service_app_id].serviceAddress.lastIndexOf("/")+1);
+            var title = sensors[service_app_id].description+" @ "+deviceName;
+            $('#name-'+graphic.id).text(title);
         }
         else{
             if(graphic.service_list.length==0){
                 graphic.graphData.removeColumn(1);
             }
-            graphic.service_list.push(service_selected);
-            graphic.serviceAddress_list.push(sensors[service_selected].serviceAddress);
-            graphic.graphData.addColumn('number',sensors[service_selected].description);
+            graphic.service_list.push(service_app_id);
+            graphic.serviceAddress_list.push(sensors[service_app_id].serviceAddress);
+            graphic.graphData.addColumn('number',sensors[service_app_id].description);
         }
 
-        $(document).on("click", '#startstop_cfg_but-'+graphic.id+'-'+service_selected, function(event){
-            startStopSensor(graphic.id,service_selected);
+        $(document).on("click", '#startstop_cfg_but-'+graphic.id+'-'+service_app_id, function(event){
+            startStopSensor(graphic.id,service_app_id);
         });
         
-        $(document).on("click", '#remove_sensor-'+graphic.id+'-'+service_selected, function(event){
-            removeSensor(graphic,service_selected);
+        $(document).on("click", '#remove_sensor-'+graphic.id+'-'+service_app_id, function(event){
+            removeSensor(graphic,service_app_id);
         });
     }
     else
