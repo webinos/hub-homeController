@@ -165,33 +165,25 @@ function Output(cb, id){
 /******************************************  FUNCTIONS  ******************************************/
 
 
-var onSensorEvent = function(event){
-	var sensor = {};
-	if(typeof event !== "undefined"){
-		sensor = sensors[event.sensorId];
-		sensor.values = event.sensorValues[0] || 0;
+var onSensorEvent = function(sensorID, event){
+	console.log("***** sensorID:::: " + sensorID);
+	var value = event.sensorValues[0] || 0;
+
+	$("[id=value_"+sensorID+"]").empty();
+	$("[id=value_"+sensorID+"]").text(value);
+
+	//save the actual value in object values_sa
+	values_sa[sensorID] = value;
+
+	for(var n in block_list){
+		if(n.indexOf(sensorID) !== -1)
+			block_list[n].input_callback(value);
 	}
-
-	if (sensor){
-
-		//$("#value_"+sensor.id).empty();
-		$("[id=value_"+sensor.id+"]").empty();
-		//$("#value_"+sensor.id).text(sensor.values);
-		$("[id=value_"+sensor.id+"]").text(sensor.values);
-
-		//save the actual value in object values_sa
-		values_sa[sensor.id] = sensor.values;
-
-		for(var n in block_list){
-			if(n.indexOf(sensor.id) !== -1)
-				block_list[n].input_callback(sensor.values);
-		}
-	}
+	
 }
 
-//event doesn't containt id of device
-var idDeviceOrientation;
-var onDeviceOrientationEvent = function(event){
+
+var onDeviceOrientationEvent = function(idDeviceOrientation, event){
     // gamma is the left-to-right tilt in degrees, where right is positive
 	var tiltLR = event.gamma;
 	// beta is the front-to-back tilt in degrees, where front is positive
@@ -207,10 +199,6 @@ var onDeviceOrientationEvent = function(event){
 
 	$("[id=value_gamma_"+idDeviceOrientation+"]").empty();
 	$("[id=value_gamma_"+idDeviceOrientation+"]").text("Gamma: "+ tiltLR);
-
-	//WHERE IS THE ID?
-	//***** {"alpha":95,"beta":44,"gamma":22,"type":"deviceorientation","target":null,"currentTarget":null,"eventPhase":null,"bubbles":false,"cancelable":false,"timestamp":1384443337059} 
-	//console.log("***** " + JSON.stringify(event));
 
 	for(var n in block_list){
 		if(n.indexOf(idDeviceOrientation) !== -1){

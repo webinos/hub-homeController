@@ -250,6 +250,9 @@ function bindProperService(service){
                 );
             }
             else{
+                // TODO :
+                // If a service (different from a sensor) is not still available (for example it is on disconnected Arduino board)
+                // we should not increment configured_services
                 configured_services++;
             }
         }
@@ -274,7 +277,7 @@ var ui_loaded = false;
 
 function show_wait(){
     //alert(configured_services+"---"+services_count);
-    if(continue_to_wait){
+    if(continue_to_wait){ 
         if(configured_services < services_count){
             $("#wait_div").show();
             setTimeout(show_wait,1000);

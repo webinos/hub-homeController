@@ -10,8 +10,6 @@
 	var num_boxes = 0;
 	var that = this;
 
-	var explorer_enabled = true;
-
 
 	var initGUI = function(leftColumn){
         //findSensorServices(leftColumn);
@@ -37,7 +35,8 @@
 	}
 
 	function myConfigureSensor(sensor, isToSave){
-        var div_id = "sensor_"+sensor.id;
+		var service_app_id = getId(sensor);
+        var div_id = "sensor_"+service_app_id;
         
         var user_name = sensor.serviceAddress.split("@")[0];
         var host = "";
@@ -58,8 +57,8 @@
 
         var formatted_serviceAddress = getFormattedAddress(address, 10);
 
-        var sensorCode = '<div id="code_'+ sensor.id +'" class="sensor">';
-        sensorCode += "<div id='remove_"+sensor.id+"' style='clear:both;'><img width='15px' height='15px' src='./assets/x_min.png' style='float:right; margin-left:-40px;'></img></div>";
+        var sensorCode = '<div id="code_'+ service_app_id +'" class="sensor">';
+        sensorCode += "<div id='remove_"+service_app_id+"' style='clear:both;'><img width='15px' height='15px' src='./assets/x_min.png' style='float:right; margin-left:-40px;'></img></div>";
         //sensorCode += '<img style="clear:both;" width="80px" height="80px" src="./assets/images/'+icons[sensor.api]+'" id="'+div_id+'" /><p>'+sensor.description+'<br><span class="addr">['+address+']</span></p>';
         sensorCode += '<img style="clear:both;" width="80px" height="80px" src="./assets/images/'+icons[sensor.api]+'" id="'+div_id+'" /><p>'+sensor.description+'<br><span class="addr">['+formatted_serviceAddress+']</span></p>';
         sensorCode += '</div>'; 
@@ -72,7 +71,7 @@
 
         setMinHeight();
 
-        $('#remove_'+sensor.id).on('click',removeSensor);
+        $('#remove_'+service_app_id).on('click',removeSensor);
 
         //save on file the new sensor added
         if(isToSave == true)
@@ -114,24 +113,25 @@
     	var service = serviceFounded;
     	serviceFounded.bind({
 	        onBind:function(serviceBinded){
-	        	actuators[serviceBinded.id] = serviceBinded;
-	        	service = serviceBinded;
+	        	var service_app_id = getId(serviceBinded);
+	        	actuators[service_app_id] = serviceBinded;
+	        	//service = serviceBinded;
 
 	        	//save on file the new actuator added
 	        	if(isToSave == true)
                 	save_rules_sa_explorer();
 
 		        //actuators[service.id] = service;
-		        var div_id = "actuator_"+service.id;
+		        var div_id = "actuator_"+service_app_id;
 
-		        var user_name = service.serviceAddress.split("@")[0];
+		        var user_name = serviceBinded.serviceAddress.split("@")[0];
 		        var host = "";
 		        var device = "";
 		        var address = user_name;
 
-		        if(service.serviceAddress.indexOf("@") !== -1){
+		        if(serviceBinded.serviceAddress.indexOf("@") !== -1){
 		            address += "<br>";
-		            var tmp = service.serviceAddress.substring(service.serviceAddress.indexOf("@")+1).split("/");
+		            var tmp = serviceBinded.serviceAddress.substring(serviceBinded.serviceAddress.indexOf("@")+1).split("/");
 		            host = tmp[0];
 		            address += host;
 		            if(typeof tmp[1] != "undefined"){
@@ -142,10 +142,10 @@
 		        }
 
                 var formatted_serviceAddress = getFormattedAddress(address, 10);
-		        var actuatorCode = '<div id="code_'+ service.id +'" class="sensor">';
-		        actuatorCode += "<div id='remove_"+service.id+"' style='clear:both;'><img width='15px' height='15px' src='./assets/x_min.png' style='float:right; margin-left:-40px;'></img></div>";
+		        var actuatorCode = '<div id="code_'+ service_app_id +'" class="sensor">';
+		        actuatorCode += "<div id='remove_"+ service_app_id +"' style='clear:both;'><img width='15px' height='15px' src='./assets/x_min.png' style='float:right; margin-left:-40px;'></img></div>";
 		        //actuatorCode += '<img width="80px" height="80px" src="./assets/images/'+icons[service.api]+'" id="'+div_id+'" /><p>'+service.description+'<br><span class="addr">['+address+']</span></p>'
-                actuatorCode += '<img width="80px" height="80px" src="./assets/images/'+icons[service.api]+'" id="'+div_id+'" /><p>'+service.description+'<br><span class="addr">['+formatted_serviceAddress+']</span></p>'
+                actuatorCode += '<img width="80px" height="80px" src="./assets/images/'+icons[serviceBinded.api]+'" id="'+div_id+'" /><p>'+serviceBinded.description+'<br><span class="addr">['+formatted_serviceAddress+']</span></p>'
 		        actuatorCode += '</div>';
 		        jQuery("#actuators_table").append(actuatorCode);
 		       	
@@ -156,7 +156,7 @@
 
 		        setMinHeight();
 
-		        $('#remove_'+service.id).on('click',removeActuator);
+		        $('#remove_'+service_app_id).on('click',removeActuator);
 	        }
 	    });
     }
@@ -190,17 +190,16 @@
 	function findFileSystem(container) {
     	webinos.discovery.findServices(new ServiceType("http://webinos.org/api/file"), {
 			onFound: function (service) {
-				if(service.serviceAddress === webinos.session.getPZPId()){
+				if(service.serviceAddress == webinos.session.getPZPId()){
 					service.bindService({
 						onBind: function () {
 							service.requestFileSystem(1, 1024, 
 								function (filesystem) {
 									root_directory = filesystem.root;
 
-									if(explorer_enabled){
-										//load past sensors and actuators selected by user from explorer.
-           								load_file(false, file_name_sensor_actuator_explorer);
-           							}
+									//load past sensors and actuators selected by user from explorer.
+           							load_file(false, file_name_sensor_actuator_explorer);
+           							
 								},
 								function (error) {
 									alert("Error requesting filesystem (#" + error.code + ")");
@@ -252,10 +251,11 @@
 	function searchSensors(id, serviceAddress){
 		webinos.discovery.findServices(new ServiceType("http://webinos.org/api/sensors/*"), {
 			onFound: function (service) {
+				var service_app_id = getId(service);
 				//found a new sensors
-				if((service.id === id) && (service.serviceAddress === serviceAddress) && (typeof(sensors[service.id]) === "undefined")){
-					sensors[service.id] = service;
-					sensorActive[service.id] = 0;
+				if((service_app_id == id) && (service.serviceAddress == serviceAddress) && (typeof(sensors[service_app_id]) === "undefined")){
+					sensors[service_app_id] = service;
+					sensorActive[service_app_id] = 0;
 					
 					service.bind({
 						onBind:function(){
@@ -278,10 +278,30 @@
 	function searchActuators(id, serviceAddress){
 		webinos.discovery.findServices(new ServiceType("http://webinos.org/api/actuators/*"), {
 			onFound: function (service) {
+				var service_app_id = getId(service);
 				//found a new sensors
-				if((service.id === id) && (service.serviceAddress === serviceAddress) && (typeof(actuators[service.id]) === "undefined")){
+				if((service_app_id == id) && (service.serviceAddress == serviceAddress) && (typeof(actuators[service_app_id]) === "undefined")){
 					myConfigureActuator(service, false);
 				}
+			}
+		});
+	}
+
+	//used on load of the html page - i read in the file "file_name_sensor_actuator_explorer" && search the sensor
+	function searchDeviceOrientation(id, serviceAddress){
+		webinos.discovery.findServices(new ServiceType("http://webinos.org/api/deviceorientation"), {
+			onFound: function (service) {
+				service.bindService({
+                    onBind:function(){
+						var service_app_id = getId(service);
+						//found a new sensors
+						if((service_app_id == id) && (service.serviceAddress == serviceAddress) && (typeof(devsOrientation[service_app_id]) === "undefined")){
+							devsOrientation[service_app_id] = service;
+		                    devsOrientationActive[service_app_id] = 0;
+		                    GUIdeviceOrientationRightSide(service, false);	
+						}
+					}
+                });
 			}
 		});
 	}
@@ -516,6 +536,8 @@
 
 		idbox = dd_box_name+"_"+num_boxes;
 
+		var service_app_id = getId(sensor);
+
         var formatted_serviceAddress = getFormattedAddress(sensor.serviceAddress, 16);
 		var html = "";
 		html += "<div class='window' id='"+idbox+"' >";
@@ -523,7 +545,7 @@
 		//html += sensor.description+'<br>['+sensor.serviceAddress+']<br><br>';
         html += sensor.description+'<br>['+formatted_serviceAddress+']<br><br>';
 		html += '<img width="80px" height="80px" src="./assets/images/'+icons[sensor.api]+'" id="sensorIMG_'+sensor.id+'" /><br><br>';                     
-	    html += "<div id='value_"+sensor.id+"'>-</div>";
+	    html += "<div id='value_"+service_app_id+"'>-</div>";
 	    html += "</div>";
 
 	    $("#main").append(html);
@@ -538,8 +560,11 @@
         jsPlumb.draggable(divsWithWindowClass);
 
         //add eventListener
-        sensor.addEventListener("sensor", onSensorEvent, false);
-		sensorActive[sensor.id] = (sensorActive[sensor.id] + 1);
+        sensor.addEventListener("sensor", function(e){ onSensorEvent(service_app_id, e)}, false);
+		//sensorActive[service_app_id] = (sensorActive[service_app_id] + 1);
+		if(!sensorActive[service_app_id])
+            sensorActive[service_app_id] = 0;
+        sensorActive[service_app_id]++;
 
         //to remove box
         $('#remove_'+idbox).on('click', function(){
@@ -552,10 +577,10 @@
 
 	function removeSensorBox(boxID){
 
-    	//remove listener
-        var sensorID = boxID.split("_")[1];
-        sensors[sensorID].removeEventListener('sensor', onSensorEvent, false);
-        sensorActive[sensorID] = (sensorActive[sensorID] - 1);
+        var service_app_id = boxID.split("_")[1];
+
+        sensors[service_app_id].removeEventListener('sensor', function(e){ onSensorEvent(service_app_id, e)}, false);
+        sensorActive[service_app_id] = (sensorActive[service_app_id] - 1);
 
         //remove connections
     	var connTMP = [];
@@ -625,6 +650,8 @@
 
 		idbox = dd_box_name+"_"+num_boxes;
 
+		var service_app_id = getId(actuator);
+
 		var html = "";
 
 		if(actuator.api.indexOf("twitter") !== -1 || actuator.api.indexOf("facebook") !== -1){
@@ -632,7 +659,7 @@
 		}else{
 			html = generalActuatorGUI(idbox, actuator);
 			//no value for now
-			values_sa[actuator.id] = "{}";
+			values_sa[service_app_id] = "{}";
 		}
 
 	    $("#main").append(html);
@@ -688,7 +715,7 @@
 		for(var t in block_list){
 			if(t.indexOf("sensor") !== -1){
 				var idS = t.split("_")[1];
-				//if the sensor is not yet insert inside the object
+				//if the sensor is not still insert inside the object
 				if(!(idS in listTRSensor)){
 					html += '<tr id="tr_'+idS+'" class="tr_popup">';
 					html += '<td>'+sensors[idS].description+'</td>';
@@ -773,9 +800,14 @@
 
 /*****************     DEVICE ORIENTATION   ******************/
 
-	function GUIdeviceOrientationRightSide(service){
-        
-        var div_id = "devOrientation_"+service.id;
+	function GUIdeviceOrientationRightSide(service, isToSave){
+
+		var service_app_id = getId(service);
+        var div_id = "devOrientation_"+service_app_id;
+
+        //save on file the new actuator added
+    	if(isToSave == true)
+        	save_rules_sa_explorer();
 
         var user_name = service.serviceAddress.split("@")[0];
         var host = "";
@@ -795,7 +827,8 @@
         }
 
         var formatted_serviceAddress = getFormattedAddress(address, 10);
-        var html = '<div id="code_'+ service.id +'" class="sensor">';
+        var html = '<div id="code_'+ service_app_id +'" class="sensor">';
+        html += "<div id='remove_"+service_app_id+"' style='clear:both;'><img width='15px' height='15px' src='./assets/x_min.png' style='float:right; margin-left:-40px;'></img></div>";
         html += '<img width="80px" height="80px" src="./assets/images/'+icons[service.api]+'" id="'+div_id+'" /><p>'+service.description+'<br><span class="addr">['+formatted_serviceAddress+']</span></p>'
         html += '</div>';
         jQuery("#sensors_table").append(html);
@@ -806,7 +839,32 @@
         initDragAndDrop(div_id);
 
         setMinHeight();
+
+        //to remove box
+        $('#remove_'+service_app_id).on('click', function(){
+        	var boxID = this.id.substring(7);
+        	removeDeviceOrientation(boxID);
+		});
+
 	}
+
+	removeDeviceOrientation = function(devID){
+
+    	overwrite_rules_file(devID, "devOrientation");
+
+    	//Remove all connection which
+    	for(x in block_list){
+    		if(x.indexOf(devID) !== -1)
+    			removeSensorBox(x);
+    	}
+
+        //remove sensor selected from the 'sensors' object
+    	delete devsOrientation[devID];
+    	//update file
+    	save_rules_sa_explorer();
+    	//update leftColum GUI
+    	$("#code_"+devID).remove();
+    }
 
 	this.GUIDeviceOrientation = function(coord, device, dd_box_name){
 		//increment num_boxes add on target
@@ -814,8 +872,7 @@
 
 		idbox = dd_box_name+"_"+num_boxes;
 
-		//AT THE MOMENT -> go to function 'onDeviceOrientationEvent'
-		idDeviceOrientation = device.id;
+		var service_app_id = getId(device);
 
         var formatted_serviceAddress = getFormattedAddress(device.serviceAddress, 16);
 		var html = "";
@@ -828,9 +885,9 @@
   		html += "<option value='beta'>Beta</option>";
   		html += "<option value='gamma'>Gamma</option>";
 		html += "</select>";              
-	    html += "<div id='value_alfa_"+device.id+"'>Alfa: -</div>";
-	    html += "<div id='value_beta_"+device.id+"'>Beta: -</div>";
-	    html += "<div id='value_gamma_"+device.id+"'>Gamma: -</div>";
+	    html += "<div id='value_alfa_"+service_app_id+"'>Alfa: -</div>";
+	    html += "<div id='value_beta_"+service_app_id+"'>Beta: -</div>";
+	    html += "<div id='value_gamma_"+service_app_id+"'>Gamma: -</div>";
 	    html += "</div>";
 
 	    $("#main").append(html);
@@ -845,8 +902,11 @@
         jsPlumb.draggable(divsWithWindowClass);
 
         //add eventListener
-		device.addEventListener("deviceorientation", onDeviceOrientationEvent, false);
-		devsOrientationActive[device.id] = (devsOrientationActive[device.id] + 1);
+        device.addEventListener("deviceorientation", function(e){ onDeviceOrientationEvent(service_app_id, e)}, true);
+		//devsOrientationActive[service_app_id] = (devsOrientationActive[service_app_id] + 1);
+		if(!devsOrientationActive[service_app_id])
+            devsOrientationActive[service_app_id] = 0;
+        devsOrientationActive[service_app_id]++;
 
         //to remove box
         $('#remove_'+idbox).on('click', function(){
@@ -859,12 +919,10 @@
 
 	function removeDeviceOrientationBox(boxID){
 
-    	//remove listener
-        var deviceID = boxID.split("_")[1];
+        var service_app_id = boxID.split("_")[1];
 
-        //NOT CORRECTLY --> ????
-        devsOrientation[deviceID].removeEventListener("deviceorientation", onDeviceOrientationEvent, false);
-        devsOrientationActive[device.id] = (devsOrientationActive[device.id] - 1);
+        devsOrientation[service_app_id].removeEventListener("deviceorientation", function(e){ onDeviceOrientationEvent(service_app_id, e)}, true);
+        devsOrientationActive[service_app_id] = (devsOrientationActive[service_app_id] - 1);
 
         //remove connections
     	var connTMP = [];

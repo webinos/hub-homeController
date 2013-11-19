@@ -1,7 +1,14 @@
 var service_types = [
     "http://webinos.org/api/sensors/*",
-    "http://webinos.org/api/actuators/*"
+    "http://webinos.org/api/actuators/*",
+    "http://webinos.org/api/deviceorientation"
 ];
+
+function getId(service){
+    var deviceName = service.serviceAddress.substr(service.serviceAddress.lastIndexOf("/")+1);
+    deviceName = deviceName.split('.').join("");
+    return service.id+""+deviceName;
+}
 
     var _initialised = false,
         connections = [],
@@ -135,15 +142,7 @@ var service_types = [
 
         var contentDiv = $('#content');
         contentDiv.tinyscrollbar();
-/*
-        if(!explorer_enabled){
-            $("#refresh").append("<div id='refresh_button' class='button'>Refresh</div>");
-            findSensorServices(leftColumn);
-        }
-        else{
-            //$("#refresh").append("<div id='explorer_actuator_button' class='button'>Add Sensor or Actuator From Explorer</div>");
-        }
-*/
+
         $(window).resize(function() {
             leftColumn.tinyscrollbar_update();
             contentDiv.tinyscrollbar_update();
@@ -153,15 +152,6 @@ var service_types = [
 
         //search file system and save the root directory.
         findFileSystem(leftColumn);
-
-        //search device orientation api
-        deviceOrientationDiscovery();
-
-/*
-        $('#refresh_button').live( 'click',function(event){
-                findSensorServices(leftColumn);
-        });
-*/
 
         $('#explorer_actuator_button').live( 'click',function(event){
             var leftColumn = $('#leftcolumn');
@@ -210,8 +200,10 @@ var service_types = [
                     for(var i in data.result){
                         if(data.result[i].api.indexOf("sensors") !== -1)
                             serviceDiscovery(container, data.result[i]); 
-                        else
+                        else if(data.result[i].api.indexOf("actuators") !== -1)
                             actuatorDiscovery(container, data.result[i]);
+                        else if(data.result[i].api.indexOf("deviceorientation") !== -1)
+                            deviceOrientationDiscovery(container, data.result[i]);
                     }
                             
                     
@@ -221,10 +213,11 @@ var service_types = [
     function serviceDiscovery(container, serviceFilter){
         webinos.discovery.findServices(new ServiceType(serviceFilter.api), {
             onFound: function (service) {
-                if ((service.id === serviceFilter.id) && (service.serviceAddress === serviceFilter.address) && (typeof(sensors[service.id]) === "undefined")) {
+                var service_app_id = getId(service);
+                if ((service.id == serviceFilter.id) && (service.serviceAddress == serviceFilter.address) && (typeof(sensors[service_app_id]) === "undefined")) {
                     //found a new sensors
-                    sensors[service.id] = service;
-                    sensorActive[service.id] = 0;
+                    sensors[service_app_id] = service;
+                    sensorActive[service_app_id] = 0;
                     service.configureSensor({rate: 500, eventFireMode: "fixedinterval"}, 
                         function(){
                             myConfigureSensor(service, true);
@@ -241,24 +234,43 @@ var service_types = [
     function actuatorDiscovery(container, serviceFilter){
         webinos.discovery.findServices(new ServiceType(serviceFilter.api), {
             onFound: function (service) {
-                if ((service.id === serviceFilter.id) && (service.serviceAddress === serviceFilter.address) && (typeof(actuators[service.id]) === "undefined")) {
+                var service_app_id = getId(service);
+                if ((service.id == serviceFilter.id) && (service.serviceAddress == serviceFilter.address) && (typeof(actuators[service_app_id]) === "undefined")) {
                     myConfigureActuator(service, true);
                 }
             }
         });
     }
 
-    function deviceOrientationDiscovery(){
+    function deviceOrientationDiscovery(container, serviceFilter){
+
+        webinos.discovery.findServices(new ServiceType(serviceFilter.api), {
+            onFound: function (service) {
+                service.bindService({
+                    onBind:function(){
+                        var service_app_id = getId(service);
+                        if ((service.id == serviceFilter.id) && (service.serviceAddress == serviceFilter.address) && (typeof(devsOrientation[service_app_id]) === "undefined")) {
+                            devsOrientation[service_app_id] = service;
+                            devsOrientationActive[service_app_id] = 0;
+                            //GUI
+                            GUIdeviceOrientationRightSide(service, true);
+                        }
+                    }
+                });
+            }
+        });
+/*
         webinos.discovery.findServices(new ServiceType('http://webinos.org/api/deviceorientation'), {
             onFound: function (service) {
                 service.bindService({
                     onBind:function(){
-                        devsOrientation[service.id] = service;
+                        var service_app_id = getId(service);
+                        devsOrientation[service_app_id] = service;
 
                         //GUI
                         GUIdeviceOrientationRightSide(service);
                     }
                 });
             }
-        });
+        });*/
     }
