@@ -658,18 +658,20 @@ function assign_services_to_graphics(service_app_id, graphic){
     if(graphic.service_list.indexOf(service_app_id) == -1){
         if(!listeners_numbers.hasOwnProperty(service_app_id)){
             if(sensors[service_app_id].api.indexOf(sensors_type) != -1){
-                //add event listener
-                //GLT
-                //sensors[service_app_id].addEventListener('sensor', onSensorEvent, false);
+
+                //check
+                // if(graphic.type == 'line-chart')
+                //     graphic.allowed_drop = [sensors_type];
             }
             else if(sensors[service_app_id].api.indexOf(geolocation_type) != -1){
-                // var PositionOptions = {};
-                // PositionOptions.enableHighAccuracy = true;
-                // PositionOptions.timeout = 1000;
-                // //sensors[service_app_id].watchPosition(onGeolocationEvent, error, PositionOptions);
-                // navigator.geolocation.watchPosition(onGeolocationEvent, error, PositionOptions);
             }
             else if(sensors[service_app_id].api.indexOf(actuators_type) != -1){
+            }
+            else if(sensors[service_app_id].api.indexOf(deviceOrientation_type) != -1){
+                
+                //check
+                // if(graphic.type == 'line-chart')
+                //     graphic.allowed_drop = [deviceOrientation_type];
             }
             listeners_numbers[service_app_id]=0;
         }

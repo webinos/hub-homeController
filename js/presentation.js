@@ -48,6 +48,12 @@ var onGeolocationEvent = function(service_app_id, event){
             graphic.setCenter(event.coords.latitude, event.coords.longitude);
             graphic.addMarker(event.coords.latitude, event.coords.longitude);
         }
+        else if(graphic.type == "line-chart"){
+            var time=new Date(event.timestamp);
+            time=(time.getUTCHours()+2)+ ":"+time.getUTCMinutes()+":"+time.getUTCSeconds();
+            var val = [time, Number(event.coords.latitude), Number(event.coords.longitude)];
+            graphic.setGeolocationVal(val);
+        }
     }
 }
 
@@ -115,39 +121,10 @@ var onDeviceOrientationEvent = function(service_app_id, event){
             graphic.setVal(text);
         }
         else if(graphic.type == "line-chart" ){
-            // var orientation = [event.alpha, event.beta, event.gamma];
-            // var time=new Date(event.timestamp);
-            // time=(time.getUTCHours()+2)+ ":"+time.getUTCMinutes()+":"+time.getUTCSeconds();
-            // //for(var i in orientation){
-            
-                
-            //     var index=graphic.service_list.indexOf(service_app_id);
-            //     //graphic.values.push(time);
-                
-            //     for(var i=0;i<graphic.service_list.length;i++){
-                    
-            //         if(i==index){
-                        
-            //             graphic.values.push([time,Number(orientation[i])]);
-                        
-            //         }
-            //         else{
-            //             if(graphic.sensor_active[graphic.service_list[i]]==true){
-            //                 graphic.values.push(graphic.old_values[i+1]);
-            //             }else{
-            //                 graphic.values.push(null);
-            //             }
-            //         }
-            //     }
-            //     graphic.numberOfValues++;
-            //     graphic.graphData.addRow(graphic.values);
-            //     graphic.chart.draw(graphic.graphData, graphic.options);
-            //     graphic.old_values=graphic.values;
-                
-            //     if(graphic.numberOfValues>150){
-            //         graphic.graphData.removeRow(0);
-            //     }
-
+            var time=new Date(event.timestamp);
+            time=(time.getUTCHours()+2)+ ":"+time.getUTCMinutes()+":"+time.getUTCSeconds();
+            var val = [time, Number(event.alpha), Number(event.beta), Number(event.gamma)];
+            graphic.setOrientationVal(val);
         }
     }
 }

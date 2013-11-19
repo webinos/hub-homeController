@@ -248,6 +248,8 @@ function LineChart(idChart, X, Y, min, max){
     arguments.callee.superConstructor.call(this, idChart, X, Y, min, max);
     this.type="line-chart";
     this.allowed_drop = [sensors_type, geolocation_type, deviceOrientation_type];
+    //this.allowed_drop = [sensors_type, deviceOrientation_type];
+    this.graphic_values = [];
 
     try{
         this.graphData=new google.visualization.DataTable();
@@ -276,13 +278,29 @@ function LineChart(idChart, X, Y, min, max){
 LineChart.subclassFrom(Graphic);
 
 LineChart.methods({
-    setVal : function(val) { //val is an array e.g. ['2004', 1000, 400]
-        if(!this.values)
-            this.values = [];
-        this.values.push(val);
-        if(this.values.length > 150)
-            this.value.slice(0,1);
-        this.chart.draw(google.visualization.arrayToDataTable(this.values),this.options);    
+    setOrientationVal : function(val) { //val is an array e.g. ['2004', 1000, 400]
+        if(Array.isArray(val)){ 
+            if(this.graphic_values.length==0){
+                this.graphic_values.push(['Time', 'Alpha', 'Beta', 'Gamma']);
+            }
+            this.graphic_values.push(val);
+            if(this.graphic_values.length > 20){
+                this.graphic_values.splice(1,1);
+            }
+            this.chart.draw(google.visualization.arrayToDataTable(this.graphic_values),this.options);
+        }
+    },
+    setGeolocationVal : function(val) { //val is an array e.g. ['2004', 1000, 400]
+        if(Array.isArray(val)){ 
+            if(this.graphic_values.length==0){
+                this.graphic_values.push(['Time', 'Latitude', 'Longitude']);
+            }
+            this.graphic_values.push(val);
+            if(this.graphic_values.length > 20){
+                this.graphic_values.splice(1,1);
+            }
+            this.chart.draw(google.visualization.arrayToDataTable(this.graphic_values),this.options);
+        }
     },
     getHTMLContent : function(){
         var html = arguments.callee.superFunction.call(this);
