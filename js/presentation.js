@@ -80,7 +80,11 @@ var onSensorEvent = function(sensor_app_id, event){
                     else if(graphic.type == "line-chart"){
                         var time=new Date(event.timestamp);
                         time=(time.getUTCHours()+2)+ ":"+time.getUTCMinutes()+":"+time.getUTCSeconds();
-                        var index=graphic.service_list.indexOf(sensor.id);
+                        //var index=graphic.service_list.indexOf(sensor.id);
+                        var index=graphic.service_list.indexOf(sensor_app_id);
+                        // alert(index);
+                        // alert(sensor.id);
+                        //alert(JSON.stringify(graphic.service_list));
                         graphic.values.push(time);
                         for(var i=0;i<graphic.service_list.length;i++){
                             if(i==index){
@@ -212,8 +216,7 @@ function load_graphics(ask){
                     
                     for(var j in contents[i].service_list){
                         var tmp_service = contents[i].service_list[j];
-                        //assign_services_to_graphics(tmp_service.id, graphic);
-                        assign_services_to_graphics(tmp_service_app_id, graphic);
+                        assign_services_to_graphics(getId(tmp_service), graphic);
                     }
                 }
             }
