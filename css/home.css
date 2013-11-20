@@ -326,7 +326,7 @@ hr {
     border-width:5px;
 }
 
-.text-label{
+.text-label, .drone-joystick{
     font-size: 3em;
     font-family: verdana;
     padding-top: 1em;

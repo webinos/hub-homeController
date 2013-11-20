@@ -174,6 +174,9 @@ function load_graphics(ask){
                     else if(contents[i].type == "text-label"){
                         graphic = new TextLabel(idChart, X, Y, min, max);
                     }
+                    else if(contents[i].type == "drone-joystick"){
+                        graphic = new DroneJoystick(idChart, X, Y, min, max);
+                    }
                     else if(contents[i].type == "line-chart"){
                         graphic = new LineChart(idChart, X, Y, min, max);
                     }

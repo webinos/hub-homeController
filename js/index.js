@@ -113,6 +113,9 @@ function load_graphics(){
                     else if(contents[i].type == "text-label"){
                         graphic = new TextLabel(idChart, X, Y, min, max);
                     }
+                    else if(contents[i].type == "drone-joystick"){
+                        graphic = new DroneJoystick(idChart, X, Y, min, max);
+                    }
                     else if(contents[i].type == "line-chart"){
                         graphic = new LineChart(idChart, X, Y, min, max);
                     }
@@ -486,6 +489,9 @@ var addDragEventsForGaugesOnTarget = function(contentDiv){
     		else if(gauge_selected == "text-label"){
     			graphic = new TextLabel(idChart, X, Y);
     		}
+            else if(gauge_selected == "btnJoystick"){
+                graphic = new DroneJoystick(idChart, X, Y);
+            }
     		else if(gauge_selected == "line-chart"){
     			graphic = new LineChart(idChart, X, Y);
     		}
@@ -629,6 +635,8 @@ var addDragEventsForSensorsOnGauge = function(idChart){
                     $('#'+idChart_selected).removeClass("drop_div");
                     if(charts[idChart_selected].type == "text-label")
                         this.className = "text-label";
+                    else if(charts[idChart_selected].type == "drone-joystick")
+                        this.className = "drone-joystick";
                     else if(graphic.type=="checkbox-gauge"){
                         //sensors[service_selected].addEventListener("actuator", onActuatorEvent, false);
                     }
