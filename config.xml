@@ -4,6 +4,7 @@
   <description>Home automation controller for sensors and actuators</description>
   <content src="index.html" />
   <icon src="icon.png" />
-  <author>Giuseppe Latorre</author>
+  <author>Giuseppe La Torre - Daniela Ventura</author>
+  <email>first.last@dieei.unict.it</email>
 </widget>
 

@@ -1,3 +1,5 @@
+var lineColor=['blue','red','orange','green','violet','brown','pink','yellow'];
+
 Function.prototype.subclassFrom=function(superClassFunc) {
     if (superClassFunc == null) {
         this.prototype={};
@@ -217,7 +219,7 @@ function TextLabel(idChart, X, Y, min, max){
     arguments.callee.superConstructor.call(this, idChart, X, Y, min, max);
 
     this.type="text-label";
-    this.allowed_drop = [sensors_type, geolocation_type];
+    this.allowed_drop = [sensors_type, geolocation_type, deviceOrientation_type];
 
     $("#target").prepend(this.getHTMLContent());
     this.chart = document.getElementById("drop_canvas-"+this.id);
@@ -242,10 +244,119 @@ TextLabel.methods({
 });
 
 
+function DroneJoystick(idChart, X, Y, min, max){
+    arguments.callee.superConstructor.call(this, idChart, X, Y, min, max);
+
+    this.type="drone-joystick";
+    this.allowed_drop = [actuators_type];
+
+    $("#target").prepend(this.getHTMLContent());
+    this.chart = document.getElementById("drop_canvas-"+this.id);
+    //this.setVal("-");
+    
+
+    $(document).on("click", "#takeoff-"+this.id, function(event){
+        var id = event.target.id.split("-")[1];
+        var graphic = charts[id];
+        graphic.setVal(0);
+    });
+
+    $(document).on("click", "#landing-"+this.id, function(event){
+        var id = event.target.id.split("-")[1];
+        var graphic = charts[id];
+        graphic.setVal(1);
+    });
+
+    $(document).on("click", "#movefront-"+this.id, function(event){
+        var id = event.target.id.split("-")[1];
+        var graphic = charts[id];
+        graphic.setVal(5);
+    });
+
+    $(document).on("click", "#moveback-"+this.id, function(event){
+        var id = event.target.id.split("-")[1];
+        var graphic = charts[id];
+        graphic.setVal(6);
+    });
+
+    $(document).on("click", "#moveleft-"+this.id, function(event){
+        //var val = (event.target.checked) ? 1 : 0;
+        //alert(event.target.value);
+        var id = event.target.id.split("-")[1];
+        var graphic = charts[id];
+        graphic.setVal(7);
+    });
+
+    $(document).on("click", "#moveright-"+this.id, function(event){
+        var id = event.target.id.split("-")[1];
+        var graphic = charts[id];
+        graphic.setVal(8);
+    });
+
+    $(document).on("click", "#rotateclock-"+this.id, function(event){
+        var id = event.target.id.split("-")[1];
+        var graphic = charts[id];
+        graphic.setVal(9);
+    });
+
+    $(document).on("click", "#rotatecounter-"+this.id, function(event){
+        var id = event.target.id.split("-")[1];
+        var graphic = charts[id];
+        graphic.setVal(10);
+    });
+    
+    function foo(val){
+        alert(val);
+    }
+}
+
+DroneJoystick.subclassFrom(Graphic);
+
+DroneJoystick.methods({
+    setVal : function(val) {
+        if(this.service_list.length>0){
+            var service = sensors[this.service_list[0]];
+            service.setValue([val],
+                function(actuatorEvent){},
+                function(actuatorError){}
+            );
+        }
+    },
+    getHTMLContent : function(){
+        var html = arguments.callee.superFunction.call(this);
+        
+        // html += "<div class='drone-joystick' id='drop_canvas-"+this.id+"'>";
+        // html += "<div><input id='takeoff-"+this.id +"' type='button' value='Take Off'/> <input id='landing-"+this.id +"' type='button' value='Landing'/></div>";
+        // html += "<div style='margin-top:20px;'><input id='movefront-"+this.id +"' type='button' value='Move Front'/></div>";
+        // html += "<div><input id='moveleft-"+this.id +"' type='button' value='Move Left'/> <input id='moveright-"+this.id +"' type='button' value='Move Right'/></div>";        
+        // html += "<div style='margin-bottom:20px;'><input id='moveback-"+this.id +"' type='button' value='Move Back'/></div>";
+        // html += "<div><input id='rotateclock-"+this.id +"' type='button' value='Rotate Clockwise'/> <input id='rotatecounter-"+this.id +"' type='button' value='Rotate counterClockWise'/></div>";
+        // html += "</div></div>";
+
+        html += "<div class='drone-joystick' id='drop_canvas-"+this.id+"'>";
+        html += "<div><span style='margin-right:20px'><input type='image' id='takeoff-"+this.id +"' width='70px' height='70px' src='assets/images/takeoff.png'/></span> <span style='margin-left:20px'><input type='image' id='landing-"+this.id +"' width='70px' height='70px' src='assets/images/landing.png'/></span></div>";
+        html += "<div style='margin-top:20px;'><input type='image' id='movefront-"+this.id+"' width='50px' height='50px' src='assets/images/front.png'></div>";
+        html += "<div><span style='margin-right:15px'><input type='image' id='moveleft-"+this.id +"' width='50px' height='50px' src='assets/images/left.png'/></span><span style='margin-left:15px'> <input type='image' id='moveright-"+this.id +"' width='50px' height='50px' src='assets/images/right.png'/></span></div>";        
+        html += "<div style='margin-bottom:20px;'><input type='image' id='moveback-"+this.id +"' width='50px' height='50px' src='assets/images/back.png'/></div>";
+        html += "<div><span style='margin-right:20px'><input type='image' id='rotateclock-"+this.id +"' width='70px' height='70px' src='assets/images/clock.png'/></span> <span style='margin-left:20px'><input type='image' id='rotatecounter-"+this.id +"' width='70px' height='70px' src='assets/images/counter.png'/></span></div>";
+        html += "</div></div>";
+        return html;
+
+
+        
+    },
+    getCustomSettingsForSensor : function(sensor){
+        return "";
+    }
+});
+
+
 function LineChart(idChart, X, Y, min, max){
     arguments.callee.superConstructor.call(this, idChart, X, Y, min, max);
     this.type="line-chart";
-    this.allowed_drop = [sensors_type, geolocation_type];
+    this.allowed_drop = [sensors_type, geolocation_type, deviceOrientation_type];
+    //this.allowed_drop = [sensors_type, deviceOrientation_type];
+    this.graphic_values = [];
 
     try{
         this.graphData=new google.visualization.DataTable();
@@ -274,10 +385,29 @@ function LineChart(idChart, X, Y, min, max){
 LineChart.subclassFrom(Graphic);
 
 LineChart.methods({
-    setVal : function(val) {
-        alert("check here");
-        //this.chart.value = val;
-        //RGraph.Effects.Gauge.Grow(this.chart);
+    setOrientationVal : function(val) { //val is an array e.g. ['2004', 1000, 400]
+        if(Array.isArray(val)){ 
+            if(this.graphic_values.length==0){
+                this.graphic_values.push(['Time', 'Alpha', 'Beta', 'Gamma']);
+            }
+            this.graphic_values.push(val);
+            if(this.graphic_values.length > 20){
+                this.graphic_values.splice(1,1);
+            }
+            this.chart.draw(google.visualization.arrayToDataTable(this.graphic_values),this.options);
+        }
+    },
+    setGeolocationVal : function(val) { //val is an array e.g. ['2004', 1000, 400]
+        if(Array.isArray(val)){ 
+            if(this.graphic_values.length==0){
+                this.graphic_values.push(['Time', 'Latitude', 'Longitude']);
+            }
+            this.graphic_values.push(val);
+            if(this.graphic_values.length > 20){
+                this.graphic_values.splice(1,1);
+            }
+            this.chart.draw(google.visualization.arrayToDataTable(this.graphic_values),this.options);
+        }
     },
     getHTMLContent : function(){
         var html = arguments.callee.superFunction.call(this);

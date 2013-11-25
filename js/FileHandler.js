@@ -109,6 +109,10 @@ function load_file(askConfirm, file_name, show_rules, id, type){
 							for(var t=0; t<contents.explorer_actuators.length; t++){
 								searchActuators(contents.explorer_actuators[t].actuatorID, contents.explorer_actuators[t].actuatorAddress);
 							}
+							//load device orientation devs that user selected in past time.
+							for(var t=0; t<contents.explorer_deviceorientation.length; t++){
+								searchDeviceOrientation(contents.explorer_deviceorientation[t].devID, contents.explorer_deviceorientation[t].devAddress);
+							}
 						} else if(file_name == file_name_facebook_configure){
 							GUIaskForAppID(contents.appID);
 						}
@@ -243,6 +247,14 @@ function save_rules_sa_explorer(){
 		});
 	}
 
+	rules_to_save["explorer_deviceorientation"] = [];
+	for(var i in devsOrientation){
+		rules_to_save["explorer_deviceorientation"].push({
+			devID: i,
+			devAddress: devsOrientation[i].serviceAddress
+		});
+	}
+
 	setTimeout(function (){
 		save_file(rules_to_save,file_name_sensor_actuator_explorer);
 	}, 1000);
@@ -286,7 +298,8 @@ function paintOneBlock(box){
 			result = that.GUIDeviceOrientation(box.coord, devsOrientation[box.boxSpecific], id);
 			//$("#select_"+result).val(box.userInputValue);
 			$("#select_"+result+" option").each(function(){
-				if($(this).val() === box.userInputValue)
+				//if($(this).val() === box.userInputValue)
+				if($(this).val() == box.userInputValue)
 					$(this).attr("selected",true);
 			});
 			addInputBox(result);
@@ -367,19 +380,19 @@ function addConnectionBetweenTwoBoxes(box, boxIDassociated){
 function clearAll_for_rules(){
 
 	//remove event listener for sensor
-	for(i in sensorActive){
-		numListenerToRemove = sensorActive[i];
+	for(service_app_id in sensorActive){
+		numListenerToRemove = sensorActive[service_app_id];
 		for(var x=0; x<numListenerToRemove; x++)
-			sensors[i].removeEventListener('sensor', onSensorEvent, false);
-        sensorActive[i] = 0;
+			sensors[service_app_id].removeEventListener('sensor', function(e){ onSensorEvent(service_app_id, e)}, false);
+        sensorActive[service_app_id] = 0;
 	}
 
 	//remove event listener for device orientation
-	for(i in devsOrientationActive){
-		numListenerToRemove = devsOrientationActive[i];
+	for(service_app_id in devsOrientationActive){
+		numListenerToRemove = devsOrientationActive[service_app_id];
 		for(var x=0; x<numListenerToRemove; x++)
-			devsOrientation[i].removeEventListener('sensor', onDeviceOrientationEvent, false);
-        devsOrientationActive[i] = 0;
+			devsOrientation[service_app_id].removeEventListener("deviceorientation", function(e){ onDeviceOrientationEvent(service_app_id, e)}, true);
+        devsOrientationActive[service_app_id] = 0;
 	}
 
 	for(x in block_list){

@@ -1,0 +1,266 @@
+<html>
+<head>
+     <!-- <link rel="stylesheet" type="text/css" href="css/home.css" /> -->
+    <style>
+        #output_area{
+            width: 1000px;
+            height: 400px;
+        }
+        #sensors_tab{
+            width:100%;
+        }
+        #actuators_tab{
+            width:70%;
+        }
+        #output_area{
+            font-family: Courier;
+            font-size: 12pt;
+        }
+        .outer_block{
+            margin-top: 50px;
+            padding: 0 50px;
+        }
+        .inner_block{
+            margin-bottom: 10px;            
+        }
+        .cell_name{
+            font-weight: bold;
+            font-size: 14;
+        }
+        .cell_description{
+            font-size: 12;
+        }
+        .button, input[type=button] {
+            background: -moz-linear-gradient(top, #dcff91 0%, #adff00 100%); /* FF3.6+ */
+            background: -webkit-linear-gradient(top, #dcff91 0%,#adff00 100%);  Chrome10+,Safari5.1+ 
+            background: -o-linear-gradient(top, #dcff91 0%,#adff00 100%); /* Opera 11.10+ */
+            background: -ms-linear-gradient(top, #dcff91 0%,#adff00 100%); /* IE10+ */
+            background: linear-gradient(to bottom, #dcff91 0%,#adff00 100%); /* W3C */
+
+            color: #333;
+            display: inline-block;
+            padding: 0.5em 2em;
+            border-radius: 5px;
+            margin: 0.5em auto;
+            border-left: none; border-right: none;
+            border-top: 1px solid #fff;
+            border-bottom: 1px solid #888;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        body{
+            /*background: #6699CC;*/
+            background: url('assets/webinosBgDarkGrayGlow.png') 50% 50% no-repeat;
+            background-image: radial-gradient(#444,#000);
+            padding: 0 0px;
+            color: white;
+        }
+        button{
+            width:150px;
+            height:40px;
+        }
+        td {
+            padding-right: .2em;
+            padding-top: .5em;
+            padding-bottom: .5em;   
+        }
+    </style>
+    
+    <script src="js/jquery-1.8.1-min.js"></script>
+    <script>
+        var sensors_count=0;
+        var actuators_count=0;
+
+        jQuery(document).ready(function() {
+            $("#sensors_tab").hide();
+            $("#actuators_tab").hide();
+
+            $(document).on("click", "#create_conf", function(event){
+                $("#output_area").val(getConfiguration());
+            });
+
+            $(document).on("click", "#add_sensor", function(event){
+                addSensor();
+            });
+
+            $(document).on("click", "#add_actuator", function(event){
+                addActuator();
+            });
+        });
+
+        function addSensor(){
+            var row = "<tr>";
+            row += "<td>S"+(++sensors_count)+"</td>";
+            row += "<td><input type='text' id='sensor_id-"+sensors_count+"' value='"+next_id()+"'/></td>";
+            row += "<td><input type='text' id='ad-"+sensors_count+"'/></td>";
+            row += "<td><input type='text' id='pin-"+sensors_count+"'/></td>";
+            row += "<td><input type='text' id='maxrange-"+sensors_count+"' value='0.1'/></td>";
+            row += "<td><input type='text' id='mindelay-"+sensors_count+"' value='500'/></td>";
+            row += "<td><input type='text' id='power-"+sensors_count+"' value='0.02'/></td>";
+            row += "<td><input type='text' id='resolution-"+sensors_count+"' value='0.001'/></td>";
+            row += "<td><input type='text' id='type-"+sensors_count+"'/></td>";
+            row += "<td><input type='text' id='vendor-"+sensors_count+"' value='fake'/></td>";
+            row += "<td><input type='text' id='version-"+sensors_count+"' value='1.0'/></td>";
+            row += "<td><input type='text' id='convfunc-"+sensors_count+"' value='f(x)=x'/></td>";
+            row += "</tr>";
+            $("#sensors_tab").append(row);
+            $("#sensors_tab").show();
+        }
+
+        function addActuator(){
+            var row = "<tr>";
+            row += "<td>A"+(++actuators_count)+"</td>";
+            row += "<td><input type='text' id='actuator_id-"+actuators_count+"' value='"+next_id()+"'/></td>";
+            row += "<td><input type='text' id='ad-"+actuators_count+"'/></td>";
+            row += "<td><input type='text' id='pin-"+actuators_count+"'/></td>";
+            row += "<td><input type='text' id='type-"+actuators_count+"'/></td>";
+            row += "<td><input type='text' id='range-"+actuators_count+"' value='0-1'/></td>";
+            row += "<td><input type='text' id='vendor-"+actuators_count+"' value='fake'/></td>";
+            row += "<td><input type='text' id='version-"+actuators_count+"' value='1.0'/></td>";
+            row += "</tr>";
+            $("#actuators_tab").append(row);
+            $("#actuators_tab").show();
+        }
+
+        function getConfiguration(){
+            var out = "#####begin configuration#####";
+            out += "\n#Copy and paste this configuration into a file named config.txt in the root folder of Arduino SD card";
+            if($("#board_id").val() != "")  out += "\n\nBOARDID " + $("#board_id").val();
+            if($("#pzp_ip").val() != "")    out += "\nPZPIPAD " + $("#pzp_ip").val();
+            if($("#board_ip").val() != "")  out += "\nBRDIPAD " + $("#board_ip").val();
+            if($("#pzp_port").val() != "")  out += "\nPZPPORT " + $("#pzp_port").val();
+            if($("#board_mac").val() != "") out += "\nMACADDR " + $("#board_mac").val();
+            out += "\n\n";
+
+            for(var i=1; i<=sensors_count;i++){
+                if($("#sensor_id-"+i).val() === "")
+                    continue;
+                out += "ELEMENT " + $("#sensor_id-"+i).val() + "$";
+                out += "0$"; //sensor
+                out += $("#ad-"+i).val() + "$";
+                out += $("#pin-"+i).val() + "$";
+                out += $("#maxrange-"+i).val() + "$";
+                out += $("#mindelay-"+i).val() + "$";
+                out += $("#power-"+i).val() + "$";
+                out += $("#resolution-"+i).val() + "$";
+                out += $("#type-"+i).val() + "$";
+                out += $("#vendor-"+i).val() + "$";
+                out += $("#version-"+i).val() + "$";
+                out += $("#convfunc-"+i).val() + "\n";
+            }
+
+            for(var i=1; i<=actuators_count;i++){
+                if($("#actuator_id-"+i).val() === "")
+                    continue;
+                out += "ELEMENT " + $("#actuator_id-"+i).val() + "$";
+                out += "1$"; //actuator
+                out += $("#ad-"+i).val() + "$";
+                out += $("#pin-"+i).val() + "$";
+                out += $("#type-"+i).val() + "$";
+                out += $("#range-"+i).val() + "$";
+                out += $("#vendor-"+i).val() + "$";
+                out += $("#version-"+i).val() + "\n";
+            }            
+            out += "#####end configuration#####";
+            return out;
+        }
+
+        function next_id(){
+            var id = sensors_count+actuators_count;
+            id = id.toString();
+            if(id.length == 3)
+                return id;
+            else if(id.length>3)
+                return id.substr(id.length-3);
+            else{
+                var num_zero = 3 - id.length;
+                for(var i=0; i<num_zero; i++)
+                    id = "0" + id;
+                return id;
+            }
+        }
+    </script>
+</head>
+<body>
+    <div id="div_home">
+        <input type="button" value="Home" id="but_home" onclick="location.href='index.html'"/>
+    </div>
+    
+    <div class="outer_block">
+        <table id="board_tab">
+            <tr>
+                <td>ARDUINO ID</td>
+                <td><input type="text" id="board_id" value="00001"/></td>
+                <td>e.g. 00001</td>
+            </tr>
+            <tr>
+                <td>ARDUINO IP</td>
+                <td><input type="text" id="board_ip" value="192.168.1.140"/></td>
+                <td>Leave blank to use DHCP. Only required by HTTP driver</td>
+            </tr>
+            <tr>
+                <td>ARDUINO MAC</td>
+                <td><input type="text" id="board_mac" value="AA:BB:CC:DD:EE:FF"/></td>
+                <td>Only required by HTTP driver</td>
+            </tr>
+            <tr>
+                <td>PZP IP</td>
+                <td><input type="text" id="pzp_ip" value="192.168.1.130"/></td>
+                <td>Only required by HTTP driver</td>
+            </tr>
+            <tr>
+                <td>PZP PORT</td>
+                <td><input type="text" id="pzp_port" value="1984"/></td>
+                <td>e.g. 1984. Only required by HTTP driver</td>
+            </tr>
+        </table>
+    </div>
+    <div class="outer_block">
+        <div class="inner_block">
+            <span>
+                <input type="button" id="add_sensor" value="Add Sensor"\>
+                <input type="button" id="add_actuator" value="Add Actuator"\> (To remove a sensor or an actuator just cancel the ID)
+            </span>
+        </div>
+
+        <div class="inner_block">
+            <table id="sensors_tab">
+                <th>
+                    <td><div class="cell_name">Sensor ID</div><div class="cell_description">(e.g. 001)</div></td>
+                    <td><div class="cell_name">Analog/Digital</div><div class="cell_description">(A=0, D=1)</div></td>
+                    <td><div class="cell_name">Pin</div><div class="cell_description">(e.g. 3)</div></td>
+                    <td><div class="cell_name">Max Range</div><div class="cell_description">(e.g. 0.1)</div></td>
+                    <td><div class="cell_name">Min Delay</div><div class="cell_description">(e.g. 500)</div></td>
+                    <td><div class="cell_name">Power</div><div class="cell_description">(e.g. 0.02)</div></td>
+                    <td><div class="cell_name">Resolution</div><div class="cell_description">(e.g. 0.001)</div></td>
+                    <td><div class="cell_name">Type</div><div class="cell_description">(e.g. light)</div></td>
+                    <td class="cell_name">Vendor</td>
+                    <td class="cell_name">Version</td>
+                    <td class="cell_name">Conversion Function</div><div class="cell_description">(e.g. f(x)=Math.log(x))</div></td>
+                </th>
+            </table>
+        </div>
+    </div>
+    <div class="outer_block">
+        <div class="inner_block">
+            <table id="actuators_tab">
+                <th>
+                    <td><div class="cell_name">Actuator ID</div><div class="cell_description">(e.g. 002)</div></td>
+                    <td><div class="cell_name">Analog/Digital</div><div class="cell_description">(A=0, D=1)</div></td>
+                    <td><div class="cell_name">Pin</div><div class="cell_description">(e.g. 3)</div></td>
+                    <td><div class="cell_name">Type</div><div class="cell_description">(e.g. switch)</div></td>
+                    <td><div class="cell_name">Range</div><div class="cell_description">(e.g. 0-5)</div></td>
+                    <td class="cell_name">Vendor</td>
+                    <td class="cell_name">Version</td>
+                </th>
+            </table>
+        </div>
+    </div>
+    <div id="output" class="outer_block">
+        <div class="inner_block">
+            <input type="button" id="create_conf" value="Create Configuration"\>
+        </div>
+        <textarea id="output_area"></textarea>
+    </div>
+</body>
+</html>
