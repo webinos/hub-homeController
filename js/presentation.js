@@ -453,7 +453,7 @@ function assign_services_to_graphics(service_app_id, graphic){
             onGeolocationEvent(service_app_id, position);
         };
         var w_id = sensors[service_app_id].watchPosition(tmpFunction, onPositionError, PositionOptions);          
-        //var w_id = navigator.geolocation.watchPosition(onGeolocationEvent, onPositionError, PositionOptions);
+        //var w_id = navigator.geolocation.watchPosition(tmpFunction, onPositionError, PositionOptions);
         services_to_handle[service_app_id]["watch_id"] = w_id;
     }
     else if(sensors[service_app_id].api.indexOf(actuators_type) != -1){}
