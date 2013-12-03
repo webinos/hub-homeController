@@ -332,6 +332,10 @@ function load_graphics(){
                         if(sensors[z].id == sl[j].id && sensors[z].serviceAddress == sl[j].serviceAddress)
                             assign_services_to_graphics(z, graphic);
                 }
+
+                if(contents[i].type == "historical-chart"){
+                    get_data_from_db(graphic);
+                }
             }
         },
         function(error){
@@ -667,8 +671,8 @@ function goto_build(){
 
         
         $(window).resize(function() {
-            //CHECK HERE
-            leftColumn.tinyscrollbar_update();
+            if(leftcolumn)
+                leftColumn.tinyscrollbar_update();
             contentDiv.tinyscrollbar_update();
             rightColumn.tinyscrollbar_update();
         });
@@ -1139,14 +1143,15 @@ function assign_services_to_graphics(service_app_id, graphic){
 function assign_services_to_graphics_presentation(service_app_id, graphic){
     //var service_selected = service_app_id.substr(0,32);
     var start = false;
-    if(!services_to_handle[service_app_id]){
+    if(!services_to_handle[service_app_id] ){
         services_to_handle[service_app_id] = {};
         services_to_handle[service_app_id]["serviceAddress"] = sensors[service_app_id].serviceAddress;
         services_to_handle[service_app_id]["graphicslist"] = [];
         start=true;
     }
     if(sensors[service_app_id].api.indexOf(sensors_type) != -1){    
-        if(start && graphic.type != "historical-chart"){
+        if(start){
+
             var service_id = service_app_id;
             sensors[service_id].addEventListener('sensor', function(e){onSensorEvent(service_id,e)}, false);
         }
@@ -1351,7 +1356,12 @@ function enableButtonsLive(idChart){
 function deleteChart(idChart_selected){
     var graphic= charts[idChart_selected];
     for(var sens in graphic.service_list){
-        $('#startstop_cfg_but-'+graphic.id+'-'+getId(graphic.service_list[sens])).die();
+
+        //alert(getId(sensors[graphic.service_list[sens]]));
+
+        //$('#startstop_cfg_but-'+graphic.id+'-'+getId(sensors[graphic.service_list[sens]])).die();
+        
+        $('#startstop_cfg_but-'+graphic.id+'-'+getId(sensors[graphic.service_list[sens]])).die();
         if((listeners_numbers.hasOwnProperty(graphic.service_list[sens]))&&(graphic.sensor_active[graphic.service_list[sens]])){    //if sensor is inactive, the listener is already removed
             listeners_numbers[graphic.service_list[sens]]--;
             if(listeners_numbers[graphic.service_list[sens]]==0){
@@ -1375,23 +1385,24 @@ function deleteChart(idChart_selected){
 function deleteChart_presentation(idChart_selected){
     var graphic= charts_presentation[idChart_selected];
     for(var sens in graphic.service_list){
-        $('#startstop_cfg_but-'+graphic.id+'-'+getId(graphic.service_list[sens])).die();
-        if((listeners_numbers.hasOwnProperty(graphic.service_list[sens]))&&(graphic.sensor_active[graphic.service_list[sens]])){    //if sensor is inactive, the listener is already removed
-            listeners_numbers[graphic.service_list[sens]]--;
-            if(listeners_numbers[graphic.service_list[sens]]==0){
-                if(sensors[graphic.service_list[sens]].api.indexOf(geolocation_type) != -1){
+        var service_app_id = getId(graphic.service_list[sens]);
+        $('#startstop_cfg_but-'+graphic.id+'-'+service_app_id).die();
+        if(listeners_numbers.hasOwnProperty(service_app_id) && (graphic.sensor_active[service_app_id])){    //if sensor is inactive, the listener is already removed
+            listeners_numbers[service_app_id]--;
+            if(listeners_numbers[service_app_id]==0){
+                if(sensors[service_app_id].api.indexOf(geolocation_type) != -1){
                     navigator.geolocation.clearWatch(services_to_handle[graphic.service_list[sens]]["watch_id"]);
                     //sensors[graphic.service_list[sens]].clearWatch(services_to_handle[graphic.service_list[sens]]["watch_id"]);
                 }
-                else if(sensors[graphic.service_list[sens]].api.indexOf(sensors_type) != -1){
-                    var service_id = graphic.service_list[sens];
+                else if(sensors[service_app_id].api.indexOf(sensors_type) != -1){
+                    var service_id = service_app_id;
                     sensors[service_id].removeEventListener('sensor', function(e){onSensorEvent(service_id,e)}, false);
                 }
-                else if(sensors[graphic.service_list[sens]].api.indexOf(deviceOrientation_type) != -1){
-                    var service_id = graphic.service_list[sens];
+                else if(sensors[service_app_id].api.indexOf(deviceOrientation_type) != -1){
+                    var service_id = service_app_id;
                     sensors[service_id].removeEventListener("deviceorientation", function(e){onDeviceOrientationEvent(service_id,e)}, true);
                 }
-                delete listeners_numbers[graphic.service_list[sens]];
+                delete listeners_numbers[service_app_id];
             }       
         }
     }
