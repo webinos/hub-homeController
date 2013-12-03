@@ -512,6 +512,94 @@ function HistoricalChart(target, idChart, X, Y){
     this.target.prepend(this.getHTMLContent());
     
     this.chart_div = document.getElementById('chart_div-'+idChart);
+
+    Highcharts.setOptions({
+        global : {
+            useUTC : false
+        }
+    });
+    var self = this;
+    this.chartDataChanged = false;
+    this.chartSeries = {};
+    // Create the chart
+    this.chart = new Highcharts.StockChart({
+        chart : {
+            renderTo: 'chart_div-'+idChart,
+            events : {
+                load : function() {
+
+                    // set up the updating of the chart each second
+//                    var series = this.series[0];
+//                    setInterval(function() {
+//                        var x = (new Date()).getTime(), // current time
+//                            y = Math.round(Math.random() * 100);
+//                        series.addPoint([x, y], true, true);
+//                    }, 1000);
+                    setInterval(function() {
+                        if (self.chartDataChanged){
+                            self.chart.redraw();
+                            self.chartDataChanged = false;
+                        }
+                    }, 1000);
+                }
+            }
+        },
+
+        rangeSelector: {
+            buttons: [{
+                count: 1,
+                type: 'minute',
+                text: '1M'
+            }, {
+                count: 5,
+                type: 'minute',
+                text: '5M'
+            }, {
+                count: 1440,
+                type: 'minute',
+                text: '1D'
+            }, {
+                type: 'all',
+                text: 'All'
+            }],
+            inputEnabled: false,
+            selected: 3
+        },
+
+        title : {
+//            text : 'Live random data'
+        },
+
+        exporting: {
+            enabled: false
+        },
+
+        series : [{
+            name : 'Random data',
+            data : (function() {
+                var data = [], time = (new Date()).getTime();
+                data.push([time, null]);
+                return data;
+            })()
+        }]
+//            {
+//                name : 'Random data',
+//                data : (function() {
+//                    // generate an array of random data
+//                    var data = [], time = (new Date()).getTime(), i;
+//
+//                    for( i = -2; i <= 0; i++) {
+//                        data.push([
+//                            time + i * 1000,
+//                            Math.round(Math.random() * 100)
+//                        ]);
+//                    }
+//                    return data;
+//                })()
+//            }
+//        ]
+    });
+
     // var chart_div = document.getElementById('chart_div-'+idChart);
 
     // g1 = new Dygraph(
@@ -539,27 +627,36 @@ function HistoricalChart(target, idChart, X, Y){
 HistoricalChart.subclassFrom(Graphic);
 
 HistoricalChart.methods({
-    setVal : function(val) {
-        g1 = new Dygraph(
-            this.chart_div,
-            //getData(),
-            getData(val),
-            // {
-            //     legend: 'always',
-            //     title: 'NYC vs. SF',
-            //     showRoller: true,
-            //     rollPeriod: 14,
-            //     customBars: true,
-            //     ylabel: 'Temperature (F)',
-            // }
-            {
-                customBars: true,
-                title: 'Daily Temperatures in New York vs. San Francisco',
-                ylabel: 'Temperature (F)',
-                legend: 'always',
-                labelsDivStyles: { 'textAlign': 'right' },
-                showRangeSelector: true
-            })
+    setVal : function(id, service, data) {
+        if (!this.chartSeries[id]){
+            this.chartSeries[id] = this.chart.addSeries({
+                name: sensors[id].description+" @ "+service.serviceAddress,
+                data: data
+            }, false);
+        }else{
+            this.chartSeries[id].addPoint(data, true, true);
+        }
+        this.chartDataChanged = true;
+//        g1 = new Dygraph(
+//            this.chart_div,
+//            //getData(),
+//            getData(val),
+//            // {
+//            //     legend: 'always',
+//            //     title: 'NYC vs. SF',
+//            //     showRoller: true,
+//            //     rollPeriod: 14,
+//            //     customBars: true,
+//            //     ylabel: 'Temperature (F)',
+//            // }
+//            {
+//                customBars: true,
+//                title: 'Daily Temperatures in New York vs. San Francisco',
+//                ylabel: 'Temperature (F)',
+//                legend: 'always',
+//                labelsDivStyles: { 'textAlign': 'right' },
+//                showRangeSelector: true
+//            })
     },
     getHTMLContent : function(){
         var html = arguments.callee.superFunction.call(this);
