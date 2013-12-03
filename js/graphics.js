@@ -520,6 +520,7 @@ function HistoricalChart(target, idChart, X, Y){
     });
     var self = this;
     this.chartDataChanged = false;
+    this.historicalLoaded = false;
     this.chartSeries = {};
     // Create the chart
     this.chart = new Highcharts.StockChart({
@@ -527,20 +528,12 @@ function HistoricalChart(target, idChart, X, Y){
             renderTo: 'chart_div-'+idChart,
             events : {
                 load : function() {
-
-                    // set up the updating of the chart each second
-//                    var series = this.series[0];
-//                    setInterval(function() {
-//                        var x = (new Date()).getTime(), // current time
-//                            y = Math.round(Math.random() * 100);
-//                        series.addPoint([x, y], true, true);
-//                    }, 1000);
-                    setInterval(function() {
-                        if (self.chartDataChanged){
-                            self.chart.redraw();
-                            self.chartDataChanged = false;
-                        }
-                    }, 1000);
+                    // setInterval(function() {
+                    //     if (self.chartDataChanged){
+                    //         self.chart.redraw();
+                    //         self.chartDataChanged = false;
+                    //     }
+                    // }, 1000);
                 }
             }
         },
@@ -628,14 +621,30 @@ HistoricalChart.subclassFrom(Graphic);
 
 HistoricalChart.methods({
     setVal : function(id, service, data) {
-        if (!this.chartSeries[id]){
-            this.chartSeries[id] = this.chart.addSeries({
-                name: sensors[id].description+" @ "+service.serviceAddress,
-                data: data
-            }, false);
-        }else{
-            this.chartSeries[id].addPoint(data, true, true);
-        }
+        // if (!this.chartSeries[id]){
+        //     this.chartSeries[id] = this.chart.addSeries({
+        //         name: sensors[id].description+" @ "+service.serviceAddress,
+        //         data: data
+        //     }, false);
+        // }else{
+            if (data.length>2 || typeof(data[0]) == "array"){
+                var self=this;
+                this.chartSeries[id] = this.chart.addSeries({
+                    name: sensors[id].description+" @ "+service.serviceAddress,
+                    data: data
+                }, false);
+                // $.each(data, function(i,val){
+                //     self.chartSeries[id].addPoint(val, false);
+                // });
+                this.historicalLoaded = true;
+            }else{
+                if(this.historicalLoaded && this.chartSeries[id])
+                    this.chartSeries[id].addPoint(data, false);
+            }
+
+            
+        // }
+        this.chart.redraw();
         this.chartDataChanged = true;
 //        g1 = new Dygraph(
 //            this.chart_div,

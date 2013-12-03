@@ -130,6 +130,11 @@ var onSensorEvent = function(sensor_app_id, event){
     //                    graphic.setVal(normalized_val);
                         graphic.setVal(value);
                     }
+                    else if(graphic.type == "historical-chart"){
+                        var time=new Date(event.timestamp).getTime();
+                        var formatted_data = [time, value];
+                        graphic.setVal(sensor_app_id, sensor, formatted_data); 
+                    }
                     else if(graphic.type == "line-chart"){
                         var time=new Date(event.timestamp);
                         time=(time.getUTCHours()+2)+ ":"+time.getUTCMinutes()+":"+time.getUTCSeconds();
