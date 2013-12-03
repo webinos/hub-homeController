@@ -307,9 +307,50 @@ function hide_wait(load){
     }
 }
 
+var first_time_presentation = true;
+
+function goto_presentation(){
+    $("#build_div").hide();
+    $("#index_div").hide();
+    $("#rules_div").hide();
+    $("#presentation_div").show();
+    $("#arduino_div").hide();
+    
+    var leftColumn = $('#leftcolumn');
+    leftColumn.tinyscrollbar();
+
+    var rightColumn = $('#rightcolumn');
+    rightColumn.tinyscrollbar();
+
+    clearAll_for_graphics();
+
+    if(first_time_presentation){
+        //$("#sensor_id_config").hide();
+        
+        var contentDiv = $('#content');
+        contentDiv.tinyscrollbar();
+
+        discover_filesystem();
+        $(window).resize(function() {
+            contentDiv.tinyscrollbar_update();
+        });
+        
+        var popup = $("#settings-container");
+        popup.click(function(){});
+        
+        $("#close").click(function(){
+            popup.fadeOut();
+            fadeOutSettings();
+        });
+
+        first_time_presentation = false;
+    }
+}
+
 jQuery(document).ready(function() {
     clearAll_for_graphics();
 
+    $('#target').css("border", "none"); 
     $(window).on('beforeunload', function(e) {    
         //TODO stop all sensors
         clearAll_for_graphics();
@@ -452,8 +493,8 @@ function assign_services_to_graphics(service_app_id, graphic){
         var tmpFunction = function(position){
             onGeolocationEvent(service_app_id, position);
         };
-        var w_id = sensors[service_app_id].watchPosition(tmpFunction, onPositionError, PositionOptions);          
-        //var w_id = navigator.geolocation.watchPosition(tmpFunction, onPositionError, PositionOptions);
+        //var w_id = sensors[service_app_id].watchPosition(tmpFunction, onPositionError, PositionOptions);          
+        var w_id = navigator.geolocation.watchPosition(tmpFunction, onPositionError, PositionOptions);
         services_to_handle[service_app_id]["watch_id"] = w_id;
     }
     else if(sensors[service_app_id].api.indexOf(actuators_type) != -1){}
@@ -583,8 +624,8 @@ function deleteChart(idChart_selected){
 			listeners_numbers[graphic.service_list[sens]]--;
 			if(listeners_numbers[graphic.service_list[sens]]==0){
 				if(sensors[graphic.service_list[sens]].api.indexOf(geolocation_type) != -1){
-                    //navigator.geolocation.clearWatch(services_to_handle[graphic.service_list[sens]]["watch_id"]);
-                    sensors[graphic.service_list[sens]].clearWatch(services_to_handle[graphic.service_list[sens]]["watch_id"]);
+                    navigator.geolocation.clearWatch(services_to_handle[graphic.service_list[sens]]["watch_id"]);
+                    //sensors[graphic.service_list[sens]].clearWatch(services_to_handle[graphic.service_list[sens]]["watch_id"]);
                 }
                 else if(sensors[graphic.service_list[sens]].api.indexOf(sensors_type) != -1){
                     var service_id = graphic.service_list[sens];

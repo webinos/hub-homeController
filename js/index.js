@@ -28,6 +28,8 @@ var remote_filesystems = [];
 var chart_selected;
 var charts_to_fade=[];
 
+var first_time_build = true;
+
 google.load("visualization", "1", {packages:["corechart"]});
 
 
@@ -100,7 +102,11 @@ function load_graphics(){
             for(var i in contents){
                 var graphic;
                 var idChart = "chart_" + (element_counter++);
-                var X = contents[i].coord.x;
+                
+                var lc = $("#leftcolumn").css("width").replace("px","");
+                lc = Number(lc);
+                var X = contents[i].coord.x + lc;
+                
                 var Y = contents[i].coord.y;
                 var min = Number(contents[i].minRange);
                 var max = Number(contents[i].maxRange);
@@ -271,6 +277,83 @@ function clearAll_for_graphics(){
     }
 }
 
+function gotodiv(div){
+    $('#'+div).show();
+    if(div != "index_div")
+        $("#index_div").hide();
+    if(div != "build_div")
+        $("#build_div").hide();
+    if(div != "rules_div")
+        $("#rules_div").hide();
+    if(div != "presentation_div")
+        $("presentation_div").hide();
+    if(div != "arduino_div")
+        $("arduino_div").hide();
+    var leftColumn = $('#leftcolumn');
+    leftColumn.tinyscrollbar();
+
+    var rightColumn = $('#rightcolumn');
+    rightColumn.tinyscrollbar();
+}
+
+function goto_build(){
+    $("#build_div").show();
+    $("#index_div").hide();
+    $("#rules_div").hide();
+    $("#presentation_div").hide();
+    $("#arduino_div").hide();
+    
+    var leftColumn = $('#leftcolumn');
+    leftColumn.tinyscrollbar();
+
+    var rightColumn = $('#rightcolumn');
+    rightColumn.tinyscrollbar();
+    
+    if(first_time_build){
+        $(document).on("change","#resolution", function(event){
+            var selected_width = Number($("#resolution").val());
+            $("#target").css("width", selected_width);
+        });
+        
+        $(document).on("click","#clearCharts", function(event){
+          clearAll_for_graphics();
+        });
+
+        $(document).on("click","#saveCharts", function(event){
+            save_graphics();
+        });
+
+        $(document).on("click","#loadCharts", function(event){
+            load_graphics();         
+        });     
+
+        var contentDiv = $('#content');
+        contentDiv.tinyscrollbar();
+        $("#refresh").text("Add From Explorer").button("refresh");
+
+        discover_filesystem();
+        $(window).resize(function() {
+            leftColumn.tinyscrollbar_update();
+            contentDiv.tinyscrollbar_update();
+            rightColumn.tinyscrollbar_update();
+        });
+
+        initDragAndDropGauges(contentDiv);
+
+        var popup = $("#settings-container");
+        popup.click(function(){});
+        
+
+        $("#close").click(function(){
+            popup.fadeOut();
+            fadeOutSettings();
+        });
+
+        first_time_build = false;
+    }
+}
+
+
 jQuery(document).ready(function() {
     
     $(window).on('beforeunload', function(e) {    
@@ -287,57 +370,24 @@ jQuery(document).ready(function() {
 		callExplorer(leftColumn);
 	});
 	
-    $(document).on("click","#clearCharts", function(event){
-	  clearAll_for_graphics();
-	});
+    
 
-    $(document).on("click","#saveCharts", function(event){
-        save_graphics();
+    $(document).on("click","#goto_build", function(event){
+        goto_build();
     });
 
-    $(document).on("click","#loadCharts", function(event){
-        load_graphics();         
-    });		
-	
-
-	var leftColumn = $('#leftcolumn');
-	leftColumn.tinyscrollbar();
-
-    var rightColumn = $('#rightcolumn');
-    rightColumn.tinyscrollbar();
-
-    var contentDiv = $('#content');
-    contentDiv.tinyscrollbar();
-    $("#refresh").text("Add From Explorer").button("refresh");
-
-	discover_filesystem();
-	$(window).resize(function() {
-        leftColumn.tinyscrollbar_update();
-        contentDiv.tinyscrollbar_update();
-        rightColumn.tinyscrollbar_update();
+    $(document).on("click","#goto_build", function(event){
+        goto_presentation();
     });
 
-	initDragAndDropGauges(contentDiv);
+    $(document).on("click","#goto_arduino", function(event){
+        gotodiv("arduino_div");
+    });
 
-	var popup = $("#settings-container");
-	popup.click(function(){
-		/*
-		popup.fadeOut();
-		for(chart_id in charts_to_fade){
-			$("#chart_div-"+charts_to_fade[chart_id]).fadeIn();
-	  	}
-	  	*/
-	});
-	
+    $(document).on("click",".but_home", function(event){
+        gotodiv("index_div");
+    });
 
-	$("#close").click(function(){
-	 	popup.fadeOut();
-	 	fadeOutSettings();
-	 	// for(chart_id in charts_to_fade){
-			// //alert("aa: "+chars_to_fade[chart_id]);
-			// $("#chart_div-"+charts_to_fade[chart_id]).fadeIn();
-	  // 	}
-	});
 
 });
 
@@ -428,8 +478,6 @@ var addOnDragStartGauges = function(){
 
 //set onDragStart for all types of boxes
 var addOnDragStart = function(id){
-
-	
 	var box = document.getElementById(id);
 	box.draggable = true;
 	box.ondragstart = function(event) {
@@ -534,7 +582,9 @@ var addDragEventsForGaugesOnTarget = function(contentDiv){
     		enableDragAndDropSensors("drop_canvas-"+idChart);	
     		enableButtonsLive(idChart);
 
-    		contentDiv.tinyscrollbar_update();
+            var contentDiv = $('#content');
+            contentDiv.tinyscrollbar();
+    		//contentDiv.tinyscrollbar_update();
 
     		event.stopPropagation();
         }

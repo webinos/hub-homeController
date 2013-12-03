@@ -353,10 +353,10 @@
 			var boxID = dd_box_name.split("_")[1];
 			var boxType = dd_box_name.split("_")[0];
 
-			//var X = event.layerX - $(event.target).position().left;
-			//var Y = event.layerY - $(event.target).position().top;
-			var X = event.layerX - 150;
-			var Y = event.layerY - 100;
+			// var X = event.layerX - $(event.target).position().left;
+			// var Y = event.layerY - $(event.target).position().top;
+			var X = event.layerX + $(event.target).position().left;
+			var Y = event.layerY - $(event.target).position().top;
 
 			var coord = {
 				x:X,

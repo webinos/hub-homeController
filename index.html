@@ -1,37 +1,336 @@
+
 <html>
 <head>
+    <title>webinos IoT Dashboard</title>
     <link rel="stylesheet" type="text/css" href="css/home.css" />
+    <link rel="stylesheet" type="text/css" href="css/draggableConnectorsDemo.css" />
+    <link rel="stylesheet" type="text/css" href="css/demo-new.css" />
+    <link rel="stylesheet" type="text/css" href="css/jquery.switchButton.css" />
+
+    <style>
+        #title{
+            font-size: 40pt;
+            font-weight: bold;
+            text-align: center;
+        }
+        #output_area{
+            width: 1000px;
+            height: 400px;
+            margin-bottom: 100px;
+        }
+        #sensors_tab{
+            width:100%;
+        }
+        #actuators_tab{
+            width:70%;
+        }
+        #output_area{
+            font-family: Courier;
+            font-size: 12pt;
+        }
+        .outer_block{
+            margin-top: 50px;
+            padding: 0 50px;
+        }
+        .inner_block{
+            margin-bottom: 10px;            
+        }
+        .cell_name{
+            font-weight: bold;
+            font-size: 14;
+        }
+        .cell_description{
+            font-size: 12;
+        }
+        body{   
+            color: white;
+        }
+        button{
+            width:150px;
+            height:40px;
+        }
+        td {
+            padding-right: .2em;
+            padding-top: .5em;
+            padding-bottom: .5em;   
+        }
+    </style>
+
+    <script src="js/jquery-1.8.1-min.js"></script>
+    <script src="js/jquery-ui-1.8.23-min.js"></script>
+    <script src="js/jquery.tinyscrollbar.js"></script>
+    <script src="js/jquery.switchButton.js"></script>
+    
+    <!-- Historical charts library -->
+    <script src="js/dygraph-combined.js"></script>
+    
+    <!-- Gauges library -->
+    <script src="js/RGraph/libraries/RGraph.common.core.js"></script>
+    <script src="js/RGraph/libraries/RGraph.common.dynamic.js"></script>
+    <script src="js/RGraph/libraries/RGraph.common.tooltips.js" ></script>
+    <script src="js/RGraph/libraries/RGraph.common.effects.js"></script>
+    <script src="js/RGraph/libraries/RGraph.gauge.js"></script>
+    <script src="js/RGraph/libraries/RGraph.cornergauge.js"></script>
+    <script src="js/RGraph/libraries/RGraph.thermometer.js"></script>
+    <script src="js/RGraph/libraries/RGraph.fuel.js"></script>
+    <script src="js/RGraph/libraries/RGraph.odo.js"></script>
+
+    <!-- Charts library -->
+    <script type="text/javascript" src="js/corechart.js"></script>
+
+    <!-- Google maps library -->
+    <script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"></script>
+
+    <!-- Connection box library -->
+    <script type="text/javascript" src="js/jsapi.js"></script>
+    <script type='text/javascript' src='js/jsPlumb/jquery.ui.touch-punch.min.js'></script>
+    <script type='text/javascript' src='js/jsPlumb/jquery.jsPlumb-1.3.16-all-min.js'></script>
+    
+    <!-- Application resources -->
+    <script src="js/icons.js"></script>
+    <script src="js/graphics.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/FileHandlerIndex.js"></script>
+    <script src="js/arduino.js"></script>
+
+    <script src="/webinos.js"></script>
+    
 </head>
+
 <body>
-    <div id="div_main_page_content">
-        
-        <div id="div_main_page_title">
-            <img id="img_main_title" src="assets/title.png">
+    <div id="index_div">
+        <div id="div_main_page_content">
+            <div id="div_main_page_title">
+                <img id="img_main_title" src="assets/title.png">
+            </div>
+
+            <div id="div_main_page_buttons">
+                <center>
+                    <table>
+                        <tr>
+                            <td><input id="goto_build" type="image" src="assets/dashboard.png" class="but_main_page_button"></td>
+                            <td><a href="rules.html"><img src="assets/rules.png" class="but_main_page_button"></a></td>
+                            <td><input id="goto_presentation" type="image" src="assets/presentation.png" class="but_main_page_button"></td>
+                            <td><input id="goto_arduino" type="image" src="assets/arduino.png" class="but_main_page_button"></td>
+                        </tr>
+                        <tr>
+                            <td align="center" class="label_main_page_button">Build UI</td>
+                            <td align="center" class="label_main_page_button">Rules</td>
+                            <td align="center" class="label_main_page_button">Dashboard</td>
+                            <td align="center" class="label_main_page_button">Arduino<br>Configuration</
+                            
+                        </tr>
+                    </table>
+                </center>
+            </div>
+        </div>
+    </div> <!-- index_div -->
+
+    <div id="build_div" style='display:none'>
+        <div id="leftcolumn" class="scroll-container">
+            <div class="scroll-scrollbar">
+                <div class="scroll-track">
+                    <div class="scroll-thumb">
+                        <div class="scroll-end">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="scroll-viewport">
+                <div id="sensors_table" class="scroll-overview"></div>
+            </div>
         </div>
 
-        <div id="div_main_page_buttons">
-            <center>
-                <table>
-                    <tr>
-                        <<td><a href="dashboard.html"><img src="assets/dashboard.png" class="but_main_page_button"></a></td>
-                        <td><a href="rules.html"><img src="assets/rules.png" class="but_main_page_button"></a></td>
-                        <td><a href="presentation.html"><img src="assets/presentation.png" class="but_main_page_button"></a></td>
-                        <td><a href="sdconf.html"><img src="assets/arduino.png" class="but_main_page_button"></a></td>
-                    </tr>
-                    <tr>
-                        <td align="center"><a href="presentation.html" class="label_main_page_button">Build UI</a></td>
-                        <td align="center"><a href="rules.html" class="label_main_page_button">Rules</a></td>
-                        <td align="center"><a href="dashboard.html" class="label_main_page_button">Dashboard</a></td>
-                        <td align="center"><a href="sdconf.html" class="label_main_page_button">Arduino<br>Configuration</
-                        
-                    </tr>
+        <div class="content-container">
+            <div class="header">
+                <span>
+                    <span class="back_span"><input type="button" value="Home" class="but_home"/></span>
+                    <span class="explorer_span"><input type="button" value="Add from Explorer" id="refresh" /></span>
+                    <span class="operations_span">
+                        <input type='button' value='Clear Charts' id='clearCharts' />
+                        <input type='button' value='Save Charts' id='saveCharts' />
+                        <input type='button' value='Load Charts' id='loadCharts' />
+                    </span>
+                    <span>
+                        <select id="resolution">
+                            <option value="1440">1280x768</option> <!-- adding 160 which is the width of leftcolumn -->
+                            <option value="928">768x1280</option> <!-- adding 160 which is the width of leftcolumn -->
+                            <option value="640">480x800</option> <!-- adding 160 which is the width of leftcolumn -->
+                            <option value="dev4">Resolution</option>
+                        </select>
+                    </span>
+                </span>
+            </div>
+
+            <div id="content" class="scroll-container">
+                <div class="scroll-scrollbar"><div class="scroll-track"><div class="scroll-thumb"><div class="scroll-end"></div></div></div></div>
+                
+                <div class="scroll-viewport">
+                    <div id="target" class="scroll-overview"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="rightcolumn" class="scroll-container">
+            <div class="scroll-scrollbar">
+                <div class="scroll-track">
+                    <div class="scroll-thumb">
+                        <div class="scroll-end"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="scroll-viewport">
+                <div id="gauges_list" class="scroll-overview">
+                    <div class="separator">Gauges</div>
+                    <img width="130px" height="130px" src="assets/gauge2.png" id="btnGauge" />
+                    <img width="33px" height="130px" src="assets/therm2.png" id="btnTherm" />
+                    <img width="130px" height="130px" src="assets/corner2.png" id="btnCorner" />
+                    <img width="130px" height="130px" src="assets/fuel_01_min.png" id="btnFuel" />
+                    <img width="130px" height="120px" src="assets/odometer.png" id="btnOdometer" />
+
+                    <div class="separator">Display Labels</div>
+                    <img width="130px" height="70px" src="assets/text-label.png" id="text-label" />
+                    
+                    <div class="separator">Charts</div>
+                    <img width="130px" height="100px" src="assets/line-chart.png" id="line-chart" />
+                    <img width="130px" height="100px" src="assets/historical.png" id="btnHistorical" />
+
+                    <div class="separator">Maps</div>
+                    <img width="130px" height="100px" src="assets/google-map.png" id="google-map" />
+
+                    <div class="separator">User Inputs</div>
+                    <img width="130px" height="90px" src="assets/checkbox.png" id="btnCheckBox" />
+                    <img width="130px" height="110px" src="assets/joystick.png" id="btnJoystick" />
+
+                    <div style="margin-bottom: 70px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="settings-container" style="display:none">
+            <div id="popup">
+                <div id="close">&times;</div>
+                <div id="settings-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="rules_div" style="display:none"></div>
+
+    <div id="presentation_div" style="display:none">
+        <!-- <div id="leftcolumn" class="scroll-container">
+        </div> -->
+       
+        <div class="content-container">
+            <div class="header">
+                <span>
+                    <span class="back_span"><input type="button" value="Home" class="but_home"></span>
+                </span>
+            </div>
+
+            <div id="content_presentation" class="scroll-container">
+                <div class="scroll-scrollbar"><div class="scroll-track"><div class="scroll-thumb"><div class="scroll-end"></div></div></div></div>
+                
+                <div class="scroll-viewport">
+                    <div id="target_presentation" class="scroll-overview"></div>
+                </div>
+            </div>
+            </div>
+        </div>
+        <div id="settings-container_presentation" style='display:none'>
+            <div id="popup">
+                <div id="close_presentation">&times;</div>
+                <div id="settings-content_presentation"></div>
+            </div>
+        </div>
+
+        <div id="wait_div" style='display:none'>
+            <img width="300px" height="300px" src="assets/wait.gif"/>
+        </div>
+    </div>
+
+
+    <div id="arduino_div" style="display:none">
+        <div id="div_home">
+            <input type="button" value="Home" class="but_home"/>
+        </div>
+        <div id="title">Arduino Configuration Tool</div>
+        <div class="outer_block">
+            <table id="board_tab">
+                <tr>
+                    <td>ARDUINO ID</td>
+                    <td><input type="text" id="board_id" value="00001"/></td>
+                    <td>e.g. 00001</td>
+                </tr>
+                <tr>
+                    <td>ARDUINO IP</td>
+                    <td><input type="text" id="board_ip" value="192.168.1.140"/></td>
+                    <td>Leave blank to use DHCP. Only required by HTTP driver</td>
+                </tr>
+                <tr>
+                    <td>ARDUINO MAC</td>
+                    <td><input type="text" id="board_mac" value="AA:BB:CC:DD:EE:FF"/></td>
+                    <td>Only required by HTTP driver</td>
+                </tr>
+                <tr>
+                    <td>PZP IP</td>
+                    <td><input type="text" id="pzp_ip" value="192.168.1.130"/></td>
+                    <td>Only required by HTTP driver</td>
+                </tr>
+                <tr>
+                    <td>PZP PORT</td>
+                    <td><input type="text" id="pzp_port" value="1984"/></td>
+                    <td>e.g. 1984. Only required by HTTP driver</td>
+                </tr>
+            </table>
+        </div>
+        <div class="outer_block">
+            <div class="inner_block">
+                <span>
+                    <input type="button" id="add_sensor" value="Add Sensor"\>
+                    <input type="button" id="add_actuator" value="Add Actuator"\> (To remove a sensor or an actuator just cancel the ID)
+                </span>
+            </div>
+
+            <div class="inner_block">
+                <table id="sensors_tab">
+                    <th>
+                        <td><div class="cell_name">Sensor ID</div><div class="cell_description">(e.g. 001)</div></td>
+                        <td><div class="cell_name">Analog/Digital</div><div class="cell_description">(A=0, D=1)</div></td>
+                        <td><div class="cell_name">Pin</div><div class="cell_description">(e.g. 3)</div></td>
+                        <td><div class="cell_name">Max Range</div><div class="cell_description">(e.g. 0.1)</div></td>
+                        <td><div class="cell_name">Min Delay</div><div class="cell_description">(e.g. 500)</div></td>
+                        <td><div class="cell_name">Power</div><div class="cell_description">(e.g. 0.02)</div></td>
+                        <td><div class="cell_name">Resolution</div><div class="cell_description">(e.g. 0.001)</div></td>
+                        <td><div class="cell_name">Type</div><div class="cell_description">(e.g. light)</div></td>
+                        <td class="cell_name">Vendor</td>
+                        <td class="cell_name">Version</td>
+                        <td class="cell_name">Conversion Function</div><div class="cell_description">(e.g. f(x)=Math.log(x))</div></td>
+                    </th>
                 </table>
-            </center>
-            <!--
-            <span>
-                <a href="presentation.html"><img src="assets/presentation.png" class="but_main_page_button"></a>
-                <a href="rules.html"><img src="assets/rules.png" class="but_main_page_button"></a>
-            </span>-->
+            </div>
+        </div>
+        <div class="outer_block">
+            <div class="inner_block">
+                <table id="actuators_tab">
+                    <th>
+                        <td><div class="cell_name">Actuator ID</div><div class="cell_description">(e.g. 002)</div></td>
+                        <td><div class="cell_name">Analog/Digital</div><div class="cell_description">(A=0, D=1)</div></td>
+                        <td><div class="cell_name">Pin</div><div class="cell_description">(e.g. 3)</div></td>
+                        <td><div class="cell_name">Type</div><div class="cell_description">(e.g. switch)</div></td>
+                        <td><div class="cell_name">Range</div><div class="cell_description">(e.g. 0-5)</div></td>
+                        <td class="cell_name">Vendor</td>
+                        <td class="cell_name">Version</td>
+                    </th>
+                </table>
+            </div>
+        </div>
+        <div id="output" class="outer_block">
+            <div class="inner_block">
+                <input type="button" id="create_conf" value="Create Configuration"\>
+            </div>
+            <textarea id="output_area"></textarea>
         </div>
     </div>
 </body>

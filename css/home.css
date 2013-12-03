@@ -2,21 +2,30 @@
 
 @import url("reset.css");
 
-html, body, #content-container {
+body, .content-container {
 	height: 100%;
 	overflow: hidden;
 }
 
-#content-container {
-    margin-top: 40px;
+.back_span{
+}
+.explorer_span{
+    margin-left: 3%;
+}
+.operations_span{
+    margin-left: 3%;
 }
 
 body {
     font-family: Verdana, Arial, Helvetica, sans-serif;
     font-size: 13px;
     color:#333;
-    background-image: -webkit-radial-gradient(#444,#000);
-    padding: 0 170px;
+
+/*    background-image: -webkit-radial-gradient(#444,#000);
+    padding: 0 170px;*/
+
+    background-image: url('../assets/pattern.png');
+    background-repeat: repeat-x;
 }
 
 
@@ -48,7 +57,7 @@ hr {
 
 }
 
-#header, #footer {
+.header, .footer {
 	position: absolute;
 	width: 100%;
 	z-index: 10;
@@ -60,12 +69,15 @@ hr {
 	color: #fff;
 }
 
-#header {
+.header {
     /*border-bottom: 3px solid #000;*/
 	top: 0;
     text-align: center;
+    background-color:#312e2e;/*#4b4848;*/
+    width:100%;
+    
 }
-#footer {
+.footer {
     border-top: 3px solid #000;
 	bottom: 0;
 }
@@ -77,7 +89,7 @@ hr {
     margin: 0 auto;
 }
 
-#content-container {
+.content-container {
 	position: relative;
 	padding: 5px 0;
 	box-sizing: border-box;
@@ -114,7 +126,8 @@ hr {
 
 .label_main_page_button{
     font-size: 30;
-    color: #ADD8E6;
+    /*color: #ADD8E6;*/
+    color:white;
     text-decoration: none;
 }
 
@@ -126,10 +139,11 @@ hr {
 }
 
 #div_home{
-    text-align: left;
+    text-align: center;
+    margin-bottom: 50px;
 }
 
-#content {
+#content, #content_presentation{
     background: url('../assets/webinosBgDarkGrayGlow.png') 50% 50% no-repeat;
 	background-size: auto 90%;
     height: 100%;
@@ -138,26 +152,36 @@ hr {
 }
 
 #leftcolumn, #rightcolumn {
-	box-sizing: border-box;
-	background: #000;
+    background-color:#312e2e;
+    margin-top : 45px;
+    box-sizing: border-box;
+    border-color:gray;
+    border-width:5px;
     position: absolute;
     top: 0;
     height: 100%;
     overflow: hidden;
-    width: 170px;
+    
     text-align: center;
     color: #fff;
+    z-index:10;
 }
 #rightcolumn img {
-	background: #fff;
-	border-radius: 10px;
+    
+        background: #fff;
+        border-radius: 10px;
 }
 #leftcolumn {
+    width: 160px;
+    border-right-style:solid;
     left: 0;
+    padding-bottom: 80px;
 }
 #rightcolumn {
+    width: 170px;
+    border-left-style:solid;
     right: 0;
-    margin-top: 45px;
+    /*margin-top: 45px;*/
 }
 
 #sensors_table, #actuators_table, #operations_table{
@@ -182,20 +206,48 @@ hr {
 .sensor {
 	margin-bottom: 15px;
 	margin-top: 15px;
-	border:2px solid gray;
+	/*border:2px solid gray;*/
 }
 
-#target {
-	width:100%;
-	height: 100%;
+#target, #target_presentation {
+    /*background-color: red;*/
+    /*position:absolute;*/
+    /*width:1280px;*/
+    width:100%;
+    position:fixed;
+    left:160px;
+    border: 5px;
+    color: #99FF66;
+    border-right-style:dashed;
+
+    /*padding-left: 160px;*/
+	height: 500%;
 	border-radius: 10px;
 	margin-left: auto;
 	margin-right: auto;
 	text-align: center;
 	box-sizing: border-box;
+    z-index:9;
 }
 
-#target2 { width:818px; min-height:1000px; border-radius: 10px;}
+/*#target_presentation {
+    /*background-color: red;*/
+    width:100%;
+    position:fixed;
+    left:160px;
+    border: 5px;
+    color: #99FF66;
+
+    padding-left: 160px;
+    height: 500%;
+    border-radius: 10px;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+    box-sizing: border-box;
+    z-index:9;
+}*/
+
 
 .target { border: 2px dashed #ADFF00; }
 .target:after {
@@ -363,7 +415,7 @@ hr {
 
 /* css for settings window */
 
-#settings-container { /* overlay & main container */
+#settings-container , #settings-container_presentation{ /* overlay & main container */
 	position: absolute;
 	background: rgba(0,0,0,0.8);
 	width: 100%;
@@ -387,7 +439,7 @@ hr {
 	z-index: 1;
 }
 
-#close {
+#close , #close_presentation{
 	position: absolute;
 	background: #adff00;
 	color: #000;
@@ -408,10 +460,11 @@ hr {
 	overflow: auto;
 }
 
-.configuration_div + .configuration_div {
+.configuration_div{
 	border-top: 4px dashed #adff00;
 	margin-top: 10px;
 	padding-top: 10px;
+    color: black;
 }
 
 .service_displayname{
@@ -432,11 +485,11 @@ hr {
 
 /* tiny scroll */
 .scroll-container { margin-top: 0px; width: 100%; clear: both;}
-.scroll-viewport { width: 100%; position: relative; height: 100%; }
+.scroll-viewport { width: 100%; position: relative; height: 100%;}
 .scroll-overview { position: absolute; left: 0; top: 0; width: 100%; box-sizing: border-box; padding-right: 20px;}
 .scroll-thumb, .scroll-end { background: #ADFF00 url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAIElEQVQYlWNgwAIOf4r7D8ODXxJZAS45BnyShz/F/QcAAIJJsc1l0kEAAAAASUVORK5CYII=); }
 .scroll-thumb:after { content: '\0022EE'; position: absolute; height: 1.4em; margin-top: -1em; top: 50%; color: #688A19; width: 2em; left: 50%; margin-left: -1em; font-size: 200%; }
-.scroll-scrollbar { position: relative; float: right; width: 15px; z-index: 10; margin-right: 2px; }
+.scroll-scrollbar { position: relative; float: right; width: 15px; z-index: 8; margin-right: 2px; }
 .scroll-track { background-color: #444; height: 100%; width:13px; position: relative; padding: 0 1px; }
 .scroll-thumb { height: 20px; width: 13px; cursor: pointer; overflow: hidden; position: absolute; top: 0; border-radius: 10px; }
 .scroll-end { overflow: hidden; height: 0; width: 13px; }

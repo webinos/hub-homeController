@@ -23,29 +23,36 @@
 </head>
 <body class="rules">
     <div id="leftcolumn" class="scroll-container rules">
-        <div id="div_home">
-            <input type="button" value="Home" id="but_home" />
-            <input type="button" id='explorer_actuator_button' value="Add Sensor or Actuator From Explorer" />
-        </div>
-        <div class="scroll-scrollbar"><div class="scroll-track"><div class="scroll-thumb"><div class="scroll-end"></div></div></div></div>
-		<div class="scroll-viewport">
-			<div class="scroll-overview">
-                <div id="refresh"></div>
-                <hr>
-                <div id="sensors_table"></div>
-                <div id="actuators_table"></div>
-                <div id="operations_table"></div>
+        <div class="scroll-scrollbar">
+            <div class="scroll-track">
+                <div class="scroll-thumb">
+                    <div class="scroll-end">
+                    </div>
+                </div>
             </div>
-		</div>
+        </div>
+        <div class="scroll-viewport">
+            <div class="scroll-overview">
+                <span>
+                    <div id="sensors_table"></div>
+                    <div id="actuators_table"></div>
+                    <div id="operations_table"></div>
+                </span>
+            </div>
+        </div>
     </div>
 
     <div id="content-container">
-        <div id="header">
-            <div id="buttons_content">
-                <input type='button' value='Clear Rules' id='clearRules' />
-                <input type='button' value='Save Rules' id='saveRules' />
-                <input type='button' value='Load Rules' id='loadRules' />
-            </div>
+        <div class="header">
+            <span>
+                <span class="back_span"><input type="button" value="Home" id="but_home" onclick="location.href='index.html'"/></span>
+                <span class="explorer_span"><input type="button" value="Add from Explorer" id="explorer_actuator_button" /></span>
+                <span class="operations_span">
+                    <input type='button' value='Clear Rules' id='clearRules' />
+                    <input type='button' value='Save Rules' id='saveRules' />
+                    <input type='button' value='Load Rules' id='loadRules' />
+                </span>
+            </span>
         </div>
 
         <div id="content" class="scroll-container">
@@ -56,9 +63,9 @@
             </div>
         </div>
 
-        <div id="footer">
+        <!-- <div id="footer">
             <p>This is the Footer</p>
-        </div>
+        </div> -->
     </div>
 
     <!-- CONFIG -->
