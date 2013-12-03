@@ -361,10 +361,10 @@ function get_data_from_db(graphic){
             console.log(data);
             foundones++;
             $.each(data, function(j, item){
-                formatted_data.push([""+item.timestamp, item.value]);
+                formatted_data.push([item.timestamp, item.value]);
             });
-            if (waitingfor==foundones)
-               graphic.setVal(formatted_data); 
+//            if (waitingfor==foundones)
+               graphic.setVal(getId(service), service, formatted_data);
         });
     });
     
