@@ -353,7 +353,9 @@ DroneJoystick.subclassFrom(Graphic);
 DroneJoystick.methods({
     setVal : function(val) {
         if(this.service_list.length>0){
-            var service = sensors[this.service_list[0]];
+            var service_id = getId(this.service_list[0]);
+            var service = sensors[service_id];
+            
             service.setValue([val],
                 function(actuatorEvent){},
                 function(actuatorError){}

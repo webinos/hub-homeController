@@ -678,8 +678,10 @@ function goto_build(){
         $(window).resize(function() {
             if(leftcolumn)
                 leftColumn.tinyscrollbar_update();
-            contentDiv.tinyscrollbar_update();
-            rightColumn.tinyscrollbar_update();
+            if(contentDiv)
+                contentDiv.tinyscrollbar_update();
+            if(rightColumn)
+                rightColumn.tinyscrollbar_update();
         });
 
         initDragAndDropGauges(contentDiv);
