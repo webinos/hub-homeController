@@ -38,9 +38,14 @@ var iot_collections = {};
 google.load("visualization", "1", {packages:["corechart"]});
 
 function getId(service){
-    var deviceName = service.serviceAddress.substr(service.serviceAddress.lastIndexOf("/")+1);
-    deviceName = deviceName.split('.').join("");
-    return service.id+""+deviceName;
+    if (typeof service === "object"){
+        var deviceName = service.serviceAddress.substr(service.serviceAddress.lastIndexOf("/")+1);
+        deviceName = deviceName.split('.').join("");
+        return service.id+""+deviceName;
+    }else{// The input service is not an object, let just return it!
+        return service;
+    }
+
 }
 
 jQuery(document).ready(function() {
@@ -133,7 +138,7 @@ var onSensorEvent = function(sensor_app_id, event){
                     else if(graphic.type == "historical-chart"){
                         var time=new Date(event.timestamp).getTime();
                         var formatted_data = [time, value];
-                        graphic.setVal(sensor_app_id, sensor, formatted_data); 
+                        graphic.setVal(sensor_app_id, sensor, formatted_data, false);
                     }
                     else if(graphic.type == "line-chart"){
                         var time=new Date(event.timestamp);
@@ -145,11 +150,11 @@ var onSensorEvent = function(sensor_app_id, event){
                         //alert(JSON.stringify(graphic.service_list));
                         graphic.values.push(time);
                         for(var i=0;i<graphic.service_list.length;i++){
-                            if(i==index){
+                            if(sensor_app_id == getId(graphic.service_list[i])){
                                 graphic.values.push(Number(value));
                             }
                             else{
-                                if(graphic.sensor_active[graphic.service_list[i]]==true){
+                                if(graphic.sensor_active[getId(graphic.service_list[i])]==true){
                                     graphic.values.push(graphic.old_values[i+1]);
                                 }else{
                                     graphic.values.push(null);
@@ -356,21 +361,23 @@ function load_graphics(){
 //     ];
 
 function get_data_from_db(graphic){
-    var formatted_data = [];
     var waitingfor=graphic.service_list.length;
     var foundones=0;
     $.each(graphic.service_list, function(j, service){
         var service = graphic.service_list[j];
         var collection = iot_collections[getId(service)];
-        collection.find({},function(data){
-            console.log(data);
-            foundones++;
-            $.each(data, function(j, item){
-                formatted_data.push([item.timestamp, item.value]);
-            });
+        if (collection) {
+            collection.find({},function(data){
+                var formatted_data = [];
+                console.log(data);
+                foundones++;
+                $.each(data, function(j, item){
+                    formatted_data.push([item.timestamp, item.value]);
+                });
 //            if (waitingfor==foundones)
-               graphic.setVal(getId(service), service, formatted_data);
-        });
+                graphic.setVal(getId(service), service, formatted_data, true);
+            });
+        }
     });
     
 }
@@ -1114,25 +1121,29 @@ function assign_services_to_graphics(service_app_id, graphic){
         }
         graphic.sensor_active[service_app_id] = true;
         listeners_numbers[service_app_id]++;
-       
-        if(graphic.type != "line-chart"){
-            if(graphic.service_list[0]!=null){
-                removeSensor(graphic,graphic.service_list[0]);
-            }
-            
-            graphic.service_list[0]=service_app_id;       //link new sensor to the gauge
-            graphic.serviceAddress_list[0]=sensors[service_app_id].serviceAddress;
-            var deviceName = sensors[service_app_id].serviceAddress.substr(sensors[service_app_id].serviceAddress.lastIndexOf("/")+1);
-            var title = sensors[service_app_id].description+" @ "+deviceName;
-            $('#name-'+graphic.id).text(title);
-        }
-        else{
-            if(graphic.service_list.length==0){
+
+        if (graphic.type == "line-chart") {
+            if (graphic.service_list.length == 0) {
                 graphic.graphData.removeColumn(1);
             }
             graphic.service_list.push(service_app_id);
             graphic.serviceAddress_list.push(sensors[service_app_id].serviceAddress);
-            graphic.graphData.addColumn('number',sensors[service_app_id].description);
+            graphic.graphData.addColumn('number', sensors[service_app_id].description);
+        } else if (graphic.type == "historical-chart") {
+            graphic.service_list.push(service_app_id);
+            graphic.serviceAddress_list.push(sensors[service_app_id].serviceAddress);
+            graphic.setLabel(sensors[service_app_id].description);
+//            graphic.graphData.addColumn('number', sensors[service_app_id].description);
+        } else {
+            if (graphic.service_list[0] != null) {
+                removeSensor(graphic, graphic.service_list[0]);
+            }
+
+            graphic.service_list[0] = service_app_id;       //link new sensor to the gauge
+            graphic.serviceAddress_list[0] = sensors[service_app_id].serviceAddress;
+            var deviceName = sensors[service_app_id].serviceAddress.substr(sensors[service_app_id].serviceAddress.lastIndexOf("/") + 1);
+            var title = sensors[service_app_id].description + " @ " + deviceName;
+            $('#name-' + graphic.id).text(title);
         }
 
         $(document).on("click", '#startstop_cfg_but-'+graphic.id+'-'+service_app_id, function(event){

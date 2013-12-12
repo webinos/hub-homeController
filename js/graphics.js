@@ -515,159 +515,135 @@ function HistoricalChart(target, idChart, X, Y){
     
     this.chart_div = document.getElementById('chart_div-'+idChart);
 
+    this.chart = null;
+    this.seriesOptions = [];
+    this.seriesCounter = 0;
+
+    this.chartDivId = 'chart_div-'+idChart;
+    this.historicalLoaded = false;
+
     Highcharts.setOptions({
         global : {
             useUTC : false
         }
     });
-    var self = this;
-    this.chartDataChanged = false;
-    this.historicalLoaded = false;
-    this.chartSeries = {};
-    // Create the chart
-    this.chart = new Highcharts.StockChart({
-        chart : {
-            renderTo: 'chart_div-'+idChart,
-            events : {
-                load : function() {
-                    // setInterval(function() {
-                    //     if (self.chartDataChanged){
-                    //         self.chart.redraw();
-                    //         self.chartDataChanged = false;
-                    //     }
-                    // }, 1000);
-                }
-            }
-        },
 
-        rangeSelector: {
-            buttons: [{
-                count: 1,
-                type: 'minute',
-                text: '1M'
-            }, {
-                count: 5,
-                type: 'minute',
-                text: '5M'
-            }, {
-                count: 1440,
-                type: 'minute',
-                text: '1D'
-            }, {
-                type: 'all',
-                text: 'All'
-            }],
-            inputEnabled: false,
-            selected: 3
-        },
 
-        title : {
-//            text : 'Live random data'
-        },
-
-        exporting: {
-            enabled: false
-        },
-
-        series : [{
-            name : 'Random data',
-            data : (function() {
-                var data = [], time = (new Date()).getTime();
-                data.push([time, null]);
-                return data;
-            })()
-        }]
-//            {
-//                name : 'Random data',
-//                data : (function() {
-//                    // generate an array of random data
-//                    var data = [], time = (new Date()).getTime(), i;
-//
-//                    for( i = -2; i <= 0; i++) {
-//                        data.push([
-//                            time + i * 1000,
-//                            Math.round(Math.random() * 100)
-//                        ]);
-//                    }
-//                    return data;
-//                })()
-//            }
-//        ]
-    });
-
-    // var chart_div = document.getElementById('chart_div-'+idChart);
-
-    // g1 = new Dygraph(
-    //       chart_div,
-    //       getData(),
-    //         // {
-    //         //     legend: 'always',
-    //         //     title: 'NYC vs. SF',
-    //         //     showRoller: true,
-    //         //     rollPeriod: 14,
-    //         //     customBars: true,
-    //         //     ylabel: 'Temperature (F)',
-    //         // }
-    //       {
-    //         customBars: true,
-    //         title: 'Daily Temperatures in New York vs. San Francisco',
-    //         ylabel: 'Temperature (F)',
-    //         legend: 'always',
-    //         labelsDivStyles: { 'textAlign': 'right' },
-    //         showRangeSelector: true
-    //       }
-    // )
 }
 
 HistoricalChart.subclassFrom(Graphic);
 
 HistoricalChart.methods({
-    setVal : function(id, service, data) {
-        // if (!this.chartSeries[id]){
-        //     this.chartSeries[id] = this.chart.addSeries({
-        //         name: sensors[id].description+" @ "+service.serviceAddress,
-        //         data: data
-        //     }, false);
-        // }else{
-            if (data.length>2 || typeof(data[0]) == "array"){
-                var self=this;
-                this.chartSeries[id] = this.chart.addSeries({
-                    name: sensors[id].description+" @ "+service.serviceAddress,
-                    data: data
-                }, false);
-                // $.each(data, function(i,val){
-                //     self.chartSeries[id].addPoint(val, false);
-                // });
+    setLabel : function (description){
+        var $list = $(this.chart_div).children("#serviceList");
+        if ($list.length == 0){
+            $list = $(this.chart_div).append("<ul id='serviceList'></ul>").children("#serviceList");
+        }
+        $list.append("<li>"+description+"</li>");
+    },
+    setVal : function(id, service, data, isHistorical) {
+        if (isHistorical) {
+//            if (this.chart == null) {
+//                this.renderChart(id, service, data);
+//            } else {
+//                var series = this.chart.get(id);
+//                if (series) {
+//                    $.each(data, function(i,dat){
+//                        series.addPoint(dat, false);
+//                    });
+//                    this.chart.redraw();
+//                } else {
+//                    this.chart.addSeries(
+//                        {
+//                            id: id,
+//                            name: sensors[id].description+" @ "+service.serviceAddress,
+//                            data: data
+//                        }
+//                    );
+//                }
+//            }
+//            this.historicalLoaded = true;
+            this.seriesOptions[this.seriesCounter++] = {
+                id: id,
+                name: sensors[id].description+" @ "+service.serviceAddress,
+                data: data
+            };
+            if (this.seriesCounter == this.service_list.length) {
+                this.renderChart();
                 this.historicalLoaded = true;
-            }else{
-                if(this.historicalLoaded && this.chartSeries[id])
-                    this.chartSeries[id].addPoint(data, false);
             }
+        } else if (this.historicalLoaded) {
+            if (this.chart == null) {
+                this.renderChart(id, service, data);
+            } else {
+                var series = this.chart.get(id);
+                if (series) {
+                    series.addPoint(data, true);
+                } else {
+                    this.chart.addSeries(
+                        {
+                            id: id,
+                            name: sensors[id].description+" @ "+service.serviceAddress,
+                            data: data
+                        }
+                    );
+                }
+            }
+        }
+    },
+    renderChart : function(id, service, data){
+        // Create the chart
+        this.chart = new Highcharts.StockChart({
+            chart : {
+                renderTo: this.chartDivId,
+                events : {
+                    load : function() {
+                        // setInterval(function() {
+                        //     if (self.chartDataChanged){
+                        //         self.chart.redraw();
+                        //         self.chartDataChanged = false;
+                        //     }
+                        // }, 1000);
+                    }
+                }
+            },
 
-            
-        // }
-        this.chart.redraw();
-        this.chartDataChanged = true;
-//        g1 = new Dygraph(
-//            this.chart_div,
-//            //getData(),
-//            getData(val),
-//            // {
-//            //     legend: 'always',
-//            //     title: 'NYC vs. SF',
-//            //     showRoller: true,
-//            //     rollPeriod: 14,
-//            //     customBars: true,
-//            //     ylabel: 'Temperature (F)',
-//            // }
-//            {
-//                customBars: true,
-//                title: 'Daily Temperatures in New York vs. San Francisco',
-//                ylabel: 'Temperature (F)',
-//                legend: 'always',
-//                labelsDivStyles: { 'textAlign': 'right' },
-//                showRangeSelector: true
-//            })
+            rangeSelector: {
+                buttons: [{
+                    count: 1,
+                    type: 'minute',
+                    text: '1M'
+                }, {
+                    count: 5,
+                    type: 'minute',
+                    text: '5M'
+                }, {
+                    count: 1440,
+                    type: 'minute',
+                    text: '1D'
+                }, {
+                    type: 'all',
+                    text: 'All'
+                }],
+                inputEnabled: false,
+                selected: 3
+            },
+
+            title : {
+//            text : 'Live random data'
+            },
+
+            exporting: {
+                enabled: false
+            },
+
+//            series : [{
+//                id: id,
+//                name: sensors[id].description+" @ "+service.serviceAddress,
+//                data: data
+//            }]
+            series:this.seriesOptions
+        });
     },
     getHTMLContent : function(){
         var html = arguments.callee.superFunction.call(this);
