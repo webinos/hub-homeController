@@ -124,51 +124,49 @@ var onSensorEvent = function(sensor_app_id, event){
             for(var i in services_to_handle[sensor_app_id].graphicslist){
                 var graphic= services_to_handle[sensor_app_id].graphicslist[i];
                 graphic.values=[];
-                if(graphic.sensor_active[sensor_app_id]==true){
-                    if( graphic.type == "gauge" || graphic.type == "corner-gauge" || graphic.type == "fuel-gauge" 
-                            || graphic.type == "odometer-gauge" || graphic.type == "thermometer" || graphic.type == "text-label" ){
-                        // var normalized_val = value;
-                        // if(graphic.maxRange && value > graphic.maxRange)
-                        //     normalized_val = graphic.maxRange;
-                        // if(graphic.minRange && value < graphic.minRange)
-                        //     normalized_val = graphic.minRange;
-    //                    graphic.setVal(normalized_val);
-                        graphic.setVal(value);
-                    }
-                    else if(graphic.type == "historical-chart"){
-                        var time=new Date(event.timestamp).getTime();
-                        var formatted_data = [time, value];
-                        graphic.setVal(sensor_app_id, sensor, formatted_data, false);
-                    }
-                    else if(graphic.type == "line-chart"){
-                        var time=new Date(event.timestamp);
-                        time=(time.getUTCHours()+2)+ ":"+time.getUTCMinutes()+":"+time.getUTCSeconds();
-                        //var index=graphic.service_list.indexOf(sensor.id);
-                        var index=graphic.service_list.indexOf(sensor_app_id);
-                        // alert(index);
-                        // alert(sensor.id);
-                        //alert(JSON.stringify(graphic.service_list));
-                        graphic.values.push(time);
-                        for(var i=0;i<graphic.service_list.length;i++){
-                            if(sensor_app_id == getId(graphic.service_list[i])){
-                                graphic.values.push(Number(value));
-                            }
-                            else{
-                                if(graphic.sensor_active[getId(graphic.service_list[i])]==true){
-                                    graphic.values.push(graphic.old_values[i+1]);
-                                }else{
-                                    graphic.values.push(null);
-                                }
+                if( graphic.type == "gauge" || graphic.type == "corner-gauge" || graphic.type == "fuel-gauge" 
+                        || graphic.type == "odometer-gauge" || graphic.type == "thermometer" || graphic.type == "text-label" ){
+                    // var normalized_val = value;
+                    // if(graphic.maxRange && value > graphic.maxRange)
+                    //     normalized_val = graphic.maxRange;
+                    // if(graphic.minRange && value < graphic.minRange)
+                    //     normalized_val = graphic.minRange;
+//                    graphic.setVal(normalized_val);
+                    graphic.setVal(value);
+                }
+                else if(graphic.type == "historical-chart"){
+                    var time=new Date(event.timestamp).getTime();
+                    var formatted_data = [time, value];
+                    graphic.setVal(sensor_app_id, sensor, formatted_data, false);
+                }
+                else if(graphic.type == "line-chart"){
+                    var time=new Date(event.timestamp);
+                    time=(time.getUTCHours()+2)+ ":"+time.getUTCMinutes()+":"+time.getUTCSeconds();
+                    //var index=graphic.service_list.indexOf(sensor.id);
+                    var index=graphic.service_list.indexOf(sensor_app_id);
+                    // alert(index);
+                    // alert(sensor.id);
+                    //alert(JSON.stringify(graphic.service_list));
+                    graphic.values.push(time);
+                    for(var i=0;i<graphic.service_list.length;i++){
+                        if(sensor_app_id == getId(graphic.service_list[i])){
+                            graphic.values.push(Number(value));
+                        }
+                        else{
+                            if(graphic.sensor_active[getId(graphic.service_list[i])]==true){
+                                graphic.values.push(graphic.old_values[i+1]);
+                            }else{
+                                graphic.values.push(null);
                             }
                         }
-                        graphic.numberOfValues++;
-                        graphic.graphData.addRow(graphic.values);
-                        graphic.chart.draw(graphic.graphData, graphic.options);
-                        graphic.old_values=graphic.values;
-                        
-                        if(graphic.numberOfValues>150){
-                            graphic.graphData.removeRow(0);
-                        }
+                    }
+                    graphic.numberOfValues++;
+                    graphic.graphData.addRow(graphic.values);
+                    graphic.chart.draw(graphic.graphData, graphic.options);
+                    graphic.old_values=graphic.values;
+                    
+                    if(graphic.numberOfValues>150){
+                        graphic.graphData.removeRow(0);
                     }
                 }
             }
@@ -1401,35 +1399,31 @@ function deleteChart(idChart_selected){
 }
 
 function deleteChart_presentation(idChart_selected){
-    var graphic= charts_presentation[idChart_selected];
-    for(var sens in graphic.service_list){
-        var service_app_id = getId(graphic.service_list[sens]);
-        $('#startstop_cfg_but-'+graphic.id+'-'+service_app_id).die();
-        if(listeners_numbers.hasOwnProperty(service_app_id) && (graphic.sensor_active[service_app_id])){    //if sensor is inactive, the listener is already removed
-            listeners_numbers[service_app_id]--;
-            if(listeners_numbers[service_app_id]==0){
-                if(sensors[service_app_id].api.indexOf(geolocation_type) != -1){
-                    navigator.geolocation.clearWatch(services_to_handle[graphic.service_list[sens]]["watch_id"]);
-                    //sensors[graphic.service_list[sens]].clearWatch(services_to_handle[graphic.service_list[sens]]["watch_id"]);
-                }
-                else if(sensors[service_app_id].api.indexOf(sensors_type) != -1){
-                    var service_id = service_app_id;
-                    sensors[service_id].removeEventListener('sensor', function(e){onSensorEvent(service_id,e)}, false);
-                }
-                else if(sensors[service_app_id].api.indexOf(deviceOrientation_type) != -1){
-                    var service_id = service_app_id;
-                    sensors[service_id].removeEventListener("deviceorientation", function(e){onDeviceOrientationEvent(service_id,e)}, true);
-                }
-                delete listeners_numbers[service_app_id];
-            }       
+    for(var service_app_id in services_to_handle){
+        $('#startstop_cfg_but-'+idChart_selected+'-'+service_app_id).die();
+        listeners_numbers[service_app_id]--;
+        if(sensors[service_app_id].api.indexOf(geolocation_type) != -1){
+            navigator.geolocation.clearWatch(services_to_handle[graphic.service_list[sens]]["watch_id"]);
+            //sensors[graphic.service_list[sens]].clearWatch(services_to_handle[graphic.service_list[sens]]["watch_id"]);
         }
+        else if(sensors[service_app_id].api.indexOf(sensors_type) != -1){
+            var service_id = service_app_id;
+            sensors[service_id].removeEventListener('sensor', function(e){onSensorEvent(service_id,e)}, false);
+        }
+        else if(sensors[service_app_id].api.indexOf(deviceOrientation_type) != -1){
+            var service_id = service_app_id;
+            sensors[service_id].removeEventListener("deviceorientation", function(e){onDeviceOrientationEvent(service_id,e)}, true);
+        }
+        delete listeners_numbers[service_app_id];
+
+
     }
-    
     $("#main-"+idChart_selected).remove();
     $('#delete-'+idChart_selected).die();
     $('#settings-'+idChart_selected).die();
     delete charts_presentation[idChart_selected];
 }
+
 function removeSensor(graphic, sid){
     listeners_numbers[sid]--;
     delete graphic.sensor_active[sid];
