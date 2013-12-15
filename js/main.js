@@ -452,7 +452,8 @@ function load_graphics_presentation(ask){
                         assign_services_to_graphics_presentation(getId(tmp_service), graphic);
                     }
 
-                    graphic.service_list = contents[i].service_list;
+                    //Christos??
+                    //graphic.service_list = contents[i].service_list;
                     
                     if(contents[i].type == "historical-chart"){
                         get_data_from_db(graphic);

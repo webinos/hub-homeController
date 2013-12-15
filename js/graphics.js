@@ -76,8 +76,8 @@ Graphic.methods({
     getCustomSettingsForSensor : function(sensor){
     },
     getSettingPage : function(){
-            var html='';
-            for(var sensor in this.service_list){
+        var html='';
+        for(var sensor in this.service_list){
             if(sensors[this.service_list[sensor]].api.indexOf(sensors_type) != -1){
                 // Configuration for sensor service
                 html+= "<div id='configuration_div-"+this.id+"-"+this.service_list[sensor]+"' class='configuration_div'>";
@@ -874,13 +874,9 @@ CheckBoxGauge.subclassFrom(Graphic);
 CheckBoxGauge.methods({
     changeVal : function(val){
         val = (val == 0) ? false : true;
-        //alert("set " + val + " on "+this.id);
-        //alert($("#checkbox-"+this.id));
         $("#checkbox-"+this.id).attr('checked', val);
     },
     setVal : function(val) {
-        //this.chart.value = val;
-        //RGraph.Effects.Odo.Grow(this.chart);
         if(this.service_list.length>0){
             var service = sensors[this.service_list[0]];
             service.setValue([val],
