@@ -75,8 +75,11 @@ Graphic.methods({
     },
     getCustomSettingsForSensor : function(sensor){
     },
+    getCustomGlobalSettings : function(){
+    },
     getSettingPage : function(){
         var html='';
+        html += this.getCustomGlobalSettings();
         for(var sensor in this.service_list){
             if(sensors[this.service_list[sensor]].api.indexOf(sensors_type) != -1){
                 // Configuration for sensor service
@@ -110,7 +113,6 @@ Graphic.methods({
             else if(sensors[this.service_list[sensor]].api.indexOf(geolocation_type) != -1){
                 //TODO Configuration for geolocation service
                 var html = "";
-                alert(this.type);
                 if(this.type == 'text-label'){
                     html += "Configuration for Text Label";
                 }
@@ -472,25 +474,6 @@ LineChart.methods({
     }
 });
 
-// TO REMOVE ------------------------------------------
-// var data = [
-//       ["20131001",10,100],
-//       ["20131002",20,80],
-//       ["20131003",50,60],
-//       ["20131004",70,80]
-//     ];
-
-  function getData(data){
-    //var result = "Date,NY,SF\n";
-    var result = "Date,NY\n";
-
-    for(var i=0; i<data.length; i++)
-      //result += data[i][0] + "," + (data[i][1]-5) + ";" + data[i][1] + ";" + (data[i][1]+5) + "," + (data[i][2]-5) + ";" + data[i][2] + ";" + (data[i][2]+5) + "\n";
-  result += data[i][0] + "," + (data[i][1]-5) + ";" + data[i][1] + ";" + (data[i][1]+5) + "\n";
-  //result += data[i][0] + "," + data[i][1] + "\n";
-    return result;
-  }
-//---------------------------------------------------
 
 function HistoricalChart(target, idChart, X, Y){
     arguments.callee.superConstructor.call(this, target, idChart, X, Y);
@@ -518,6 +501,7 @@ function HistoricalChart(target, idChart, X, Y){
     this.chart = null;
     this.seriesOptions = [];
     this.seriesCounter = 0;
+    this.appendLiveData = true;
 
     this.chartDivId = 'chart_div-'+idChart;
     this.historicalLoaded = false;
@@ -572,7 +556,7 @@ HistoricalChart.methods({
                 this.renderChart();
                 this.historicalLoaded = true;
             }
-        } else if (this.historicalLoaded) {
+        } else if (this.historicalLoaded && this.appendLiveData) {
             if (this.chart == null) {
                 this.renderChart(id, service, data);
             } else {
@@ -654,20 +638,12 @@ HistoricalChart.methods({
         // html += "<div class='text-label' id='drop_canvas-"+this.id+"'></div></div>";
         // return html;
     },
+    getCustomGlobalSettings : function(){
+        var checked = (this.appendLiveData) ? "checked='checked'" : "";
+        return "<div class='graphic_global_settings'><input type='checkbox' id='show_live_"+ this.id +"'" + checked + ">Show live data</div>";
+    },
     getCustomSettingsForSensor : function(sensor){
-        // var html = "";
-        // html+= "<div id='color' class='param_td'>Color";
-        // html+= "<select id='cfg_color-"+this.service_list[sensor]+"'>";
-        // for(var i=0;i<this.options.colors.length;i++){
-        //     if(lineColor[i]==this.options.colors[sensor]){
-        //         html+= "<option selected value='"+lineColor[i]+"'>"+lineColor[i]+"</option>";
-        //     }
-        //     else{
-        //         html+= "<option value='"+lineColor[i]+"'>"+lineColor[i]+"</option>";
-        //     }
-        // }
-        // html+= "</select>"; 
-        // return html;
+        return "";
     }
 });
 

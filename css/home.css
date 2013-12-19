@@ -483,6 +483,12 @@ hr {
     color: #99FF66;
 }
 
+.graphic_global_settings{
+    margin-bottom: 20px;
+    color: black;
+    font-size: 14;
+}
+
 /* tiny scroll */
 .scroll-container { margin-top: 0px; width: 100%; clear: both;}
 .scroll-viewport { width: 100%; position: relative; height: 100%;}

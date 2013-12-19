@@ -32,6 +32,7 @@ var configured_services = 0;
 var found_services = [];
 var active_div = "main_div";
 
+var DB_NAME = "iot-hub";
 var iot_database = null;
 var iot_collections = {};
 
@@ -590,7 +591,9 @@ function serviceDiscovery_afterExplorer(container, serviceFilter){
                 if ((service.id === serviceFilter.id) && (service.serviceAddress === serviceFilter.address) /*&& (typeof(sensors[service.id]) === "undefined")*/) {
                     //alert("Add to sensors2");
                     //sensors[service.id] = service;
-                    bindProperService(service, true);
+                    if(!sensors[getId(service)]){
+                        bindProperService(service, true);
+                    }
 //                    save_services(false);
                }
             }
@@ -776,7 +779,7 @@ function discover_services_presentation(container, saved_services){
 function discover_db(){
     webinos.discovery.findServices(new ServiceType("http://webinos.org/api/db"), {
         onFound: function (service) {
-            if(webinos.session.getPZPId() == service.serviceAddress && service.displayName.indexOf("iot-hub") != -1){
+            if(webinos.session.getPZPId() == service.serviceAddress && service.displayName.indexOf(DB_NAME) != -1){
                 service.bindService({
                     onBind: function () {   
                         service.open(function(_db){
@@ -1202,7 +1205,19 @@ function assign_services_to_graphics_presentation(service_app_id, graphic){
     graphic.sensor_active[service_app_id] = true;
     listeners_numbers[service_app_id]++;
     
-    if(graphic.type != "line-chart"){
+    if(graphic.type == "line-chart"){
+        if(graphic.service_list.length==0){
+            graphic.graphData.removeColumn(1);
+        }
+
+        graphic.service_list.push(service_app_id);
+        graphic.serviceAddress_list.push(sensors[service_app_id].serviceAddress);
+        graphic.graphData.addColumn('number',sensors[service_app_id].description);
+    }
+    else if(graphic.type == "historical-chart" ){
+        graphic.service_list.push(service_app_id);
+    }
+    else{
         if(graphic.service_list[0]!=null){
             removeSensor(graphic,graphic.service_list[0]);
         }
@@ -1214,15 +1229,28 @@ function assign_services_to_graphics_presentation(service_app_id, graphic){
         var title = sensors[service_app_id].description+" @ "+deviceName;
         $('#name-'+graphic.id).text(title);
     }
-    else{
-        if(graphic.service_list.length==0){
-            graphic.graphData.removeColumn(1);
-        }
 
-        graphic.service_list.push(service_app_id);
-        graphic.serviceAddress_list.push(sensors[service_app_id].serviceAddress);
-        graphic.graphData.addColumn('number',sensors[service_app_id].description);
-    }
+    // if(graphic.type != "line-chart" ){
+    //     if(graphic.service_list[0]!=null){
+    //         removeSensor(graphic,graphic.service_list[0]);
+    //     }
+        
+    //     graphic.service_list[0]=service_app_id;       //link new sensor to the gauge
+    //     graphic.serviceAddress_list[0]=sensors[service_app_id].serviceAddress;
+
+    //     var deviceName = sensors[service_app_id].serviceAddress.substr(sensors[service_app_id].serviceAddress.lastIndexOf("/")+1);
+    //     var title = sensors[service_app_id].description+" @ "+deviceName;
+    //     $('#name-'+graphic.id).text(title);
+    // }
+    // else{
+    //     if(graphic.service_list.length==0){
+    //         graphic.graphData.removeColumn(1);
+    //     }
+
+    //     graphic.service_list.push(service_app_id);
+    //     graphic.serviceAddress_list.push(sensors[service_app_id].serviceAddress);
+    //     graphic.graphData.addColumn('number',sensors[service_app_id].description);
+    // }
 
     $(document).on("click", '#startstop_cfg_but-'+graphic.id+'-'+service_app_id, function(event){
         startStopSensor_presentation(graphic.id,service_app_id);
@@ -1347,6 +1375,9 @@ function enableButtonsLive(idChart){
                 else if (graphic.type=='line-chart'){
                     color[sensor]=$("#cfg_color-"+graphic.service_list[sensor]).val();
                     graphic.options.colors[sensor]=color[sensor];
+                }
+                else if (graphic.type=='historical-chart'){
+                    graphic.appendLiveData = $("#show_live_"+ idChart).prop('checked');
                 }
                 sensors_configuration[graphic.service_list[sensor]]={
                     rate:urate,
