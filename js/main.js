@@ -685,12 +685,12 @@ function goto_build(){
 
         
         $(window).resize(function() {
-            if(leftcolumn)
-                leftColumn.tinyscrollbar_update();
-            if(contentDiv)
-                contentDiv.tinyscrollbar_update();
-            if(rightColumn)
-                rightColumn.tinyscrollbar_update();
+            var leftColumn = $('#leftcolumn');
+            leftColumn.tinyscrollbar();
+            var rightColumn = $('#rightcolumn');
+            rightColumn.tinyscrollbar();
+            var contentDiv = $('content');
+            contentDiv.tinyscrollbar();
         });
 
         initDragAndDropGauges(contentDiv);
@@ -1066,7 +1066,6 @@ var addDragEventsForSensorsOnGauge = function(idChart){
             idChart_selected = last_chart_id;
         
         var graphic=charts[idChart_selected];
-        
         try{
             if(graphic.canDrop(sensors[service_selected].api)){
                 if(service_selected!=''){
@@ -1612,7 +1611,8 @@ function goto_presentation(){
         contentDiv.tinyscrollbar();
         
         $(window).resize(function() {
-            contentDiv.tinyscrollbar_update();
+            var contentDiv = $('#content_presentation');
+            contentDiv.tinyscrollbar();
         });
         
         var popup = $("#settings-container_presentation");
