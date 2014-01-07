@@ -35,6 +35,7 @@ var active_div = "main_div";
 var DB_NAME = "iot-hub";
 var iot_database = null;
 var iot_collections = {};
+var global_settings = null;
 
 google.load("visualization", "1", {packages:["corechart"]});
 
@@ -82,7 +83,11 @@ jQuery(document).ready(function() {
         goto_index();
     });
 
+    $(document).on("change","#selected_db", function(event) {
+        save_global_settings();
+    });
 
+    discover_all_dbs();
 });
 
 var onGeolocationEvent = function(service_app_id, event){
@@ -216,7 +221,7 @@ function save_services(ask){
 }
 
 function load_services(ask){
-     __Utilities__load_file(local_filesystem, "hub_presentation_explorer.txt",
+    __Utilities__load_file(local_filesystem, "hub_presentation_explorer.txt",
         function(contents){
             var leftColumn = $('#leftcolumn');
             leftColumn.tinyscrollbar();
@@ -776,21 +781,70 @@ function discover_services_presentation(container, saved_services){
     }
 }
 
-function discover_db(){
-    webinos.discovery.findServices(new ServiceType("http://webinos.org/api/db"), {
+function save_global_settings(){
+    var to_save = {
+        db_service_id : $("#selected_db").val() || null
+    };
+    __Utilities__save_file(local_filesystem, to_save, "global_settings.json", false);
+}
+
+function load_global_settings(onLoad){
+    __Utilities__load_file(local_filesystem, "global_settings.json",
+        function(contents){
+            global_settings = contents;
+            onLoad();
+            // discover_db();
+        },
+        function(error){
+            alert(error.message);
+        }, false
+    );
+}
+function discover_all_dbs(){
+    var apiURI = "http://webinos.org/api/db";
+    var discoveryFilter = {
+        zoneId: [webinos.session.getPZPId()]
+    };
+    webinos.discovery.findServices(new ServiceType(apiURI), {
         onFound: function (service) {
-            if(webinos.session.getPZPId() == service.serviceAddress && service.displayName.indexOf(DB_NAME) != -1){
+            $("#selected_db").append("<option value='"+service.id+"'>"+service.displayName+"</option>");
+        }
+    //}, null, discoveryFilter);
+    }, null, null);
+}
+
+
+function discover_db(){
+    //alert("Discover DB " + global_settings["db_service_id"]);
+    var counter = 0;
+    var apiURI = "http://webinos.org/api/db";
+    var discoveryOptions = null;
+    var discoveryFilter = {
+        zoneId: [webinos.session.getPZPId()],
+        serviceID: global_settings["db_service_id"]
+    };
+    
+    iot_database = null;
+
+    webinos.discovery.findServices(new ServiceType(apiURI), {
+        onFound: function (service) {
+            console.log(counter++, service);
+            if(service.id == global_settings["db_service_id"]){ //this if is required since the filter.serviceID is not considered by findServices
                 service.bindService({
-                    onBind: function () {   
+                    onBind: function () { 
+
                         service.open(function(_db){
                             console.log(_db);
                             iot_database = _db;
+                            //load_services_presentation(false);
                         });
                     }
                 });
             }
         }
-    });
+    }, discoveryOptions, discoveryFilter);
+
+    setTimeout(load_services_presentation, 300, false);
 }
 
 function discover_filesystem(){
@@ -803,7 +857,13 @@ function discover_filesystem(){
                             //root_directory = filesystem.root;
                             if(service.serviceAddress === webinos.session.getPZPId()){
                                 local_filesystem = filesystem.root;
-
+                                load_global_settings(function(){
+                                    $("#selected_db option").each(function()
+                                    {
+                                        if($(this).val() == global_settings["db_service_id"])
+                                            $(this).attr('selected', 'selected');
+                                    });
+                                });
                                 load_services(false);
                             }
                             else{
@@ -829,7 +889,9 @@ function discover_filesystem_presentation(){
                         function (filesystem) {
                             if(service.serviceAddress === webinos.session.getPZPId()){
                                 local_filesystem = filesystem.root;
-                                load_services_presentation(false);
+
+                                load_global_settings(discover_db);
+                                //load_services_presentation(false);
                             }
                         },
                         function (error) {
@@ -1602,7 +1664,7 @@ function goto_presentation(){
     clearAll_for_graphics();
     discover_filesystem_presentation();
     
-    discover_db();
+    
     
     if(first_time_presentation){
         //$("#sensor_id_config").hide();
