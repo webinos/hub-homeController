@@ -800,6 +800,7 @@ function load_global_settings(onLoad){
         }, false
     );
 }
+
 function discover_all_dbs(){
     var apiURI = "http://webinos.org/api/db";
     var discoveryFilter = {
@@ -813,6 +814,8 @@ function discover_all_dbs(){
     }, null, null);
 }
 
+
+var first_found_db = true;
 
 function discover_db(){
     //alert("Discover DB " + global_settings["db_service_id"]);
@@ -829,7 +832,8 @@ function discover_db(){
     webinos.discovery.findServices(new ServiceType(apiURI), {
         onFound: function (service) {
             console.log(counter++, service);
-            if(service.id == global_settings["db_service_id"]){ //this if is required since the filter.serviceID is not considered by findServices
+            if(first_found_db || service.id == global_settings["db_service_id"]){ //this if is required since the filter.serviceID is not considered by findServices
+                first_found_db = false;
                 service.bindService({
                     onBind: function () { 
 
