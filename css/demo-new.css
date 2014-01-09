@@ -35,11 +35,11 @@ body {
 }
 */
 
-body.rules {
+/*body.rules {
     padding: 0 0 0 440px;
-}
+}*/
 body.rules > #leftcolumn {
-    width: 440px;
+    width: 450px;
 }
 
 #buttons_content {

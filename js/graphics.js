@@ -20,8 +20,9 @@ Function.prototype.methods=function(funcs) {
         }
 }
 
-function Graphic(idChart, X, Y, min, max) {
+function Graphic(target, idChart, X, Y, min, max) {
     this.id = idChart;
+    this.target = target;
     this.service_list=[];
     this.serviceAddress_list=[];
     this.values=[];
@@ -74,9 +75,12 @@ Graphic.methods({
     },
     getCustomSettingsForSensor : function(sensor){
     },
+    getCustomGlobalSettings : function(){
+    },
     getSettingPage : function(){
-            var html='';
-            for(var sensor in this.service_list){
+        var html='';
+        html += this.getCustomGlobalSettings();
+        for(var sensor in this.service_list){
             if(sensors[this.service_list[sensor]].api.indexOf(sensors_type) != -1){
                 // Configuration for sensor service
                 html+= "<div id='configuration_div-"+this.id+"-"+this.service_list[sensor]+"' class='configuration_div'>";
@@ -109,7 +113,6 @@ Graphic.methods({
             else if(sensors[this.service_list[sensor]].api.indexOf(geolocation_type) != -1){
                 //TODO Configuration for geolocation service
                 var html = "";
-                alert(this.type);
                 if(this.type == 'text-label'){
                     html += "Configuration for Text Label";
                 }
@@ -133,8 +136,10 @@ Graphic.methods({
         }
         tmp["minRange"] = this.minRange;
         tmp["maxRange"] = this.maxRange;
+        var lc = $("#leftcolumn").css("width").replace("px","");
+        lc = Number(lc);
         tmp["coord"] = {
-            x: $("#main-"+this.id).position().left,
+            x: $("#main-"+this.id).position().left - lc,
             y: $("#main-"+this.id).position().top
         }
         return tmp;
@@ -142,8 +147,8 @@ Graphic.methods({
 });
 
 
-function Thermometer(idChart, X, Y, min, max){
-    arguments.callee.superConstructor.call(this, idChart, X, Y, min, max);
+function Thermometer(target, idChart, X, Y, min, max){
+    arguments.callee.superConstructor.call(this, target, idChart, X, Y, min, max);
     
     this.type="thermometer";
         // this.minRange=min_temperature_range;
@@ -152,7 +157,7 @@ function Thermometer(idChart, X, Y, min, max){
     this.allowed_drop = [sensors_type];
     this.old_value = -1;
 
-    $("#target").prepend(this.getHTMLContent());
+    this.target.prepend(this.getHTMLContent());
     this.chart = new RGraph.Thermometer("drop_canvas-"+this.id, this.minRange, this.maxRange, 0);
     RGraph.Effects.Thermometer.Grow(this.chart);
 }
@@ -179,8 +184,8 @@ Thermometer.methods({
 });
 
 
-function Gauge(idChart, X, Y, min, max){
-    arguments.callee.superConstructor.call(this, idChart, X, Y, min, max);
+function Gauge(target, idChart, X, Y, min, max){
+    arguments.callee.superConstructor.call(this, target, idChart, X, Y, min, max);
     this.type="gauge";
     // this.minRange=min_gauge_range;
     // this.maxRange=max_gauge_range;
@@ -188,7 +193,8 @@ function Gauge(idChart, X, Y, min, max){
     this.allowed_drop = [sensors_type];
     this.old_value = -1;
 
-    $("#target").prepend(this.getHTMLContent());
+    //$("#target").prepend(this.getHTMLContent());
+    this.target.prepend(this.getHTMLContent());
     this.chart = new RGraph.Gauge("drop_canvas-"+this.id, this.minRange, this.maxRange, 0);
     RGraph.Effects.Gauge.Grow(this.chart);
 }
@@ -215,13 +221,13 @@ Gauge.methods({
 });
 
 
-function TextLabel(idChart, X, Y, min, max){
-    arguments.callee.superConstructor.call(this, idChart, X, Y, min, max);
+function TextLabel(target, idChart, X, Y, min, max){
+    arguments.callee.superConstructor.call(this, target, idChart, X, Y, min, max);
 
     this.type="text-label";
     this.allowed_drop = [sensors_type, geolocation_type, deviceOrientation_type];
 
-    $("#target").prepend(this.getHTMLContent());
+    this.target.prepend(this.getHTMLContent());
     this.chart = document.getElementById("drop_canvas-"+this.id);
     this.setVal("-");
     
@@ -244,70 +250,104 @@ TextLabel.methods({
 });
 
 
-function DroneJoystick(idChart, X, Y, min, max){
-    arguments.callee.superConstructor.call(this, idChart, X, Y, min, max);
+function DroneJoystick(target, idChart, X, Y, min, max){
+    arguments.callee.superConstructor.call(this, target, idChart, X, Y, min, max);
 
     this.type="drone-joystick";
     this.allowed_drop = [actuators_type];
 
-    $("#target").prepend(this.getHTMLContent());
+    this.target.prepend(this.getHTMLContent());
     this.chart = document.getElementById("drop_canvas-"+this.id);
     //this.setVal("-");
     
 
     $(document).on("click", "#takeoff-"+this.id, function(event){
         var id = event.target.id.split("-")[1];
-        var graphic = charts[id];
-        graphic.setVal(0);
+        try{
+            var graphic = charts_presentation[id];
+            graphic.setVal(0);
+        }
+        catch(e){
+            console.log("Cannot set value in build mode");
+        }
     });
 
     $(document).on("click", "#landing-"+this.id, function(event){
         var id = event.target.id.split("-")[1];
-        var graphic = charts[id];
-        graphic.setVal(1);
+        try{
+            var graphic = charts_presentation[id];
+            graphic.setVal(1);
+        }
+        catch(e){
+            console.log("Cannot set value in build mode");
+        }
     });
 
     $(document).on("click", "#movefront-"+this.id, function(event){
         var id = event.target.id.split("-")[1];
-        var graphic = charts[id];
-        graphic.setVal(5);
+        try{
+            var graphic = charts_presentation[id];
+            graphic.setVal(5);
+        }
+        catch(e){
+            console.log("Cannot set value in build mode");
+        }
     });
 
     $(document).on("click", "#moveback-"+this.id, function(event){
         var id = event.target.id.split("-")[1];
-        var graphic = charts[id];
-        graphic.setVal(6);
+        try{
+            var graphic = charts_presentation[id];
+            graphic.setVal(6);
+        }
+        catch(e){
+            console.log("Cannot set value in build mode");
+        }
     });
 
     $(document).on("click", "#moveleft-"+this.id, function(event){
-        //var val = (event.target.checked) ? 1 : 0;
-        //alert(event.target.value);
         var id = event.target.id.split("-")[1];
-        var graphic = charts[id];
-        graphic.setVal(7);
+        try{
+            var graphic = charts_presentation[id];
+            graphic.setVal(7);
+        }
+        catch(e){
+            console.log("Cannot set value in build mode");
+        }
     });
 
     $(document).on("click", "#moveright-"+this.id, function(event){
         var id = event.target.id.split("-")[1];
-        var graphic = charts[id];
-        graphic.setVal(8);
+        try{
+            var graphic = charts_presentation[id];
+            graphic.setVal(8);
+        }
+        catch(e){
+            console.log("Cannot set value in build mode");
+        }
     });
 
     $(document).on("click", "#rotateclock-"+this.id, function(event){
         var id = event.target.id.split("-")[1];
-        var graphic = charts[id];
-        graphic.setVal(9);
+        try{
+            var graphic = charts_presentation[id];
+            graphic.setVal(9);
+        }
+        catch(e){
+            console.log("Cannot set value in build mode");
+        }
     });
 
     $(document).on("click", "#rotatecounter-"+this.id, function(event){
         var id = event.target.id.split("-")[1];
-        var graphic = charts[id];
-        graphic.setVal(10);
+        try{
+            var graphic = charts_presentation[id];
+            graphic.setVal(10);
+        }
+        catch(e){
+            console.log("Cannot set value in build mode");
+        }
     });
-    
-    function foo(val){
-        alert(val);
-    }
 }
 
 DroneJoystick.subclassFrom(Graphic);
@@ -315,7 +355,9 @@ DroneJoystick.subclassFrom(Graphic);
 DroneJoystick.methods({
     setVal : function(val) {
         if(this.service_list.length>0){
-            var service = sensors[this.service_list[0]];
+            var service_id = getId(this.service_list[0]);
+            var service = sensors[service_id];
+            
             service.setValue([val],
                 function(actuatorEvent){},
                 function(actuatorError){}
@@ -351,8 +393,8 @@ DroneJoystick.methods({
 });
 
 
-function LineChart(idChart, X, Y, min, max){
-    arguments.callee.superConstructor.call(this, idChart, X, Y, min, max);
+function LineChart(target, idChart, X, Y, min, max){
+    arguments.callee.superConstructor.call(this, target, idChart, X, Y, min, max);
     this.type="line-chart";
     this.allowed_drop = [sensors_type, geolocation_type, deviceOrientation_type];
     //this.allowed_drop = [sensors_type, deviceOrientation_type];
@@ -372,7 +414,7 @@ function LineChart(idChart, X, Y, min, max){
             pointSize: 0
         };
 
-        $("#target").prepend(this.getHTMLContent());
+        this.target.prepend(this.getHTMLContent());
         var chart_div = document.getElementById('chart_div-'+idChart);
         this.chart = new google.visualization.LineChart(chart_div);
         this.chart.draw(this.graphData, this.options);
@@ -432,25 +474,9 @@ LineChart.methods({
     }
 });
 
-// TO REMOVE ------------------------------------------
-var data = [
-      ["20131001",10,100],
-      ["20131002",20,80],
-      ["20131003",50,60],
-      ["20131004",70,80]
-    ];
 
-  function getData(){
-    var result = "Date,NY,SF\n";
-
-    for(var i=0; i<data.length; i++)
-      result += data[i][0] + "," + (data[i][1]-5) + ";" + data[i][1] + ";" + (data[i][1]+5) + "," + (data[i][2]-5) + ";" + data[i][2] + ";" + (data[i][2]+5) + "\n";
-    return result;
-  }
-//---------------------------------------------------
-
-function HistoricalChart(idChart, X, Y){
-    arguments.callee.superConstructor.call(this, idChart, X, Y);
+function HistoricalChart(target, idChart, X, Y){
+    arguments.callee.superConstructor.call(this, target, idChart, X, Y);
     this.type="historical-chart";
     
     // this.graphData=new google.visualization.DataTable();
@@ -468,66 +494,162 @@ function HistoricalChart(idChart, X, Y){
 
     this.allowed_drop = [sensors_type];
 
-    $("#target").prepend(this.getHTMLContent());
-    var chart_div = document.getElementById('chart_div-'+idChart);
+    this.target.prepend(this.getHTMLContent());
+    
+    this.chart_div = document.getElementById('chart_div-'+idChart);
 
-    g1 = new Dygraph(
-          chart_div,
-          getData(),
-            // {
-            //     legend: 'always',
-            //     title: 'NYC vs. SF',
-            //     showRoller: true,
-            //     rollPeriod: 14,
-            //     customBars: true,
-            //     ylabel: 'Temperature (F)',
-            // }
-          {
-            customBars: true,
-            title: 'Daily Temperatures in New York vs. San Francisco',
-            ylabel: 'Temperature (F)',
-            legend: 'always',
-            labelsDivStyles: { 'textAlign': 'right' },
-            showRangeSelector: true
-          }
-      );
-    // this.chart = new google.visualization.LineChart(chart_div);
-    // this.chart.draw(this.graphData, this.options);
+    this.chart = null;
+    this.seriesOptions = [];
+    this.seriesCounter = 0;
+    this.appendLiveData = true;
+
+    this.chartDivId = 'chart_div-'+idChart;
+    this.historicalLoaded = false;
+
+    Highcharts.setOptions({
+        global : {
+            useUTC : false
+        }
+    });
+
+
 }
 
 HistoricalChart.subclassFrom(Graphic);
 
 HistoricalChart.methods({
-    setVal : function(val) {
-        // this.chart.value = val;
-        // RGraph.Effects.Gauge.Grow(this.chart);
+    setLabel : function (description){
+        var $list = $(this.chart_div).children("#serviceList");
+        if ($list.length == 0){
+            $list = $(this.chart_div).append("<ul id='serviceList'></ul>").children("#serviceList");
+        }
+        $list.append("<li>"+description+"</li>");
+    },
+    setVal : function(id, service, data, isHistorical) {
+        if (isHistorical) {
+//            if (this.chart == null) {
+//                this.renderChart(id, service, data);
+//            } else {
+//                var series = this.chart.get(id);
+//                if (series) {
+//                    $.each(data, function(i,dat){
+//                        series.addPoint(dat, false);
+//                    });
+//                    this.chart.redraw();
+//                } else {
+//                    this.chart.addSeries(
+//                        {
+//                            id: id,
+//                            name: sensors[id].description+" @ "+service.serviceAddress,
+//                            data: data
+//                        }
+//                    );
+//                }
+//            }
+//            this.historicalLoaded = true;
+            this.seriesOptions[this.seriesCounter++] = {
+                id: id,
+                name: sensors[id].description+" @ "+service.serviceAddress,
+                data: data
+            };
+            if (this.seriesCounter == this.service_list.length) {
+                this.renderChart();
+                this.historicalLoaded = true;
+            }
+        } else if (this.historicalLoaded && this.appendLiveData) {
+            if (this.chart == null) {
+                this.renderChart(id, service, data);
+            } else {
+                var series = this.chart.get(id);
+                if (series) {
+                    series.addPoint(data, true);
+                } else {
+                    this.chart.addSeries(
+                        {
+                            id: id,
+                            name: sensors[id].description+" @ "+service.serviceAddress,
+                            data: data
+                        }
+                    );
+                }
+            }
+        }
+    },
+    renderChart : function(id, service, data){
+        // Create the chart
+        this.chart = new Highcharts.StockChart({
+            chart : {
+                renderTo: this.chartDivId,
+                events : {
+                    load : function() {
+                        // setInterval(function() {
+                        //     if (self.chartDataChanged){
+                        //         self.chart.redraw();
+                        //         self.chartDataChanged = false;
+                        //     }
+                        // }, 1000);
+                    }
+                }
+            },
+
+            rangeSelector: {
+                buttons: [{
+                    count: 1,
+                    type: 'minute',
+                    text: '1M'
+                }, {
+                    count: 5,
+                    type: 'minute',
+                    text: '5M'
+                }, {
+                    count: 1440,
+                    type: 'minute',
+                    text: '1D'
+                }, {
+                    type: 'all',
+                    text: 'All'
+                }],
+                inputEnabled: false,
+                selected: 3
+            },
+
+            title : {
+//            text : 'Live random data'
+            },
+
+            exporting: {
+                enabled: false
+            },
+
+//            series : [{
+//                id: id,
+//                name: sensors[id].description+" @ "+service.serviceAddress,
+//                data: data
+//            }]
+            series:this.seriesOptions
+        });
     },
     getHTMLContent : function(){
         var html = arguments.callee.superFunction.call(this);
-        html += "<div class='' id='drop_canvas-"+this.id+"'></div>";
-        html += "<div id='chart_div-"+this.id+"' class='line-chart'></div>";
+        html += "<div class='' id='drop_canvas-"+this.id+"'>";
+        html += "<div id='chart_div-"+this.id+"' class='line-chart'></div></div></div>";
         return html;
+
+        // html += "<div class='text-label' id='drop_canvas-"+this.id+"'></div></div>";
+        // return html;
+    },
+    getCustomGlobalSettings : function(){
+        var checked = (this.appendLiveData) ? "checked='checked'" : "";
+        return "<div class='graphic_global_settings'><input type='checkbox' id='show_live_"+ this.id +"'" + checked + ">Show live data</div>";
     },
     getCustomSettingsForSensor : function(sensor){
-        // var html = "";
-        // html+= "<div id='color' class='param_td'>Color";
-        // html+= "<select id='cfg_color-"+this.service_list[sensor]+"'>";
-        // for(var i=0;i<this.options.colors.length;i++){
-        //     if(lineColor[i]==this.options.colors[sensor]){
-        //         html+= "<option selected value='"+lineColor[i]+"'>"+lineColor[i]+"</option>";
-        //     }
-        //     else{
-        //         html+= "<option value='"+lineColor[i]+"'>"+lineColor[i]+"</option>";
-        //     }
-        // }
-        // html+= "</select>"; 
-        // return html;
+        return "";
     }
 });
 
 
-function GoogleMap(idChart, X, Y){
-    arguments.callee.superConstructor.call(this, idChart, X, Y);
+function GoogleMap(target, idChart, X, Y){
+    arguments.callee.superConstructor.call(this, target, idChart, X, Y);
 
     this.type="google-map";
     this.marker;
@@ -541,7 +663,7 @@ function GoogleMap(idChart, X, Y){
     var latlng
     try{
         var latlng = new google.maps.LatLng(42.745334,12.738430);
-        $("#target").prepend(this.getHTMLContent());
+        this.target.prepend(this.getHTMLContent());
         var options = { zoom: 12,
             center: latlng,
             mapTypeId: google.maps.MapTypeId.ROADMAP
@@ -583,8 +705,8 @@ GoogleMap.methods({
     }
 });
 
-function CornerGauge(idChart, X, Y, min, max){
-    arguments.callee.superConstructor.call(this, idChart, X, Y, min, max);
+function CornerGauge(target, idChart, X, Y, min, max){
+    arguments.callee.superConstructor.call(this, target, idChart, X, Y, min, max);
     this.type="corner-gauge";
     // this.minRange=min_gauge_range;
     // this.maxRange=max_gauge_range;
@@ -593,7 +715,7 @@ function CornerGauge(idChart, X, Y, min, max){
     
     this.old_value = -1;
     
-    $("#target").prepend(this.getHTMLContent());
+    this.target.prepend(this.getHTMLContent());
     this.chart = new RGraph.CornerGauge("drop_canvas-"+this.id, this.minRange, this.maxRange, 0);
     RGraph.Effects.CornerGauge.Grow(this.chart);
 }
@@ -619,8 +741,8 @@ CornerGauge.methods({
     }
 });
 
-function FuelGauge(idChart, X, Y, min, max){
-    arguments.callee.superConstructor.call(this, idChart, X, Y, min, max);
+function FuelGauge(target, idChart, X, Y, min, max){
+    arguments.callee.superConstructor.call(this, target, idChart, X, Y, min, max);
     this.type="fuel-gauge";
     // this.minRange= (min)?min:0; //min_gauge_range;
     // this.maxRange= (max)?max:100; //max_gauge_range;
@@ -628,7 +750,7 @@ function FuelGauge(idChart, X, Y, min, max){
     this.allowed_drop = [sensors_type];
     this.old_value = -1;
 
-    $("#target").prepend(this.getHTMLContent());
+    this.target.prepend(this.getHTMLContent());
     this.chart = new RGraph.Fuel("drop_canvas-"+this.id, this.minRange, this.maxRange, 0);
     RGraph.Effects.Fuel.Grow(this.chart);
 }
@@ -653,8 +775,8 @@ FuelGauge.methods({
     }
 });
 
-function OdometerGauge(idChart, X, Y, min, max){
-    arguments.callee.superConstructor.call(this, idChart, X, Y, min, max);
+function OdometerGauge(target, idChart, X, Y, min, max){
+    arguments.callee.superConstructor.call(this, target, idChart, X, Y, min, max);
     this.type="odometer-gauge";
     // this.minRange=0;//min_gauge_range;
     // this.maxRange=100;//max_gauge_range;
@@ -662,7 +784,7 @@ function OdometerGauge(idChart, X, Y, min, max){
     this.allowed_drop = [sensors_type];
     this.old_value = -1;
     
-    $("#target").prepend(this.getHTMLContent());
+    this.target.prepend(this.getHTMLContent());
     this.chart = new RGraph.Odometer("drop_canvas-"+this.id, this.minRange, this.maxRange, 0);
     RGraph.Effects.Odo.Grow(this.chart);
 }
@@ -689,15 +811,15 @@ OdometerGauge.methods({
 });
 
 
-function CheckBoxGauge(idChart, X, Y){
-    arguments.callee.superConstructor.call(this, idChart, X, Y);
+function CheckBoxGauge(target, idChart, X, Y){
+    arguments.callee.superConstructor.call(this, target, idChart, X, Y);
     this.type="checkbox-gauge";
     //this.minRange=min_gauge_range;
     //this.maxRange=max_gauge_range;
 
     this.allowed_drop = [actuators_type];
     
-    $("#target").prepend(this.getHTMLContent());
+    this.target.prepend(this.getHTMLContent());
 
     //$("#drop_canvas-"+this.id+"[type=checkbox]").switchButton({
     $("#checkbox-"+this.id+"[type=checkbox]").switchButton({
@@ -711,8 +833,14 @@ function CheckBoxGauge(idChart, X, Y){
     $(document).on("change", "#checkbox-"+this.id, function(event){
         var val = (event.target.checked) ? 1 : 0;
         var id = event.target.id.split("-")[1];
-        var graphic = charts[id];
-        graphic.setVal(val);
+        var graphic = charts_presentation[id];        
+        try{
+            graphic.setVal(val);
+        }
+        catch(e){
+            console.log("Cannot set value in build mode");
+            event.target.checked(0);
+        }
     });
 }
 
@@ -722,13 +850,9 @@ CheckBoxGauge.subclassFrom(Graphic);
 CheckBoxGauge.methods({
     changeVal : function(val){
         val = (val == 0) ? false : true;
-        //alert("set " + val + " on "+this.id);
-        //alert($("#checkbox-"+this.id));
         $("#checkbox-"+this.id).attr('checked', val);
     },
     setVal : function(val) {
-        //this.chart.value = val;
-        //RGraph.Effects.Odo.Grow(this.chart);
         if(this.service_list.length>0){
             var service = sensors[this.service_list[0]];
             service.setValue([val],

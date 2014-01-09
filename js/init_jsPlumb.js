@@ -133,6 +133,7 @@ function getId(service){
     /***************  ON READY FUNCTION FOR JsPlump Library   *********************/
 
     jsPlumb.bind("ready", function() {
+        $('#target').css("border", "none");
         //jsPlumb.reset();
         jsPlumb.setRenderMode(jsPlumb.SVG);
         jsPlumbDemo.init();
