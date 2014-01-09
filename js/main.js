@@ -1,17 +1,18 @@
 var charts={};  //contain Graphic instances
 var charts_presentation={};
 var sensors_type = "http://webinos.org/api/sensors";
-var geolocation_type = "http://www.w3.org/ns/api-perms/geolocation";
+//var geolocation_type = "http://www.w3.org/ns/api-perms/geolocation";
+var geolocation_type = "http://webinos.org/api/w3c/geolocation";
 var actuators_type = "http://webinos.org/api/actuators";
 var deviceOrientation_type = "http://webinos.org/api/deviceorientation";
 
 var element_counter = 0;
 var last_chart_id;
 var service_types = [
-    geolocation_type,
-    "http://webinos.org/api/sensors/*",
-    "http://webinos.org/api/actuators/*",
-    deviceOrientation_type
+    geolocation_type
+    ,"http://webinos.org/api/sensors/*"
+    ,"http://webinos.org/api/actuators/*"
+    ,deviceOrientation_type
 ];
 var sensors = {};
 var services_to_save = {};
@@ -150,9 +151,6 @@ var onSensorEvent = function(sensor_app_id, event){
                     time=(time.getUTCHours()+2)+ ":"+time.getUTCMinutes()+":"+time.getUTCSeconds();
                     //var index=graphic.service_list.indexOf(sensor.id);
                     var index=graphic.service_list.indexOf(sensor_app_id);
-                    // alert(index);
-                    // alert(sensor.id);
-                    //alert(JSON.stringify(graphic.service_list));
                     graphic.values.push(time);
                     for(var i=0;i<graphic.service_list.length;i++){
                         if(sensor_app_id == getId(graphic.service_list[i])){
@@ -275,7 +273,6 @@ function save_graphics(ask){
 function load_graphics(){
     __Utilities__load_file(local_filesystem, "hub_presentation_page.txt",
         function(contents){
-            //alert(JSON.stringify(contents));
             clearAll_for_graphics();
             for(var i in contents){
                 var graphic;
@@ -594,7 +591,6 @@ function serviceDiscovery_afterExplorer(container, serviceFilter){
       , {
             onFound: function(service){
                 if ((service.id === serviceFilter.id) && (service.serviceAddress === serviceFilter.address) /*&& (typeof(sensors[service.id]) === "undefined")*/) {
-                    //alert("Add to sensors2");
                     //sensors[service.id] = service;
                     if(!sensors[getId(service)]){
                         bindProperService(service, true);
@@ -818,7 +814,6 @@ function discover_all_dbs(){
 var first_found_db = true;
 
 function discover_db(){
-    //alert("Discover DB " + global_settings["db_service_id"]);
     var counter = 0;
     var apiURI = "http://webinos.org/api/db";
     var discoveryOptions = null;
@@ -1469,11 +1464,6 @@ function enableButtonsLive(idChart){
 function deleteChart(idChart_selected){
     var graphic= charts[idChart_selected];
     for(var sens in graphic.service_list){
-
-        //alert(getId(sensors[graphic.service_list[sens]]));
-
-        //$('#startstop_cfg_but-'+graphic.id+'-'+getId(sensors[graphic.service_list[sens]])).die();
-        
         $('#startstop_cfg_but-'+graphic.id+'-'+getId(sensors[graphic.service_list[sens]])).die();
         if((listeners_numbers.hasOwnProperty(graphic.service_list[sens]))&&(graphic.sensor_active[graphic.service_list[sens]])){    //if sensor is inactive, the listener is already removed
             listeners_numbers[graphic.service_list[sens]]--;
@@ -1500,8 +1490,8 @@ function deleteChart_presentation(idChart_selected){
         $('#startstop_cfg_but-'+idChart_selected+'-'+service_app_id).die();
         listeners_numbers[service_app_id]--;
         if(sensors[service_app_id].api.indexOf(geolocation_type) != -1){
-            navigator.geolocation.clearWatch(services_to_handle[graphic.service_list[sens]]["watch_id"]);
-            //sensors[graphic.service_list[sens]].clearWatch(services_to_handle[graphic.service_list[sens]]["watch_id"]);
+            navigator.geolocation.clearWatch(services_to_handle[service_app_id]["watch_id"]);
+            //sensors[graphic.service_list[sens]].clearWatch(services_to_handle[service_app_id]["watch_id"]);
         }
         else if(sensors[service_app_id].api.indexOf(sensors_type) != -1){
             var service_id = service_app_id;
@@ -1512,8 +1502,6 @@ function deleteChart_presentation(idChart_selected){
             sensors[service_id].removeEventListener("deviceorientation", function(e){onDeviceOrientationEvent(service_id,e)}, true);
         }
         delete listeners_numbers[service_app_id];
-
-
     }
     $("#main-"+idChart_selected).remove();
     $('#delete-'+idChart_selected).die();
@@ -1598,14 +1586,10 @@ function startStopSensor_presentation(chartId,service_app_id){
 }
 
 
-var intervalwaitid = 0;
-
-
 var ui_loaded = false;
 var continue_to_wait = true;
 
 function show_wait(){
-    //alert(configured_services+"---"+services_count);
     if(continue_to_wait){ 
         if(configured_services < services_count){
             $("#wait_div").show();
@@ -1613,7 +1597,6 @@ function show_wait(){
         }
         else
             hide_wait(true);
-        //$("#wait_div").show();
     }
 }
 
