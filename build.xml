@@ -18,11 +18,8 @@
                 <include name="config.xml"/>
                 <include name="icon.png"/>
                 <include name="index.html"/>                
-                <include name="dashboard.html"/>                
                 <include name="rules.html"/>                
-                <include name="presentation.html"/>                
                 <include name="success.html"/>                
-                <include name="sdconf.html"/>                
             </fileset> 
         </zip> 
         <move file="${basedir}/${widget.file}.zip" tofile="${basedir}/${widget.file}.wgt"/>
