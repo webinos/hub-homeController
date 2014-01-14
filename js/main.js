@@ -118,7 +118,7 @@ function onPositionError(err){
 function save_to_DB(sensor_app_id, event){
     if(iot_collections[sensor_app_id]){
         console.log("Saving " + sensor_app_id);
-        iot_collections[sensor_app_id].insert({timestamp: event.timestamp, value: event.sensorValues[0] || 0});
+        iot_collections[sensor_app_id].insert({timestamp: event.timestamp, value: Number(event.sensorValues[0]) || 0});
     }
 }
 
@@ -143,7 +143,8 @@ var onSensorEvent = function(sensor_app_id, event){
                 }
                 else if(graphic.type == "historical-chart"){
                     var time=new Date(event.timestamp).getTime();
-                    var formatted_data = [time, value];
+                    var number_val = Number(value);
+                    var formatted_data = [time, number_val];
                     graphic.setVal(sensor_app_id, sensor, formatted_data, false);
                 }
                 else if(graphic.type == "line-chart"){
@@ -804,7 +805,7 @@ function discover_all_dbs(){
     };
     webinos.discovery.findServices(new ServiceType(apiURI), {
         onFound: function (service) {
-            $("#selected_db").append("<option value='"+service.id+"'>"+service.displayName+"</option>");
+            $("#selected_db").append("<option value='"+service.id+"'>"+service.displayName+"@"+ service.serviceAddress + "</option>");
         }
     //}, null, discoveryFilter);
     }, null, null);
