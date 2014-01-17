@@ -1,7 +1,9 @@
 <?xml version="1.0" ?>
 <widget xmlns="http://www.w3.org/ns/widgets" id="http://webinos.org/HAC" version="1.0">
-  <name>Webinos home automation controller gateway</name>
-  <description>Home automation controller for sensors and actuators</description>
+  <name>Webinos Controller Gateway</name>
+  <description>
+    The Home Controller Gateway allows users to monitor, configure and manage in a very dynamic and customized way, sensors and actuators which the user has access to.The Home Controller Hub, taking full advantages of webinos platform, provides something more: users are not only able to read values from sensors or control actuators but also they can create logic rules using services provided by any of the user’s devices. Something like: “ If I’m close to my house (geolocation) then switch on lights (actuators)”
+  </description>
   <content src="index.html" />
   <icon src="icon.png" />
   <author>Giuseppe La Torre - Daniela Ventura</author>
