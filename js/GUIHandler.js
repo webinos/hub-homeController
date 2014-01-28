@@ -22,13 +22,15 @@
 	function addOperationsGUI(){
 		var html = "";
 		html += '<div class="sensor"><img width="80px" height="80px" src="./assets/greater.png" id="operation_greater" /><p>Greater than</p></div>';
-        html += '<div class="sensor"><img width="80px" height="80px" src="./assets/lesser.png" id="operation_lesser" /><p>Lesser than</p></div>';
+        html += '<div class="sensor"><img width="80px" height="80px" src="./assets/lesser.png" id="operation_lesser" /><p>Less than</p></div>';
+        html += '<div class="sensor"><img width="80px" height="80px" src="./assets/percentage.png" id="operation_variation" /><p>Variation</p></div>';
         html += '<div class="sensor"><img width="80px" height="80px" src="./assets/and.png" id="bool_and" /><p>AND</p></div>';
         html += '<div class="sensor"><img width="80px" height="80px" src="./assets/or.png" id="bool_or" /><p>OR</p></div>';
         html += '<div class="sensor"><img width="80px" height="80px" src="./assets/user_input.png" id="userInput_input" /><p>User Input</p></div>';
         jQuery("#operations_table").append(html);
         initDragAndDrop("operation_greater");
         initDragAndDrop("operation_lesser");
+        initDragAndDrop("operation_variation");
         initDragAndDrop("bool_and");
         initDragAndDrop("bool_or");
         initDragAndDrop("userInput_input");
@@ -472,8 +474,10 @@
 		html += "<div style='clear:both;'>";
 		if(type=="greater")
 			html += '<img width="80px" height="80px" src="./assets/greater.png" id="greater" /><br><br>';
-		else
+		else if(type=="lesser")
 			html += '<img width="80px" height="80px" src="./assets/lesser.png" id="lesser" /><br><br>';
+        else if(type=="variation")
+            html += '<img width="80px" height="80px" src="./assets/percentage.png" id="variation" /><br><br>';
 		html += "</div>";
 		html += "</div>";
 
