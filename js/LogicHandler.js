@@ -220,7 +220,7 @@ var greaterThan = function(values){
 	//values[0] = sx val
 	//values[1] = dx val
 	if(values.length==2){
-		if(parseInt(values[0])>parseInt(values[1]))
+		if(parseFloat(values[0])>parseFloat(values[1]))
 			return 1;
 		else
 			return 0;
@@ -233,8 +233,7 @@ var lesserThan = function(values){
 	//values[0] = sx val
 	//values[1] = dx val
 	if(values.length==2){
-
-		if(parseInt(values[0])<parseInt(values[1]))
+		if(parseFloat(values[0])<parseFloat(values[1]))
 			return 1;
 		else
 			return 0;
@@ -266,8 +265,8 @@ var ORManagment = function(values){
 
 var VariationManagment = function(values, eleId){
 	if(values.length==2){
-		var current_value = parseInt(values[0]);
-		var perc = parseInt(values[1]);
+		var current_value = parseFloat(values[0]);
+		var perc = parseFloat(values[1]);
 		if(isNaN(perc))
 			return -1;
 		
@@ -277,7 +276,7 @@ var VariationManagment = function(values, eleId){
 			last_values[eleId] = current_value;
 		}
 		else
-			last_value = parseInt(last_values[eleId]);
+			last_value = parseFloat(last_values[eleId]);
 			
 		var last_plus_perc = last_value + (last_value/100*perc);
 		var last_minus_perc = last_value - (last_value/100*perc);
