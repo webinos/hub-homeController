@@ -31,12 +31,14 @@ function Input(id){
 	}
 };
 
+var last_values = {};
 
 function Processing(ic, id){
 	var boxID = id;
 	var input_nodes = {};
 	var input_nodes_position = {};
 	var inner_callback = ic;
+	
 	
 	//GLT
 	//var output_callback;
@@ -75,7 +77,7 @@ function Processing(ic, id){
 			if(allElementsAreCharged()){
 				//if i have all input values -> execute logic and callback
 				if(inner_callback){
-					var result = inner_callback(getArray());
+					var result = inner_callback(getArray(), boxID);
 					if(result!=-1){
 						for(var i in output_callbacks){
 							output_callbacks[i](result, boxID);
@@ -218,7 +220,7 @@ var greaterThan = function(values){
 	//values[0] = sx val
 	//values[1] = dx val
 	if(values.length==2){
-		if(parseInt(values[0])>parseInt(values[1]))
+		if(parseFloat(values[0])>parseFloat(values[1]))
 			return 1;
 		else
 			return 0;
@@ -231,8 +233,7 @@ var lesserThan = function(values){
 	//values[0] = sx val
 	//values[1] = dx val
 	if(values.length==2){
-
-		if(parseInt(values[0])<parseInt(values[1]))
+		if(parseFloat(values[0])<parseFloat(values[1]))
 			return 1;
 		else
 			return 0;
@@ -260,6 +261,35 @@ var ORManagment = function(values){
 		return 0;
 	}
 	return -1;	
+}
+
+var VariationManagment = function(values, eleId){
+	if(values.length==2){
+		var current_value = parseFloat(values[0]);
+		var perc = parseFloat(values[1]);
+		if(isNaN(perc))
+			return -1;
+		
+		var last_value;
+		if(!last_values[eleId]){
+			last_value = current_value;
+			last_values[eleId] = current_value;
+		}
+		else
+			last_value = parseFloat(last_values[eleId]);
+			
+		var last_plus_perc = last_value + (last_value/100*perc);
+		var last_minus_perc = last_value - (last_value/100*perc);
+		if(current_value >= last_plus_perc){
+			last_values[eleId] = current_value;
+			return 1;
+		}
+		else if(current_value <= last_minus_perc){
+			last_values[eleId] = current_value;
+			return 0;
+		}
+	}
+	return -1;
 }
 
 var setActuatorState = function(argumentsObj){
@@ -395,6 +425,8 @@ function addProcessingBox(ID){
 		block_list[ID] = new Processing(ANDManagment, ID);
 	else if(ID.indexOf("or") !== -1)
 		block_list[ID] = new Processing(ORManagment, ID);
+	else if(ID.indexOf("variation") !== -1)
+		block_list[ID] = new Processing(VariationManagment, ID);
 }
 
 function addOutputBox(ID){

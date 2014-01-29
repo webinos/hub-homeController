@@ -1,6 +1,6 @@
-<project name="WebinosHomeController" basedir="." default="main">    
+<project name="WebinosHomeControllerGateway" basedir="." default="main">    
     <property name="build.dir" value="."/>
-    <property name="widget.file" value="WebinosHomeController"/>  
+    <property name="widget.file" value="WebinosHomeControllerGateway"/>  
     <property name="src.dir" value="js"/>
     <property name="css.dir" value="css"/>
     <property name="assets.dir" value="assets"/>

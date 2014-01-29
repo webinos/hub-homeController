@@ -26,7 +26,7 @@ var icons = {
     "http://webinos.org/api/sensors/map": "obd-icon.png",
     "http://webinos.org/api/sensors/sparkadv": "obd-icon.png",
     "http://webinos.org/api/sensors/maf": "obd-icon.png",
-    "http://www.w3.org/ns/api-perms/geolocation": "geolocation-icon.png",
+    "http://webinos.org/api/w3c/geolocation": "geolocation-icon.png",
     "http://webinos.org/api/actuators/twitter": "twitter-icon.png",
     "http://webinos.org/api/actuators/facebook": "facebook-icon.png",
     "http://webinos.org/api/actuators/drone-motor": "drone-icon.png",
